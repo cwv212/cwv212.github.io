@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>야구 채널 m3u8 플레이어</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background: #f4f7fa;
+            color: #333;
+        }
+        #sidebar {
+            width: 220px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            transition: transform 0.3s ease;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 10;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+        #sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        #toggle-btn {
+            position: fixed;
+            top: 10px;
+            left: 205px;
+            width: 20px;
+            height: 20px;
+            background: #007bff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            transition: left 0.3s ease, background 0.3s;
+            padding: 0;
+            z-index: 11;
+            line-height: 20px;
+            text-align: center;
+        }
+        #sidebar.collapsed + #player-container #toggle-btn {
+            left: 10px;
+        }
+        #toggle-btn:hover {
+            background: #0056b3;
+        }
+        .channel-item {
+            padding: 12px;
+            margin: 5px 0;
+            background: #e9ecef;
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+        }
+        .channel-item:hover {
+            background: #dee2e6;
+        }
+        #spotv-channels {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .small-channel-btn {
+            display: inline-block;
+            padding: 6px 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 30px;
+        }
+        .small-channel-btn:hover {
+            background: #dee2e6;
+        }
+        #player-container {
+            flex-grow: 1;
+            display: grid;
+            gap: 10px;
+            padding: 10px;
+            height: 100vh;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #ffffff;
+            border: none;
+        }
+        .player-box {
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: none;
+            position: relative;
+        }
+        .player-box.active {
+            border: none;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 5px 0;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        h3 {
+            font-size: 18px;
+            margin: 15px 0 10px;
+            color: #495057;
+        }
+        a {
+            display: block;
+            margin: 15px 0;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h3>채널 목록</h3>
+        <div id="channels"></div>
+        <div id="spotv-channels"></div>
+        <h3>분할 화면 설정</h3>
+        <button onclick="setSplitScreen(1)">1분할</button>
+        <button onclick="setSplitScreen(2)">2분할</button>
+        <button onclick="setSplitScreen(3)">3분할</button>
+        <button onclick="setSplitScreen(4)">4분할</button>
+        <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 확장</a>
+    </div>
+    <div id="player-container">
+        <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
+    </div>
+
+    <script>
+        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
+        const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
+        const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
+        
+        const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
+            name: `야구${i + 1}번`,
+            url: `${baseballBaseUrl}${i + 1}/master.m3u8`
+        }));
+        
+        const spotvChannels = Array.from({ length: 40 }, (_, i) => ({
+            name: `${i + 1}`,
+            url: `https://ch${i + 1}-nlivecdn.spotvnow.co.kr/ch${i + 1}/decr/medialist_14173921312004482655_hls.m3u8`
+        }));
+
+        const channelList = document.getElementById('channels');
+        const spotvChannelList = document.getElementById('spotv-channels');
+        const playerContainer = document.getElementById('player-container');
+        const sidebar = document.getElementById('sidebar');
+        let playerCount = 1;
+        let clickIndex = 0;
+
+        // 드롭 이벤트 핸들러 함수
+        function createDropHandler(box) {
+            return (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const textPlain = e.dataTransfer.getData('text/plain');
+                const textHtml = e.dataTransfer.getData('text/html');
+                const textUri = e.dataTransfer.getData('text/uri-list');
+                console.log('Dropped data - text/plain:', textPlain);
+                console.log('Dropped data - text/html:', textHtml);
+                console.log('Dropped data - text/uri-list:', textUri);
+
+                let url = textUri;
+                if (!url && textHtml) {
+                    url = extractM3u8Url(textHtml);
+                }
+                if (!url && textPlain) {
+                    url = extractM3u8Url(textPlain);
+                }
+
+                if (url && url.endsWith('.m3u8')) {
+                    console.log('Extracted m3u8 URL:', url);
+                    loadPlayer(box, url);
+                } else {
+                    console.log('No valid m3u8 URL found');
+                }
+            };
+        }
+
+        // 야구 채널 목록 생성
+        baseballChannels.forEach(channel => {
+            const div = document.createElement('div');
+            div.className = 'channel-item';
+            div.draggable = true;
+            div.textContent = channel.name;
+            div.dataset.url = channel.url;
+            div.addEventListener('dragstart', (e) => {
+                const url = channel.url;
+                e.dataTransfer.setData('text/plain', url);
+                console.log('Dragging baseball channel:', url);
+            });
+            div.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, channel.url);
+                    clickIndex++;
+                }
+            });
+            channelList.appendChild(div);
+        });
+
+        // SPOTV 채널 목록 생성
+        spotvChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'small-channel-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
+            btn.addEventListener('dragstart', (e) => {
+                const url = channel.url;
+                e.dataTransfer.setData('text/plain', url);
+                console.log('Dragging SPOTV channel:', url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, channel.url);
+                    clickIndex++;
+                }
+            });
+            spotvChannelList.appendChild(btn);
+        });
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('collapsed');
+            adjustPlayerLayout();
+        }
+
+        function extractM3u8Url(data) {
+            const urlPattern = /(https?:\/\/[^\s]+\.m3u8)/i;
+            const match = data.match(urlPattern);
+            return match ? match[0] : null;
+        }
+
+        function setSplitScreen(count) {
+            playerCount = count;
+            clickIndex = 0;
+            adjustPlayerLayout();
+            const existingToggleBtn = document.getElementById('toggle-btn');
+            playerContainer.innerHTML = '';
+            playerContainer.appendChild(existingToggleBtn);
+            for (let i = 0; i < count; i++) {
+                const box = document.createElement('div');
+                box.className = 'player-box';
+                
+                box.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                box.addEventListener('drop', createDropHandler(box));
+                
+                playerContainer.appendChild(box);
+            }
+        }
+
+        function adjustPlayerLayout() {
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            playerContainer.style.padding = isCollapsed ? '0' : '10px';
+            playerContainer.style.gap = isCollapsed ? '0' : '10px';
+            playerContainer.style.gridTemplateColumns = `repeat(${Math.min(playerCount, 2)}, 1fr)`;
+            playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(playerCount / 2)}, 1fr)`;
+            playerContainer.style.marginLeft = isCollapsed ? '0' : '250px';
+        }
+
+        function loadPlayer(box, url) {
+            while (box.firstChild) {
+                box.removeChild(box.firstChild);
+            }
+            const playerUrl = `chrome-extension://${extensionId}/player.html#${url}`;
+            const iframe = document.createElement('iframe');
+            iframe.src = playerUrl;
+            box.appendChild(iframe);
+            
+            box.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+            box.addEventListener('drop', createDropHandler(box));
+            
+            box.classList.add('active');
+        }
+
+        // 쿼리 파라미터에서 URL 읽기 및 자동 재생
+        window.onload = () => {
+            setSplitScreen(1); // 기본 1분할 설정
+            const urlParams = new URLSearchParams(window.location.search);
+            const m3u8Url = urlParams.get('url');
+            if (m3u8Url) {
+                console.log('Loading m3u8 from query param:', m3u8Url);
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    loadPlayer(playerBoxes[0], decodeURIComponent(m3u8Url));
+                }
+            }
+        };
+    </script>
+</body>
+</html>
