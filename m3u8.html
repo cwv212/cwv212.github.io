@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>야구 채널 m3u8 플레이어</title>
+    <title>m3u8 플레이어</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
@@ -222,6 +222,32 @@
                 }
             };
         }
+
+        // LCK 채널 추가
+        const lckChannel = {
+            name: 'LCK',
+            url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8'
+        };
+        
+        const lckDiv = document.createElement('div');
+        lckDiv.className = 'channel-item';
+        lckDiv.draggable = true;
+        lckDiv.textContent = lckChannel.name;
+        lckDiv.dataset.url = lckChannel.url;
+        lckDiv.addEventListener('dragstart', (e) => {
+            const url = lckChannel.url;
+            e.dataTransfer.setData('text/plain', url);
+            console.log('Dragging LCK channel:', url);
+        });
+        lckDiv.addEventListener('click', () => {
+            const playerBoxes = playerContainer.querySelectorAll('.player-box');
+            if (playerBoxes.length > 0) {
+                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                loadPlayer(targetBox, lckChannel.url);
+                clickIndex++;
+            }
+        });
+        channelList.appendChild(lckDiv);
 
         // 야구 채널 목록 생성
         baseballChannels.forEach(channel => {
