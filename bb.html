@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>야구 채널 m3u8 플레이어</title>
+    <title>야구 채널 m3u8 플레이어 (Firefox)</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
@@ -41,7 +41,7 @@
             left: 205px;
             width: 20px;
             height: 20px;
-            background: #001F63;
+            background: #007bff;
             border: none;
             border-radius: 50%;
             cursor: pointer;
@@ -70,6 +70,28 @@
             border: none;
         }
         .channel-item:hover {
+            background: #dee2e6;
+        }
+        #spotv-channels {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .small-channel-btn {
+            display: inline-block;
+            padding: 6px 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 30px;
+        }
+        .small-channel-btn:hover {
             background: #dee2e6;
         }
         #player-container {
@@ -105,7 +127,7 @@
         button {
             padding: 8px 15px;
             margin: 5px 0;
-            background: #001F63;
+            background: #007bff;
             color: white;
             border: none;
             border-radius: 6px;
@@ -124,7 +146,7 @@
         a {
             display: block;
             margin: 15px 0;
-            color: #001F63;
+            color: #007bff;
             text-decoration: none;
             font-weight: 500;
         }
@@ -138,27 +160,35 @@
     <div id="sidebar">
         <h3>채널 목록</h3>
         <div id="channels"></div>
+        <div id="spotv-channels"></div>
         <h3>분할 화면 설정</h3>
         <button onclick="setSplitScreen(1)">1분할</button>
         <button onclick="setSplitScreen(2)">2분할</button>
         <button onclick="setSplitScreen(3)">3분할</button>
         <button onclick="setSplitScreen(4)">4분할</button>
-        <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 확장</a>
+        <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 확장 (Firefox)</a>
     </div>
     <div id="player-container">
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
     </div>
 
     <script>
-        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
+        const extensionId = 'ace413ec-8009-4e7c-841a-d0b581794b61'; // Firefox 확장 ID
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
+        const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
         
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
             name: `야구${i + 1}번`,
             url: `${baseballBaseUrl}${i + 1}/master.m3u8`
         }));
+        
+        const spotvChannels = Array.from({ length: 40 }, (_, i) => ({
+            name: `${i + 1}`,
+            url: `https://ch${i + 1}-nlivecdn.spotvnow.co.kr/ch${i + 1}/decr/medialist_14173921312004482655_hls.m3u8`
+        }));
 
         const channelList = document.getElementById('channels');
+        const spotvChannelList = document.getElementById('spotv-channels');
         const playerContainer = document.getElementById('player-container');
         const sidebar = document.getElementById('sidebar');
         let playerCount = 1;
@@ -193,6 +223,32 @@
             };
         }
 
+        // LCK 채널 추가
+        const lckChannel = {
+            name: 'LCK',
+            url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8'
+        };
+        
+        const lckDiv = document.createElement('div');
+        lckDiv.className = 'channel-item';
+        lckDiv.draggable = true;
+        lckDiv.textContent = lckChannel.name;
+        lckDiv.dataset.url = lckChannel.url;
+        lckDiv.addEventListener('dragstart', (e) => {
+            const url = lckChannel.url;
+            e.dataTransfer.setData('text/plain', url);
+            console.log('Dragging LCK channel:', url);
+        });
+        lckDiv.addEventListener('click', () => {
+            const playerBoxes = playerContainer.querySelectorAll('.player-box');
+            if (playerBoxes.length > 0) {
+                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                loadPlayer(targetBox, lckChannel.url);
+                clickIndex++;
+            }
+        });
+        channelList.appendChild(lckDiv);
+
         // 야구 채널 목록 생성
         baseballChannels.forEach(channel => {
             const div = document.createElement('div');
@@ -214,6 +270,29 @@
                 }
             });
             channelList.appendChild(div);
+        });
+
+        // SPOTV 채널 목록 생성
+        spotvChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'small-channel-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
+            btn.addEventListener('dragstart', (e) => {
+                const url = channel.url;
+                e.dataTransfer.setData('text/plain', url);
+                console.log('Dragging SPOTV channel:', url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, channel.url);
+                    clickIndex++;
+                }
+            });
+            spotvChannelList.appendChild(btn);
         });
 
         function toggleSidebar() {
@@ -261,7 +340,7 @@
             while (box.firstChild) {
                 box.removeChild(box.firstChild);
             }
-            const playerUrl = `chrome-extension://${extensionId}/player.html#${url}`;
+            const playerUrl = `moz-extension://${extensionId}/player.html#${url}`; // Firefox용 URL
             const iframe = document.createElement('iframe');
             iframe.src = playerUrl;
             box.appendChild(iframe);
