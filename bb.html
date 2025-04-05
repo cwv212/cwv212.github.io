@@ -154,6 +154,17 @@
             text-decoration: underline;
             color: #0056b3;
         }
+        #custom-url-container {
+            margin: 10px 0;
+        }
+        #custom-url-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -166,7 +177,11 @@
         <button onclick="setSplitScreen(2)">2분할</button>
         <button onclick="setSplitScreen(3)">3분할</button>
         <button onclick="setSplitScreen(4)">4분할</button>
-        <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 확장 (Firefox)</a>
+        <div id="custom-url-container">
+            <input type="text" id="custom-url-input" placeholder="m3u8 URL을 입력하세요">
+            <button onclick="playCustomUrl()">실행</button>
+        </div>
+        <a href="https://addons.mozilla.org/ko/firefox/addon/hls-player-m3u8-streaming/" target="_blank">HLS 확장 (Firefox)</a>
     </div>
     <div id="player-container">
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
@@ -352,6 +367,21 @@
             box.addEventListener('drop', createDropHandler(box));
             
             box.classList.add('active');
+        }
+
+        // 사용자 입력 URL 재생 함수
+        function playCustomUrl() {
+            const customUrl = document.getElementById('custom-url-input').value.trim();
+            if (customUrl && customUrl.endsWith('.m3u8')) {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, customUrl);
+                    clickIndex++;
+                }
+            } else {
+                alert('유효한 m3u8 URL을 입력해주세요.');
+            }
         }
 
         // 쿼리 파라미터에서 URL 읽기 및 자동 재생
