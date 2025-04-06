@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>야구 채널 m3u8 플레이어</title>
+    <title>m3u8 플레이어</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
@@ -161,6 +161,29 @@
         .small-channel-btn:hover {
             background: #dee2e6;
         }
+        #tv-channels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .tv-btn {
+            flex: 1;
+            padding: 6px 0;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 32px;
+            max-width: 32px;
+        }
+        .tv-btn:hover {
+            background: #dee2e6;
+        }
         #player-container {
             flex-grow: 1;
             display: grid;
@@ -205,9 +228,9 @@
             background: #0056b3;
             transform: translateY(-2px);
         }
-        h3 {
-            font-size: 18px;
-            margin: 15px 0 10px;
+        h3, h4 {
+            font-size: 14px;
+            margin: 10px 0 5px;
             color: #495057;
         }
         a {
@@ -236,11 +259,16 @@
 </head>
 <body>
     <div id="sidebar">
-        <h3>채널 목록</h3>
+        <h3>숙제 채널</h3>
         <div id="lck-channels"></div>
+        <h4>야구 채널</h4>
         <div id="baseball-channels"></div>
+        <h4>스트리머 채널</h4>
         <div id="chzzk-channels"></div>
+        <h4>스포티비 채널</h4>
         <div id="spotv-channels"></div>
+        <h4>TV 채널</h4>
+        <div id="tv-channels"></div>
         <h3>분할 화면 설정</h3>
         <button onclick="setSplitScreen(1)">1분할</button>
         <button onclick="setSplitScreen(2)">2분할</button>
@@ -289,10 +317,18 @@
             { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181' }
         ];
 
+        const tvChannels = [
+            { name: 'k1', url: 'https://stream.ogtv3.com/live/live1004.m3u8' },
+            { name: 'k2', url: 'https://stream.ogtv3.com/live/live1005.m3u8' },
+            { name: 'm', url: 'https://stream.ogtv3.com/live/live1003.m3u8' },
+            { name: 's', url: 'https://stream.ogtv3.com/live/live1006.m3u8' }
+        ];
+
         const baseballChannelList = document.getElementById('baseball-channels');
         const lckChannelList = document.getElementById('lck-channels');
         const chzzkChannelList = document.getElementById('chzzk-channels');
         const spotvChannelList = document.getElementById('spotv-channels');
+        const tvChannelList = document.getElementById('tv-channels');
         const playerContainer = document.getElementById('player-container');
         const sidebar = document.getElementById('sidebar');
         let playerCount = 1;
@@ -335,8 +371,7 @@
             const btn = document.createElement('div');
             btn.className = 'lck-btn';
             btn.draggable = true;
-            btn.textContent = channel.name;
-            btn.dataset.url = channel.url;
+            btn.textContent = channel.name            btn.dataset.url = channel.url;
             btn.dataset.type = channel.type;
             btn.title = channel.tooltip;
             btn.addEventListener('dragstart', (e) => {
@@ -429,6 +464,31 @@
                 }
             });
             spotvChannelList.appendChild(btn);
+        });
+
+        // TV 채널 목록 생성
+        tvChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'tv-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
+            btn.dataset.type = 'm3u8';
+            btn.addEventListener('dragstart', (e) => {
+                const url = channel.url;
+                e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/type', 'm3u8');
+                console.log('Dragging TV channel:', url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, channel.url, 'm3u8');
+                    clickIndex++;
+                }
+            });
+            tvChannelList.appendChild(btn);
         });
 
         function toggleSidebar() {
