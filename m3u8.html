@@ -59,33 +59,28 @@
         #toggle-btn:hover {
             background: #0056b3;
         }
-        .channel-item {
-            padding: 12px;
+        #baseball-channels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
             margin: 5px 0;
+        }
+        .baseball-btn {
+            flex: 1;
+            padding: 6px 0; /* 크기 줄이기 */
             background: #e9ecef;
-            border-radius: 8px;
+            border-radius: 4px;
             cursor: move;
             user-select: none;
             transition: background 0.2s;
             border: none;
-            position: relative; /* 툴팁 위치를 위해 */
+            font-size: 12px; /* 글자 크기 줄이기 */
+            text-align: center;
+            min-width: 38px; /* 최소 너비 조정 */
+            max-width: 38px; /* 최대 너비 고정 */
         }
-        .channel-item:hover {
+        .baseball-btn:hover {
             background: #dee2e6;
-        }
-        .channel-item[title]:hover::after {
-            content: attr(title);
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 20;
         }
         #lck-channels {
             display: flex;
@@ -102,7 +97,7 @@
             transition: background 0.2s;
             border: none;
             text-align: center;
-            position: relative; /* 툴팁 위치를 위해 */
+            position: relative;
         }
         .lck-btn:hover {
             background: #dee2e6;
@@ -219,8 +214,8 @@
 <body>
     <div id="sidebar">
         <h3>채널 목록</h3>
-        <div id="channels"></div>
         <div id="lck-channels"></div>
+        <div id="baseball-channels"></div>
         <div id="spotv-channels"></div>
         <h3>분할 화면 설정</h3>
         <button onclick="setSplitScreen(1)">1분할</button>
@@ -244,7 +239,7 @@
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
         
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
-            name: `야구${i + 1}번`,
+            name: `야구${i + 1}`,
             url: `${baseballBaseUrl}${i + 1}/master.m3u8`
         }));
         
@@ -262,7 +257,7 @@
             { name: 'K', url: 'https://www.youtube.com/embed/live_stream?channel=UCw1DsweY9b2AKGjV4kGJP1A', type: 'iframe', tooltip: 'youtube' }
         ];
 
-        const channelList = document.getElementById('channels');
+        const baseballChannelList = document.getElementById('baseball-channels');
         const lckChannelList = document.getElementById('lck-channels');
         const spotvChannelList = document.getElementById('spotv-channels');
         const playerContainer = document.getElementById('player-container');
@@ -310,11 +305,11 @@
             btn.textContent = channel.name;
             btn.dataset.url = channel.url;
             btn.dataset.type = channel.type;
-            btn.title = channel.tooltip; // 툴팁 추가
+            btn.title = channel.tooltip;
             btn.addEventListener('dragstart', (e) => {
                 const url = channel.url;
                 e.dataTransfer.setData('text/plain', url);
-                e.dataTransfer.setData('text/type', channel.type); // 타입 전달
+                e.dataTransfer.setData('text/type', channel.type);
                 console.log(`Dragging LCK ${channel.name} channel:`, url);
             });
             btn.addEventListener('click', () => {
@@ -330,19 +325,19 @@
 
         // 야구 채널 목록 생성
         baseballChannels.forEach(channel => {
-            const div = document.createElement('div');
-            div.className = 'channel-item';
-            div.draggable = true;
-            div.textContent = channel.name;
-            div.dataset.url = channel.url;
-            div.dataset.type = 'm3u8';
-            div.addEventListener('dragstart', (e) => {
+            const btn = document.createElement('div');
+            btn.className = 'baseball-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
+            btn.dataset.type = 'm3u8';
+            btn.addEventListener('dragstart', (e) => {
                 const url = channel.url;
                 e.dataTransfer.setData('text/plain', url);
                 e.dataTransfer.setData('text/type', 'm3u8');
                 console.log('Dragging baseball channel:', url);
             });
-            div.addEventListener('click', () => {
+            btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
                 if (playerBoxes.length > 0) {
                     const targetBox = playerBoxes[clickIndex % playerBoxes.length];
@@ -350,7 +345,7 @@
                     clickIndex++;
                 }
             });
-            channelList.appendChild(div);
+            baseballChannelList.appendChild(btn);
         });
 
         // SPOTV 채널 목록 생성
@@ -437,7 +432,7 @@
             });
             box.addEventListener('drop', createDropHandler(box));
             
-            box.classList.add('active');
+            box.className = 'player-box active';
         }
 
         // 입력 URL 처리 함수
