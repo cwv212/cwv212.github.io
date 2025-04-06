@@ -191,6 +191,7 @@
         const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
+        const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
         
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
             name: `야구${i + 1}번`,
@@ -198,7 +199,7 @@
         }));
         
         const spotvChannels = Array.from({ length: 40 }, (_, i) => {
-            const channelNum = String(i + 1).padStart(2, '0'); // 두 자리로 변환
+            const channelNum = String(i + 1).padStart(2, '0');
             return {
                 name: `${i + 1}`,
                 url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8`
@@ -232,11 +233,11 @@
                     url = extractM3u8Url(textPlain);
                 }
 
-                if (url && url.includes('.m3u8')) {
-                    console.log('Extracted m3u8 URL:', url);
+                if (url && (url.includes('.m3u8') || url.startsWith(chzzkProxyBaseUrl))) {
+                    console.log('Extracted URL:', url);
                     loadPlayer(box, url);
                 } else {
-                    console.log('No valid m3u8 URL found');
+                    console.log('No valid m3u8 or proxy URL found');
                 }
             };
         }
@@ -375,15 +376,19 @@
         // 사용자 입력 URL 재생 함수
         function playCustomUrl() {
             const customUrl = document.getElementById('custom-url-input').value.trim();
-            if (customUrl && customUrl.includes('.m3u8')) {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, customUrl);
-                    clickIndex++;
+            if (customUrl) {
+                if (customUrl.includes('.m3u8') || customUrl.startsWith(chzzkProxyBaseUrl)) {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        loadPlayer(targetBox, customUrl);
+                        clickIndex++;
+                    }
+                } else {
+                    alert('유효한 m3u8 URL 또는 Chzzk 프록시 URL을 입력해주세요.');
                 }
             } else {
-                alert('유효한 m3u8 URL을 입력해주세요.');
+                alert('URL을 입력해주세요.');
             }
         }
 
