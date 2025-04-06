@@ -72,10 +72,6 @@
         .channel-item:hover {
             background: #dee2e6;
         }
-        .channel-item.live {
-            background: #28a745; /* 라이브 상태일 때 초록색 */
-            color: white;
-        }
         #spotv-channels {
             margin-top: 10px;
             display: flex;
@@ -97,10 +93,6 @@
         }
         .small-channel-btn:hover {
             background: #dee2e6;
-        }
-        .small-channel-btn.live {
-            background: #28a745; /* 라이브 상태일 때 초록색 */
-            color: white;
         }
         #player-container {
             flex-grow: 1;
@@ -355,7 +347,6 @@
                 
                 playerContainer.appendChild(box);
             }
-            updateButtonStates(); // 초기 상태 갱신
         }
 
         function adjustPlayerLayout() {
@@ -385,39 +376,14 @@
             box.classList.add('active');
         }
 
-        // 버튼 상태 업데이트 함수
-        async function updateButtonStates() {
-            const allButtons = document.querySelectorAll('.channel-item, .small-channel-btn');
-            for (const btn of allButtons) {
-                const url = btn.dataset.url;
-                if (url) {
-                    const isLive = await checkStreamStatus(url);
-                    if (isLive) {
-                        btn.classList.add('live');
-                    } else {
-                        btn.classList.remove('live');
-                    }
-                }
-            }
-        }
-
-        // 스트림 상태 확인 함수
-        async function checkStreamStatus(url) {
-            try {
-                const response = await fetch(url, { method: 'HEAD', mode: 'no-cors' });
-                // no-cors 모드에서는 상태 코드를 확인할 수 없으므로 단순히 요청 성공 여부만 체크
-                return true; // 요청이 성공적으로 보냈다면 라이브로 간주 (정확도 낮음)
-            } catch (error) {
-                console.log(`Stream check failed for ${url}:`, error);
-                return false;
-            }
-        }
-
         // 입력 URL 처리 함수
         function processInputUrl(input) {
             if (!input) return null;
+            // 이미 .m3u8이 포함된 경우 그대로 반환
             if (input.includes('.m3u8')) return input;
+            // 이미 프록시 URL이 포함된 경우 그대로 반환
             if (input.startsWith(chzzkProxyBaseUrl)) return input;
+            // 32자리 16진수 채널 ID로 보이는 경우 프록시 URL로 변환
             if (/^[0-9a-fA-F]{32}$/.test(input)) {
                 return `${chzzkProxyBaseUrl}${input}`;
             }
@@ -444,9 +410,6 @@
             }
         }
 
-        // 주기적으로 버튼 상태 갱신
-        setInterval(updateButtonStates, 10000); // 10초마다 갱신
-
         // 쿼리 파라미터에서 URL 읽기 및 자동 재생
         window.onload = () => {
             setSplitScreen(1); // 기본 1분할 설정
@@ -462,7 +425,6 @@
                     }
                 }
             }
-            updateButtonStates(); // 초기 갱신
         };
     </script>
 </body>
