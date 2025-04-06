@@ -31,7 +31,6 @@
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             overflow-y: auto;
             scrollbar-width: thin;
-            transform: translateX(0); /* 기본적으로 보이도록 설정 */
         }
         #sidebar.collapsed {
             transform: translateX(-100%);
@@ -62,7 +61,7 @@
         }
         #baseball-channels {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: wrap; /* nowrap -> wrap으로 변경 */
             gap: 5px;
             margin: 5px 0;
         }
@@ -119,7 +118,7 @@
         }
         #chzzk-channels {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: wrap; /* nowrap -> wrap으로 변경 */
             gap: 5px;
             margin: 5px 0;
         }
@@ -333,7 +332,6 @@
 
         // LCK 채널 추가
         lckChannels.forEach(channel => {
-            console.log('Adding LCK channel:', channel.name);
             const btn = document.createElement('div');
             btn.className = 'lck-btn';
             btn.draggable = true;
@@ -360,7 +358,6 @@
 
         // 야구 채널 목록 생성
         baseballChannels.forEach(channel => {
-            console.log('Adding baseball channel:', channel.name);
             const btn = document.createElement('div');
             btn.className = 'baseball-btn';
             btn.draggable = true;
@@ -386,7 +383,6 @@
 
         // 치지직 채널 추가
         chzzkChannels.forEach(channel => {
-            console.log('Adding chzzk channel:', channel.name);
             const btn = document.createElement('div');
             btn.className = 'chzzk-btn';
             btn.draggable = true;
@@ -412,7 +408,6 @@
 
         // SPOTV 채널 목록 생성
         spotvChannels.forEach(channel => {
-            console.log('Adding spotv channel:', channel.name);
             const btn = document.createElement('div');
             btn.className = 'small-channel-btn';
             btn.draggable = true;
@@ -420,9 +415,7 @@
             btn.dataset.url = channel.url;
             btn.dataset.type = 'm3u8';
             btn.addEventListener('dragstart', (e) => {
-                const url
-
- = channel.url;
+                const url = channel.url;
                 e.dataTransfer.setData('text/plain', url);
                 e.dataTransfer.setData('text/type', 'm3u8');
                 console.log('Dragging SPOTV channel:', url);
@@ -485,10 +478,8 @@
             }
             const iframe = document.createElement('iframe');
             if (type === 'm3u8') {
-                iframe.src = `chrome-extension://${extensionId}/player.htmlintrepreter.addEventListener('load', () => {
-                iframe.allowFullscreen = true;
-            });
-            if (type === 'iframe') {
+                iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
+            } else if (type === 'iframe') {
                 iframe.src = url;
             }
             box.appendChild(iframe);
@@ -524,6 +515,8 @@
                         const targetBox = playerBoxes[clickIndex % playerBoxes.length];
                         loadPlayer(targetBox, finalUrl, 'm3u8');
                         clickIndex++;
+                    } else {
+                        console.log('플레이어 박스가 없습니다.');
                     }
                 } else {
                     alert('유효한 m3u8 URL, Chzzk 프록시 URL, 또는 32자리 채널 ID를 입력해주세요.');
@@ -535,9 +528,7 @@
 
         // 쿼리 파라미터에서 URL 읽기 및 자동 재생
         window.onload = () => {
-            console.log('Window loaded');
-            console.log('Sidebar:', document.getElementById('sidebar'));
-            setSplitScreen(1);
+            setSplitScreen(1); // 기본 1분할 설정
             const urlParams = new URLSearchParams(window.location.search);
             const m3u8Url = urlParams.get('url');
             if (m3u8Url) {
