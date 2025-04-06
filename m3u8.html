@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+현재 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -61,23 +61,23 @@
         }
         #baseball-channels {
             display: flex;
-            flex-wrap: wrap; /* nowrap -> wrap으로 변경 */
+            flex-wrap: wrap;
             gap: 5px;
             margin: 5px 0;
         }
         .baseball-btn {
             flex: 1;
-            padding: 6px 0;
+            padding: 6px 0; /* 크기 줄이기 */
             background: #e9ecef;
             border-radius: 4px;
             cursor: move;
             user-select: none;
             transition: background 0.2s;
             border: none;
-            font-size: 12px;
+            font-size: 12px; /* 글자 크기 줄이기 */
             text-align: center;
-            min-width: 35px;
-            max-width: 35px;
+            min-width: 38px; /* 최소 너비 조정 */
+            max-width: 38px; /* 최대 너비 고정 */
         }
         .baseball-btn:hover {
             background: #dee2e6;
@@ -115,29 +115,6 @@
             font-size: 12px;
             white-space: nowrap;
             z-index: 20;
-        }
-        #chzzk-channels {
-            display: flex;
-            flex-wrap: wrap; /* nowrap -> wrap으로 변경 */
-            gap: 5px;
-            margin: 5px 0;
-        }
-        .chzzk-btn {
-            flex: 1;
-            padding: 6px 0;
-            background: #e9ecef;
-            border-radius: 8px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            text-align: center;
-            font-size: 12px;
-            min-width: 35px;
-            max-width: 35px;
-        }
-        .chzzk-btn:hover {
-            background: #dee2e6;
         }
         #spotv-channels {
             margin-top: 10px;
@@ -239,7 +216,6 @@
         <h3>채널 목록</h3>
         <div id="lck-channels"></div>
         <div id="baseball-channels"></div>
-        <div id="chzzk-channels"></div>
         <div id="spotv-channels"></div>
         <h3>분할 화면 설정</h3>
         <button onclick="setSplitScreen(1)">1분할</button>
@@ -263,7 +239,7 @@
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
         
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
-            name: `야${i + 1}`,
+            name: `야구${i + 1}`,
             url: `${baseballBaseUrl}${i + 1}/master.m3u8`
         }));
         
@@ -273,7 +249,7 @@
                 name: `${i + 1}`,
                 url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8`
             };
-        }));
+        });
 
         const lckChannels = [
             { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
@@ -281,17 +257,8 @@
             { name: 'K', url: 'https://www.youtube.com/embed/live_stream?channel=UCw1DsweY9b2AKGjV4kGJP1A', type: 'iframe', tooltip: 'youtube' }
         ];
 
-        const chzzkChannels = [
-            { name: '풍', url: `${chzzkProxyBaseUrl}7ce8032370ac5121dcabce7bad375ced`, type: 'm3u8' },
-            { name: '침', url: `${chzzkProxyBaseUrl}bb382c2c0cc9fa7c86ab3b037fb5799c`, type: 'm3u8' },
-            { name: '추', url: `${chzzkProxyBaseUrl}181a3baebe508d3b5fa5d9fe4d6b5241`, type: 'm3u8' },
-            { name: '솝', url: `${chzzkProxyBaseUrl}34a2bd4f5988e37693e94306f0bfe57f`, type: 'm3u8' },
-            { name: '센', url: `${chzzkProxyBaseUrl}be243c7cbfb8d4e28777eedc43e28181`, type: 'm3u8' }
-        ];
-
         const baseballChannelList = document.getElementById('baseball-channels');
         const lckChannelList = document.getElementById('lck-channels');
-        const chzzkChannelList = document.getElementById('chzzk-channels');
         const spotvChannelList = document.getElementById('spotv-channels');
         const playerContainer = document.getElementById('player-container');
         const sidebar = document.getElementById('sidebar');
@@ -379,31 +346,6 @@
                 }
             });
             baseballChannelList.appendChild(btn);
-        });
-
-        // 치지직 채널 추가
-        chzzkChannels.forEach(channel => {
-            const btn = document.createElement('div');
-            btn.className = 'chzzk-btn';
-            btn.draggable = true;
-            btn.textContent = channel.name;
-            btn.dataset.url = channel.url;
-            btn.dataset.type = channel.type;
-            btn.addEventListener('dragstart', (e) => {
-                const url = channel.url;
-                e.dataTransfer.setData('text/plain', url);
-                e.dataTransfer.setData('text/type', channel.type);
-                console.log(`Dragging Chzzk ${channel.name} channel:`, url);
-            });
-            btn.addEventListener('click', () => {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, channel.url, channel.type);
-                    clickIndex++;
-                }
-            });
-            chzzkChannelList.appendChild(btn);
         });
 
         // SPOTV 채널 목록 생성
@@ -515,8 +457,6 @@
                         const targetBox = playerBoxes[clickIndex % playerBoxes.length];
                         loadPlayer(targetBox, finalUrl, 'm3u8');
                         clickIndex++;
-                    } else {
-                        console.log('플레이어 박스가 없습니다.');
                     }
                 } else {
                     alert('유효한 m3u8 URL, Chzzk 프록시 URL, 또는 32자리 채널 ID를 입력해주세요.');
