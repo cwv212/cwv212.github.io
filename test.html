@@ -59,13 +59,13 @@
         #toggle-btn:hover {
             background: #0056b3;
         }
-        #baseball-channels {
+        #baseball-channels, #chzzk-channels, #spotv-channels, #tv-channels {
             display: flex;
             flex-wrap: wrap;
             gap: 5px;
             margin: 5px 0;
         }
-        .baseball-btn {
+        .baseball-btn, .chzzk-btn, .tv-btn {
             flex: 1;
             padding: 6px 0;
             background: #e9ecef;
@@ -79,30 +79,7 @@
             min-width: 32px;
             max-width: 32px;
         }
-        .baseball-btn:hover {
-            background: #dee2e6;
-        }
-        #chzzk-channels {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        .chzzk-btn {
-            flex: 1;
-            padding: 6px 0;
-            background: #e9ecef;
-            border-radius: 4px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            font-size: 12px;
-            text-align: center;
-            min-width: 32px;
-            max-width: 32px;
-        }
-        .chzzk-btn:hover {
+        .baseball-btn:hover, .chzzk-btn:hover, .tv-btn:hover {
             background: #dee2e6;
         }
         #lck-channels {
@@ -139,12 +116,6 @@
             white-space: nowrap;
             z-index: 20;
         }
-        #spotv-channels {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
         .small-channel-btn {
             display: inline-block;
             padding: 6px 10px;
@@ -159,29 +130,6 @@
             min-width: 30px;
         }
         .small-channel-btn:hover {
-            background: #dee2e6;
-        }
-        #tv-channels {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        .tv-btn {
-            flex: 1;
-            padding: 6px 0;
-            background: #e9ecef;
-            border-radius: 4px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            font-size: 12px;
-            text-align: center;
-            min-width: 32px;
-            max-width: 32px;
-        }
-        .tv-btn:hover {
             background: #dee2e6;
         }
         #player-container {
@@ -371,14 +319,14 @@
             const btn = document.createElement('div');
             btn.className = 'lck-btn';
             btn.draggable = true;
-            btn.textContent = channel.name            btn.dataset.url = channel.url;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
             btn.dataset.type = channel.type;
             btn.title = channel.tooltip;
             btn.addEventListener('dragstart', (e) => {
-                const url = channel.url;
-                e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/plain', channel.url);
                 e.dataTransfer.setData('text/type', channel.type);
-                console.log(`Dragging LCK ${channel.name} channel:`, url);
+                console.log(`Dragging LCK ${channel.name} channel:`, channel.url);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
@@ -400,10 +348,9 @@
             btn.dataset.url = channel.url;
             btn.dataset.type = 'm3u8';
             btn.addEventListener('dragstart', (e) => {
-                const url = channel.url;
-                e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/plain', channel.url);
                 e.dataTransfer.setData('text/type', 'm3u8');
-                console.log('Dragging baseball channel:', url);
+                console.log('Dragging baseball channel:', channel.url);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
@@ -450,10 +397,9 @@
             btn.dataset.url = channel.url;
             btn.dataset.type = 'm3u8';
             btn.addEventListener('dragstart', (e) => {
-                const url = channel.url;
-                e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/plain', channel.url);
                 e.dataTransfer.setData('text/type', 'm3u8');
-                console.log('Dragging SPOTV channel:', url);
+                console.log('Dragging SPOTV channel:', channel.url);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
@@ -475,10 +421,9 @@
             btn.dataset.url = channel.url;
             btn.dataset.type = 'm3u8';
             btn.addEventListener('dragstart', (e) => {
-                const url = channel.url;
-                e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/plain', channel.url);
                 e.dataTransfer.setData('text/type', 'm3u8');
-                console.log('Dragging TV channel:', url);
+                console.log('Dragging TV channel:', channel.url);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
