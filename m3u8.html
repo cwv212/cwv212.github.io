@@ -72,6 +72,10 @@
         .channel-item:hover {
             background: #dee2e6;
         }
+        .channel-item.active {
+            background: #28a745; /* 재생 중일 때 초록색 */
+            color: white;
+        }
         #spotv-channels {
             margin-top: 10px;
             display: flex;
@@ -93,6 +97,10 @@
         }
         .small-channel-btn:hover {
             background: #dee2e6;
+        }
+        .small-channel-btn.active {
+            background: #28a745; /* 재생 중일 때 초록색 */
+            color: white;
         }
         #player-container {
             flex-grow: 1;
@@ -212,6 +220,7 @@
         const sidebar = document.getElementById('sidebar');
         let playerCount = 1;
         let clickIndex = 0;
+        let activeUrls = new Set(); // 재생 중인 URL 추적
 
         // 드롭 이벤트 핸들러 함수
         function createDropHandler(box) {
@@ -331,6 +340,7 @@
         function setSplitScreen(count) {
             playerCount = count;
             clickIndex = 0;
+            activeUrls.clear(); // 분할 화면 변경 시 재생 상태 초기화
             adjustPlayerLayout();
             const existingToggleBtn = document.getElementById('toggle-btn');
             playerContainer.innerHTML = '';
@@ -347,6 +357,7 @@
                 
                 playerContainer.appendChild(box);
             }
+            updateButtonStates(); // 버튼 상태 갱신
         }
 
         function adjustPlayerLayout() {
@@ -374,16 +385,28 @@
             box.addEventListener('drop', createDropHandler(box));
             
             box.classList.add('active');
+            activeUrls.add(url); // 재생 중인 URL 추가
+            updateButtonStates(); // 버튼 상태 갱신
+        }
+
+        // 버튼 상태 업데이트 함수
+        function updateButtonStates() {
+            const allButtons = document.querySelectorAll('.channel-item, .small-channel-btn');
+            allButtons.forEach(btn => {
+                const url = btn.dataset.url;
+                if (activeUrls.has(url)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
         }
 
         // 입력 URL 처리 함수
         function processInputUrl(input) {
             if (!input) return null;
-            // 이미 .m3u8이 포함된 경우 그대로 반환
             if (input.includes('.m3u8')) return input;
-            // 이미 프록시 URL이 포함된 경우 그대로 반환
             if (input.startsWith(chzzkProxyBaseUrl)) return input;
-            // 32자리 16진수 채널 ID로 보이는 경우 프록시 URL로 변환
             if (/^[0-9a-fA-F]{32}$/.test(input)) {
                 return `${chzzkProxyBaseUrl}${input}`;
             }
