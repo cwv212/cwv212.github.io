@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>야구 채널 m3u8 플레이어</title>
+    <title>m3u8 플레이어</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
@@ -19,7 +19,7 @@
             color: #333;
         }
         #sidebar {
-            width: 220px;
+            width: 230px;
             padding: 15px;
             background: rgba(255, 255, 255, 0.95);
             transition: transform 0.3s ease;
@@ -38,7 +38,7 @@
         #toggle-btn {
             position: fixed;
             top: 10px;
-            left: 205px;
+            left: 215px;
             width: 20px;
             height: 20px;
             background: #007bff;
@@ -67,19 +67,42 @@
         }
         .baseball-btn {
             flex: 1;
-            padding: 6px 0; /* 크기 줄이기 */
+            padding: 6px 0;
             background: #e9ecef;
             border-radius: 4px;
             cursor: move;
             user-select: none;
             transition: background 0.2s;
             border: none;
-            font-size: 12px; /* 글자 크기 줄이기 */
+            font-size: 12px;
             text-align: center;
-            min-width: 38px; /* 최소 너비 조정 */
-            max-width: 38px; /* 최대 너비 고정 */
+            min-width: 32px;
+            max-width: 32px;
         }
         .baseball-btn:hover {
+            background: #dee2e6;
+        }
+        #chzzk-channels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .chzzk-btn {
+            flex: 1;
+            padding: 6px 0;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 32px;
+            max-width: 32px;
+        }
+        .chzzk-btn:hover {
             background: #dee2e6;
         }
         #lck-channels {
@@ -187,6 +210,11 @@
             margin: 15px 0 10px;
             color: #495057;
         }
+        h4 {
+            font-size: 14px;
+            margin: 10px 0 5px;
+            color: #495057;
+        }
         a {
             display: block;
             margin: 15px 0;
@@ -215,7 +243,11 @@
     <div id="sidebar">
         <h3>채널 목록</h3>
         <div id="lck-channels"></div>
+        <h4>야구 채널</h4>
         <div id="baseball-channels"></div>
+        <h4>스트리머 채널</h4>
+        <div id="chzzk-channels"></div>
+        <h4>스포티비 채널</h4>
         <div id="spotv-channels"></div>
         <h3>분할 화면 설정</h3>
         <button onclick="setSplitScreen(1)">1분할</button>
@@ -239,7 +271,7 @@
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
         
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
-            name: `야구${i + 1}`,
+            name: `야${i + 1}`,
             url: `${baseballBaseUrl}${i + 1}/master.m3u8`
         }));
         
@@ -257,8 +289,17 @@
             { name: 'K', url: 'https://www.youtube.com/embed/live_stream?channel=UCw1DsweY9b2AKGjV4kGJP1A', type: 'iframe', tooltip: 'youtube' }
         ];
 
+        const chzzkChannels = [
+            { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced' },
+            { name: '침', id: 'bb382c2c0cc9fa7c86ab3b037fb5799c' },
+            { name: '추', id: '181a3baebe508d3b5fa5d9fe4d6b5241' },
+            { name: '솝', id: '34a2bd4f5988e37693e94306f0bfe57f' },
+            { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181' }
+        ];
+
         const baseballChannelList = document.getElementById('baseball-channels');
         const lckChannelList = document.getElementById('lck-channels');
+        const chzzkChannelList = document.getElementById('chzzk-channels');
         const spotvChannelList = document.getElementById('spotv-channels');
         const playerContainer = document.getElementById('player-container');
         const sidebar = document.getElementById('sidebar');
@@ -346,6 +387,31 @@
                 }
             });
             baseballChannelList.appendChild(btn);
+        });
+
+        // 치지직 채널 목록 생성
+        chzzkChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'chzzk-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = `${chzzkProxyBaseUrl}${channel.id}`;
+            btn.dataset.type = 'm3u8';
+            btn.addEventListener('dragstart', (e) => {
+                const url = `${chzzkProxyBaseUrl}${channel.id}`;
+                e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/type', 'm3u8');
+                console.log('Dragging Chzzk channel:', url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, `${chzzkProxyBaseUrl}${channel.id}`, 'm3u8');
+                    clickIndex++;
+                }
+            });
+            chzzkChannelList.appendChild(btn);
         });
 
         // SPOTV 채널 목록 생성
