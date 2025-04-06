@@ -68,9 +68,58 @@
             user-select: none;
             transition: background 0.2s;
             border: none;
+            position: relative; /* 툴팁 위치를 위해 */
         }
         .channel-item:hover {
             background: #dee2e6;
+        }
+        .channel-item[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 20;
+        }
+        #lck-channels {
+            display: flex;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .lck-btn {
+            flex: 1;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            text-align: center;
+            position: relative; /* 툴팁 위치를 위해 */
+        }
+        .lck-btn:hover {
+            background: #dee2e6;
+        }
+        .lck-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 20;
         }
         #spotv-channels {
             margin-top: 10px;
@@ -171,6 +220,7 @@
     <div id="sidebar">
         <h3>채널 목록</h3>
         <div id="channels"></div>
+        <div id="lck-channels"></div>
         <div id="spotv-channels"></div>
         <h3>분할 화면 설정</h3>
         <button onclick="setSplitScreen(1)">1분할</button>
@@ -206,7 +256,14 @@
             };
         });
 
+        const lckChannels = [
+            { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
+            { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
+            { name: 'K', url: 'https://www.youtube.com/embed/live_stream?channel=UCw1DsweY9b2AKGjV4kGJP1A', type: 'iframe', tooltip: 'youtube' }
+        ];
+
         const channelList = document.getElementById('channels');
+        const lckChannelList = document.getElementById('lck-channels');
         const spotvChannelList = document.getElementById('spotv-channels');
         const playerContainer = document.getElementById('player-container');
         const sidebar = document.getElementById('sidebar');
@@ -237,7 +294,7 @@
                     const finalUrl = processInputUrl(url);
                     if (finalUrl) {
                         console.log('Extracted URL:', finalUrl);
-                        loadPlayer(box, finalUrl);
+                        loadPlayer(box, finalUrl, 'm3u8');
                     } else {
                         console.log('No valid m3u8 or proxy URL found');
                     }
@@ -246,30 +303,30 @@
         }
 
         // LCK 채널 추가
-        const lckChannel = {
-            name: 'LCK',
-            url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8'
-        };
-        
-        const lckDiv = document.createElement('div');
-        lckDiv.className = 'channel-item';
-        lckDiv.draggable = true;
-        lckDiv.textContent = lckChannel.name;
-        lckDiv.dataset.url = lckChannel.url;
-        lckDiv.addEventListener('dragstart', (e) => {
-            const url = lckChannel.url;
-            e.dataTransfer.setData('text/plain', url);
-            console.log('Dragging LCK channel:', url);
+        lckChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'lck-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
+            btn.dataset.type = channel.type;
+            btn.title = channel.tooltip; // 툴팁 추가
+            btn.addEventListener('dragstart', (e) => {
+                const url = channel.url;
+                e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/type', channel.type); // 타입 전달
+                console.log(`Dragging LCK ${channel.name} channel:`, url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, channel.url, channel.type);
+                    clickIndex++;
+                }
+            });
+            lckChannelList.appendChild(btn);
         });
-        lckDiv.addEventListener('click', () => {
-            const playerBoxes = playerContainer.querySelectorAll('.player-box');
-            if (playerBoxes.length > 0) {
-                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                loadPlayer(targetBox, lckChannel.url);
-                clickIndex++;
-            }
-        });
-        channelList.appendChild(lckDiv);
 
         // 야구 채널 목록 생성
         baseballChannels.forEach(channel => {
@@ -278,16 +335,18 @@
             div.draggable = true;
             div.textContent = channel.name;
             div.dataset.url = channel.url;
+            div.dataset.type = 'm3u8';
             div.addEventListener('dragstart', (e) => {
                 const url = channel.url;
                 e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/type', 'm3u8');
                 console.log('Dragging baseball channel:', url);
             });
             div.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
                 if (playerBoxes.length > 0) {
                     const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, channel.url);
+                    loadPlayer(targetBox, channel.url, 'm3u8');
                     clickIndex++;
                 }
             });
@@ -301,16 +360,18 @@
             btn.draggable = true;
             btn.textContent = channel.name;
             btn.dataset.url = channel.url;
+            btn.dataset.type = 'm3u8';
             btn.addEventListener('dragstart', (e) => {
                 const url = channel.url;
                 e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/type', 'm3u8');
                 console.log('Dragging SPOTV channel:', url);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
                 if (playerBoxes.length > 0) {
                     const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, channel.url);
+                    loadPlayer(targetBox, channel.url, 'm3u8');
                     clickIndex++;
                 }
             });
@@ -358,13 +419,16 @@
             playerContainer.style.marginLeft = isCollapsed ? '0' : '250px';
         }
 
-        function loadPlayer(box, url) {
+        function loadPlayer(box, url, type) {
             while (box.firstChild) {
                 box.removeChild(box.firstChild);
             }
-            const playerUrl = `chrome-extension://${extensionId}/player.html#${url}`;
             const iframe = document.createElement('iframe');
-            iframe.src = playerUrl;
+            if (type === 'm3u8') {
+                iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
+            } else if (type === 'iframe') {
+                iframe.src = url;
+            }
             box.appendChild(iframe);
             
             box.addEventListener('dragover', (e) => {
@@ -379,11 +443,8 @@
         // 입력 URL 처리 함수
         function processInputUrl(input) {
             if (!input) return null;
-            // 이미 .m3u8이 포함된 경우 그대로 반환
             if (input.includes('.m3u8')) return input;
-            // 이미 프록시 URL이 포함된 경우 그대로 반환
             if (input.startsWith(chzzkProxyBaseUrl)) return input;
-            // 32자리 16진수 채널 ID로 보이는 경우 프록시 URL로 변환
             if (/^[0-9a-fA-F]{32}$/.test(input)) {
                 return `${chzzkProxyBaseUrl}${input}`;
             }
@@ -399,7 +460,7 @@
                     const playerBoxes = playerContainer.querySelectorAll('.player-box');
                     if (playerBoxes.length > 0) {
                         const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, finalUrl);
+                        loadPlayer(targetBox, finalUrl, 'm3u8');
                         clickIndex++;
                     }
                 } else {
@@ -421,7 +482,7 @@
                 if (finalUrl) {
                     const playerBoxes = playerContainer.querySelectorAll('.player-box');
                     if (playerBoxes.length > 0) {
-                        loadPlayer(playerBoxes[0], finalUrl);
+                        loadPlayer(playerBoxes[0], finalUrl, 'm3u8');
                     }
                 }
             }
