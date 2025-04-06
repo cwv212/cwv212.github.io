@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>m3u8 플레이어</title>
+    <title>야구 채널 m3u8 플레이어</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
@@ -229,7 +229,7 @@
                     url = extractM3u8Url(textPlain);
                 }
 
-                if (url && url.endsWith('.m3u8')) {
+                if (url && url.includes('.m3u8')) { // .m3u8 포함 여부로 수정
                     console.log('Extracted m3u8 URL:', url);
                     loadPlayer(box, url);
                 } else {
@@ -316,7 +316,7 @@
         }
 
         function extractM3u8Url(data) {
-            const urlPattern = /(https?:\/\/[^\s]+\.m3u8)/i;
+            const urlPattern = /(https?:\/\/[^\s]+\.m3u8[^\s]*)/i; // 매개변수 포함 가능하도록 수정
             const match = data.match(urlPattern);
             return match ? match[0] : null;
         }
@@ -372,7 +372,7 @@
         // 사용자 입력 URL 재생 함수
         function playCustomUrl() {
             const customUrl = document.getElementById('custom-url-input').value.trim();
-            if (customUrl && customUrl.endsWith('.m3u8')) {
+            if (customUrl && customUrl.includes('.m3u8')) { // .m3u8 포함 여부로 수정
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
                 if (playerBoxes.length > 0) {
                     const targetBox = playerBoxes[clickIndex % playerBoxes.length];
