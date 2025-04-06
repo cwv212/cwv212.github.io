@@ -76,8 +76,8 @@
             border: none;
             font-size: 12px;
             text-align: center;
-            min-width: 32px;
-            max-width: 36px;
+            min-width: 38px;
+            max-width: 38px;
         }
         .baseball-btn:hover {
             background: #dee2e6;
@@ -259,7 +259,7 @@
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
         
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
-            name: `야${i + 1}`,
+            name: `야구${i + 1}`,
             url: `${baseballBaseUrl}${i + 1}/master.m3u8`
         }));
         
@@ -279,10 +279,7 @@
 
         const chzzkChannels = [
             { name: '풍', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/7ce8032370ac5121dcabce7bad375ced', type: 'm3u8' },
-            { name: '침', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/bb382c2c0cc9fa7c86ab3b037fb5799c' },
-            { name: '추', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/181a3baebe508d3b5fa5d9fe4d6b5241' },
-            { name: '솝', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/34a2bd4f5988e37693e94306f0bfe57f' },
-            { name: '센', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/be243c7cbfb8d4e28777eedc43e28181' }
+            { name: '침', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/채널id' } // '침' 채널 ID를 나중에 채워야 함
         ];
 
         const baseballChannelList = document.getElementById('baseball-channels');
