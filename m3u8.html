@@ -178,7 +178,7 @@
         <button onclick="setSplitScreen(3)">3분할</button>
         <button onclick="setSplitScreen(4)">4분할</button>
         <div id="custom-url-container">
-            <input type="text" id="custom-url-input" placeholder="m3u8 URL을 입력하세요">
+            <input type="text" id="custom-url-input" placeholder="m3u8 URL 또는 채널 ID를 입력하세요">
             <button onclick="playCustomUrl()">실행</button>
         </div>
         <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 확장</a>
@@ -233,11 +233,14 @@
                     url = extractM3u8Url(textPlain);
                 }
 
-                if (url && (url.includes('.m3u8') || url.startsWith(chzzkProxyBaseUrl))) {
-                    console.log('Extracted URL:', url);
-                    loadPlayer(box, url);
-                } else {
-                    console.log('No valid m3u8 or proxy URL found');
+                if (url) {
+                    const finalUrl = processInputUrl(url);
+                    if (finalUrl) {
+                        console.log('Extracted URL:', finalUrl);
+                        loadPlayer(box, finalUrl);
+                    } else {
+                        console.log('No valid m3u8 or proxy URL found');
+                    }
                 }
             };
         }
@@ -373,22 +376,37 @@
             box.classList.add('active');
         }
 
+        // 입력 URL 처리 함수
+        function processInputUrl(input) {
+            if (!input) return null;
+            // 이미 .m3u8이 포함된 경우 그대로 반환
+            if (input.includes('.m3u8')) return input;
+            // 이미 프록시 URL이 포함된 경우 그대로 반환
+            if (input.startsWith(chzzkProxyBaseUrl)) return input;
+            // 32자리 16진수 채널 ID로 보이는 경우 프록시 URL로 변환
+            if (/^[0-9a-fA-F]{32}$/.test(input)) {
+                return `${chzzkProxyBaseUrl}${input}`;
+            }
+            return null;
+        }
+
         // 사용자 입력 URL 재생 함수
         function playCustomUrl() {
             const customUrl = document.getElementById('custom-url-input').value.trim();
             if (customUrl) {
-                if (customUrl.includes('.m3u8') || customUrl.startsWith(chzzkProxyBaseUrl)) {
+                const finalUrl = processInputUrl(customUrl);
+                if (finalUrl) {
                     const playerBoxes = playerContainer.querySelectorAll('.player-box');
                     if (playerBoxes.length > 0) {
                         const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, customUrl);
+                        loadPlayer(targetBox, finalUrl);
                         clickIndex++;
                     }
                 } else {
-                    alert('유효한 m3u8 URL 또는 Chzzk 프록시 URL을 입력해주세요.');
+                    alert('유효한 m3u8 URL, Chzzk 프록시 URL, 또는 32자리 채널 ID를 입력해주세요.');
                 }
             } else {
-                alert('URL을 입력해주세요.');
+                alert('URL 또는 채널 ID를 입력해주세요.');
             }
         }
 
@@ -399,9 +417,12 @@
             const m3u8Url = urlParams.get('url');
             if (m3u8Url) {
                 console.log('Loading m3u8 from query param:', m3u8Url);
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    loadPlayer(playerBoxes[0], decodeURIComponent(m3u8Url));
+                const finalUrl = processInputUrl(decodeURIComponent(m3u8Url));
+                if (finalUrl) {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        loadPlayer(playerBoxes[0], finalUrl);
+                    }
                 }
             }
         };
