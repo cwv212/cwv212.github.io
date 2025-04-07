@@ -135,8 +135,8 @@
         #player-container {
             flex-grow: 1;
             display: grid;
-            gap: 10px;
-            padding: 10px;
+            gap: 0; /* 영상 간 거리를 없애기 위해 0으로 설정 */
+            padding: 0px; /* 외곽 여백 유지 */
             height: 100vh;
             width: 100%;
             transition: all 0.3s ease;
@@ -471,7 +471,7 @@
         function adjustPlayerLayout() {
             const isCollapsed = sidebar.classList.contains('collapsed');
             playerContainer.style.padding = isCollapsed ? '0' : '10px';
-            playerContainer.style.gap = isCollapsed ? '0' : '10px';
+            playerContainer.style.gap = isCollapsed ? '0' : '0'; /* 사이드바 상태에 관계없이 gap 유지 */
             playerContainer.style.gridTemplateColumns = `repeat(${Math.min(playerCount, 2)}, 1fr)`;
             playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(playerCount / 2)}, 1fr)`;
             playerContainer.style.marginLeft = isCollapsed ? '0' : '250px';
