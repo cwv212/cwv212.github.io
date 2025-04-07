@@ -41,7 +41,7 @@
             left: 205px;
             width: 20px;
             height: 20px;
-            background: #008040;
+            background: #007bff;
             border: none;
             border-radius: 50%;
             cursor: pointer;
@@ -57,7 +57,7 @@
             left: 10px;
         }
         #toggle-btn:hover {
-            background: #006633;
+            background: #0056b3;
         }
         #baseball-channels, #chzzk-channels, #spotv-channels, #tv-channels {
             display: flex;
@@ -135,14 +135,15 @@
         #player-container {
             flex-grow: 1;
             display: grid;
-            gap: 0;
-            padding: 0;
+            gap: 2px;
+            padding: 10px;
             height: 100vh;
             width: 100%;
             transition: all 0.3s ease;
             position: relative;
             background: #ffffff;
             border: none;
+            margin-left: 0; /* 빈칸 제거 */
         }
         .player-box {
             background: #f0f2f5;
@@ -162,21 +163,21 @@
             border: none;
             z-index: 1;
         }
-button {
-    padding: 8px 15px;
-    margin: 5px 5px 5px 0;
-    background: #008040; /* 기본 색상 */
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s, transform 0.2s;
-    width: 90px;
-}
-button:hover {
-    background: #006633; /* 호버링 색상 */
-    transform: translateY(-2px);
-}
+        button {
+            padding: 8px 15px;
+            margin: 5px 5px 5px 0;
+            background: #008040; /* 기본 색상 */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            width: 90px;
+        }
+        button:hover {
+            background: #006633; /* 호버링 색상 */
+            transform: translateY(-2px);
+        }
         h3, h4 {
             font-size: 14px;
             margin: 10px 0 5px;
@@ -185,13 +186,13 @@ button:hover {
         a {
             display: block;
             margin: 15px 0;
-            color: #008040;
+            color: #007bff;
             text-decoration: none;
             font-weight: 500;
         }
         a:hover {
             text-decoration: underline;
-            color: #006633;
+            color: #0056b3;
         }
         #custom-url-container {
             margin: 10px 0;
@@ -231,11 +232,10 @@ button:hover {
             <button onclick="setSplitScreen(4)">4분할</button>
         </div>
         <div id="custom-url-container">
-            <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
+            <input type="text" id="custom-url-input" placeholder="m3u8 URL 또는 채널 ID를 입력하세요">
             <button onclick="playCustomUrl()">실행</button>
         </div>
-        <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어(설치 필수)</a>
-        <a href="https://0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev/" target="_self">크롬용 페이지로 가기</a>
+        <a href="https://addons.mozilla.org/ko/firefox/addon/hls-player-m3u8-streaming/" target="_blank">HLS 플레이어 (Firefox, 설치 필수)</a>
     </div>
     <div id="player-container">
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
@@ -291,7 +291,6 @@ button:hover {
         let playerCount = 1;
         let clickIndex = 0;
 
-        // 드롭 이벤트 핸들러 함수
         function createDropHandler(box) {
             return (e) => {
                 e.preventDefault();
@@ -323,7 +322,6 @@ button:hover {
             };
         }
 
-        // LCK 채널 추가
         lckChannels.forEach(channel => {
             const btn = document.createElement('div');
             btn.className = 'lck-btn';
@@ -348,7 +346,6 @@ button:hover {
             lckChannelList.appendChild(btn);
         });
 
-        // 치지직 채널 목록 생성
         chzzkChannels.forEach(channel => {
             const btn = document.createElement('div');
             btn.className = 'chzzk-btn';
@@ -373,7 +370,6 @@ button:hover {
             chzzkChannelList.appendChild(btn);
         });
 
-        // SPOTV 채널 목록 생성
         spotvChannels.forEach(channel => {
             const btn = document.createElement('div');
             btn.className = 'small-channel-btn';
@@ -397,7 +393,6 @@ button:hover {
             spotvChannelList.appendChild(btn);
         });
 
-        // 야구 채널 목록 생성
         baseballChannels.forEach(channel => {
             const btn = document.createElement('div');
             btn.className = 'baseball-btn';
@@ -421,7 +416,6 @@ button:hover {
             baseballChannelList.appendChild(btn);
         });
 
-        // TV 채널 목록 생성
         tvChannels.forEach(channel => {
             const btn = document.createElement('div');
             btn.className = 'tv-btn';
@@ -483,7 +477,7 @@ button:hover {
             playerContainer.style.gap = isCollapsed ? '0' : '0';
             playerContainer.style.gridTemplateColumns = `repeat(${Math.min(playerCount, 2)}, 1fr)`;
             playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(playerCount / 2)}, 1fr)`;
-            playerContainer.style.marginLeft = isCollapsed ? '0' : '250px';
+            // margin-left 조정 제거
         }
 
         function loadPlayer(box, url, type) {
@@ -492,7 +486,7 @@ button:hover {
             }
             const iframe = document.createElement('iframe');
             if (type === 'm3u8') {
-                iframe.src = `moz-extension://${extensionId}/player.html#${url}`; // Firefox에서는 moz-extension 사용
+                iframe.src = `moz-extension://${extensionId}/player.html#${url}`;
             } else if (type === 'iframe') {
                 iframe.src = url;
             }
@@ -507,7 +501,6 @@ button:hover {
             box.className = 'player-box active';
         }
 
-        // 입력 URL 처리 함수
         function processInputUrl(input) {
             if (!input) return null;
             if (input.includes('.m3u8')) return input;
@@ -518,7 +511,6 @@ button:hover {
             return null;
         }
 
-        // 사용자 입력 URL 재생 함수
         function playCustomUrl() {
             const customUrl = document.getElementById('custom-url-input').value.trim();
             if (customUrl) {
@@ -538,9 +530,8 @@ button:hover {
             }
         }
 
-        // 쿼리 파라미터에서 URL 읽기 및 자동 재생
         window.onload = () => {
-            setSplitScreen(1); // 기본 1분할 설정
+            setSplitScreen(1);
             const urlParams = new URLSearchParams(window.location.search);
             const m3u8Url = urlParams.get('url');
             if (m3u8Url) {
