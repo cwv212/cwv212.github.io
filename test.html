@@ -11,25 +11,18 @@
             font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
-            display: flex;
             height: 100vh;
             overflow: hidden;
             background: #f4f7fa;
             color: #333;
         }
         #sidebar {
-            width: 220px;
-            padding: 15px;
             background: rgba(255, 255, 255, 0.95);
             transition: transform 0.3s ease;
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
             z-index: 10;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
         }
-        #sidebar.collapsed { transform: translateX(-100%); }
         #toggle-btn {
             position: fixed;
             top: 10px;
@@ -47,27 +40,17 @@
             align-items: center;
             justify-content: center;
             font-size: 16px;
-            padding: 0;
-            line-height: normal;
-            text-align: center;
         }
         #sidebar.collapsed + #main-container #toggle-btn { left: 10px; }
         #toggle-btn:hover { background: #0056b3; }
         #main-container {
-            flex-grow: 1;
-            display: flex;
             height: 100vh;
-            margin-left: 220px;
-            transition: margin-left 0.3s ease;
+            width: 100%;
         }
-        #sidebar.collapsed + #main-container { margin-left: 0; }
         #player-container {
-            flex-grow: 1;
+            background: #ffffff;
             display: grid;
             gap: 0;
-            height: 100%;
-            background: #ffffff;
-            border: none;
         }
         .player-box {
             background: #f0f2f5;
@@ -80,19 +63,11 @@
         }
         iframe { width: 100%; height: 100%; border: none; }
         #chat-section {
-            width: 320px;
-            height: 100%;
-            min-width: 240px;
             background: #fff;
             box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: auto; /* 스크롤 추가 */
+            overflow: auto;
         }
-        #chat-iframe {
-            flex-grow: 1;
-            min-height: 0; /* 잘리지 않도록 */
-        }
+        #chat-iframe { height: 100%; }
         #baseball-channels, #chzzk-channels, #tv-channels, #lck-channels {
             display: flex;
             flex-wrap: wrap;
@@ -105,9 +80,7 @@
             gap: 5px;
             margin: 5px 0;
         }
-        #spotv-channels.active {
-            display: flex;
-        }
+        #spotv-channels.active { display: flex; }
         #lck-channels {
             display: flex;
             gap: 5px;
@@ -125,9 +98,7 @@
             text-align: center;
             position: relative;
         }
-        .lck-btn:hover {
-            background: #dee2e6;
-        }
+        .lck-btn:hover { background: #dee2e6; }
         .lck-btn[title]:hover::after {
             content: attr(title);
             position: absolute;
@@ -198,72 +169,36 @@
         .toggle-header.collapsed::after {
             content: '▶';
         }
-        @media (max-width: 768px) {
-            #main-container {
-                flex-direction: column;
-                margin-left: 0;
-            }
-            #sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding: 10px 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-            #sidebar.collapsed {
-                display: none;
-            }
-            #toggle-btn {
-                left: 10px;
-                top: 5px;
-            }
-            #player-container {
-                width: 100%;
-                height: 30%;
-            }
-            #chat-section {
-                width: 100%;
-                height: 70%;
-                min-width: unset;
-                overflow: auto; /* 모바일에서 스크롤 가능 */
-            }
-            #chat-iframe {
-                width: 100%;
-                height: 100%;
-            }
-        }
     </style>
 </head>
 <body>
-    <div id="sidebar">
-        <h3>숙제 채널</h3>
-        <div id="lck-channels"></div>
-        <h4>스트리머 채널</h4>
-        <div id="chzzk-channels"></div>
-        <h4 class="toggle-header" onclick="toggleSpotv()">스포티비 채널</h4>
-        <div id="spotv-channels"></div>
-        <h4>야구 채널</h4>
-        <div id="baseball-channels"></div>
-        <h4>TV 채널</h4>
-        <div id="tv-channels"></div>
-        <h3>분할 화면 설정</h3>
-        <div id="split-screen-buttons">
-            <button onclick="setSplitScreen(1)">1분할</button>
-            <button onclick="setSplitScreen(2)">2분할</button>
-            <button onclick="setSplitScreen(3)">3분할</button>
-            <button onclick="setSplitScreen(4)">4분할</button>
-        </div>
-        <div id="custom-url-container">
-            <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
-            <button onclick="playCustomUrl()">실행</button>
-        </div>
-        <button id="hrm-btn">흐름</button>
-        <button id="refresh-btn">F5</button>
-        <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
-    </div>
     <div id="main-container">
+        <div id="sidebar">
+            <h3>숙제 채널</h3>
+            <div id="lck-channels"></div>
+            <h4>스트리머 채널</h4>
+            <div id="chzzk-channels"></div>
+            <h4 class="toggle-header" onclick="toggleSpotv()">스포티비 채널</h4>
+            <div id="spotv-channels"></div>
+            <h4>야구 채널</h4>
+            <div id="baseball-channels"></div>
+            <h4>TV 채널</h4>
+            <div id="tv-channels"></div>
+            <h3>분할 화면 설정</h3>
+            <div id="split-screen-buttons">
+                <button onclick="setSplitScreen(1)">1분할</button>
+                <button onclick="setSplitScreen(2)">2분할</button>
+                <button onclick="setSplitScreen(3)">3분할</button>
+                <button onclick="setSplitScreen(4)">4분할</button>
+            </div>
+            <div id="custom-url-container">
+                <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
+                <button onclick="playCustomUrl()">실행</button>
+            </div>
+            <button id="hrm-btn">흐름</button>
+            <button id="refresh-btn">F5</button>
+            <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
+        </div>
         <div id="player-container">
             <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
         </div>
@@ -316,6 +251,89 @@
         const chatSection = document.getElementById('chat-section');
         let playerCount = 1;
         let clickIndex = 0;
+
+        function getVideoarea(w, h, wr, hr) {
+            h = h - 25;
+            if (w <= 0 || h <= 0) return 0;
+            return (w * hr > h * wr) ? (h * h * wr / hr) : (w * w * hr / wr);
+        }
+
+        function getUtility(x, n) {
+            return x / (x + n);
+        }
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        function design() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            const minChatHeight = h * 0.4;
+            const maxVideoHeight = h - minChatHeight - 50;
+            const standardHeight = w * 9 / 16 + 25;
+            const hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
+
+            const wg = getUtility(getVideoarea(w - 320, h, 16, 9), 192 * 108 * 10) + getUtility(240 * h, 24 * 20 * 10);
+            const hg = getUtility(getVideoarea(w, hgh, 16, 9), 192 * 108 * 10) + getUtility((w > 240 ? 240 : w) * (h - hgh), 24 * 20 * 10);
+
+            if (hg > wg) {
+                // 모바일: 상하 레이아웃
+                sidebar.style.position = "relative";
+                sidebar.style.width = "100%";
+                sidebar.style.height = "auto";
+                sidebar.style.display = "block";
+                sidebar.style.padding = "10px 0";
+
+                playerContainer.style.width = "100%";
+                playerContainer.style.height = `${hgh}px`;
+                playerContainer.style.position = "relative";
+
+                chatSection.style.width = "100%";
+                chatSection.style.height = `${h - hgh}px`;
+                chatSection.style.position = "relative";
+            } else {
+                // PC: 좌우 레이아웃
+                const pcContainer = document.createElement('div');
+                pcContainer.style.display = 'flex';
+                pcContainer.style.height = '100%';
+                pcContainer.style.width = '100%';
+
+                const rightContainer = document.createElement('div');
+                rightContainer.style.width = '17.5%';
+                rightContainer.style.minWidth = '320px';
+                rightContainer.style.height = '100%';
+
+                sidebar.style.position = "relative";
+                sidebar.style.width = "220px";
+                sidebar.style.height = "100%";
+                sidebar.style.display = "block";
+                sidebar.style.padding = "15px";
+
+                chatSection.style.width = "100%";
+                chatSection.style.height = "100%";
+                chatSection.style.position = "relative";
+
+                rightContainer.appendChild(chatSection);
+                pcContainer.appendChild(playerContainer);
+                pcContainer.appendChild(rightContainer);
+
+                const mainContainer = document.getElementById('main-container');
+                mainContainer.innerHTML = '';
+                mainContainer.appendChild(sidebar);
+                mainContainer.appendChild(pcContainer);
+
+                playerContainer.style.width = "calc(100% - 540px)"; // 220px (sidebar) + 320px (chat)
+                playerContainer.style.height = "100%";
+                playerContainer.style.position = "relative";
+            }
+            adjustPlayerLayout();
+        }
 
         function createDropHandler(box) {
             return (e) => {
@@ -453,7 +471,7 @@
 
         function toggleSidebar() {
             sidebar.classList.toggle('collapsed');
-            adjustPlayerLayout();
+            design();
         }
 
         function toggleSpotv() {
@@ -480,7 +498,6 @@
         }
 
         function adjustPlayerLayout() {
-            const isCollapsed = sidebar.classList.contains('collapsed');
             playerContainer.style.gridTemplateColumns = `repeat(${Math.min(playerCount, 2)}, 1fr)`;
             playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(playerCount / 2)}, 1fr)`;
         }
@@ -528,10 +545,10 @@
             chatIframe.src = baseUrl + '?cache=' + Math.random() + hashPart;
         });
 
-        window.addEventListener('resize', adjustChatHeight);
+        window.addEventListener('resize', debounce(design, 200));
         window.onload = () => {
             setSplitScreen(1);
-            adjustChatHeight();
+            design();
             const urlParams = new URLSearchParams(window.location.search);
             const m3u8Url = urlParams.get('url');
             if (m3u8Url) {
@@ -542,18 +559,6 @@
                 }
             }
         };
-
-        function adjustChatHeight() {
-            const chatSection = document.getElementById('chat-section');
-            const chatIframe = document.getElementById('chat-iframe');
-            if (window.innerWidth <= 768) {
-                chatSection.style.height = '40%';
-                chatIframe.style.height = '100%';
-            } else {
-                chatSection.style.height = '100%';
-                chatIframe.style.height = '100%';
-            }
-        }
     </script>
 </body>
 </html>
