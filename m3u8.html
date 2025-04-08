@@ -29,8 +29,6 @@
             height: 100%;
             z-index: 10;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
-            scrollbar-width: thin;
         }
         #sidebar.collapsed {
             transform: translateX(-100%);
@@ -164,21 +162,21 @@
         }
         button {
             padding: 8px 15px;
-            margin: 5px 5px 5px 0; /* 오른쪽 마진 추가로 간격 조정 */
+            margin: 5px 5px 5px 0;
             background: #007bff;
             color: white;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             transition: background 0.3s, transform 0.2s;
-            width: 90px; /* 고정 폭으로 버튼 크기 통일 */
+            width: 90px;
         }
         button:hover {
             background: #0056b3;
             transform: translateY(-2px);
         }
         h3, h4 {
-            font-size: 14px;
+            font-size: 16px;
             margin: 10px 0 5px;
             color: #495057;
         }
@@ -206,8 +204,28 @@
         }
         #split-screen-buttons {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* 2열로 배치 */
+            grid-template-columns: 1fr 1fr;
             gap: 5px;
+        }
+        /* 토글 스타일 추가 */
+        .toggle-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toggle-header::after {
+            content: '▼';
+            font-size: 12px;
+        }
+        .toggle-header.collapsed::after {
+            content: '▶';
+        }
+        #spotv-channels {
+            display: none; /* 기본적으로 닫힌 상태 */
+        }
+        #spotv-channels.active {
+            display: flex; /* 열릴 때 표시 */
         }
     </style>
 </head>
@@ -217,7 +235,7 @@
         <div id="lck-channels"></div>
         <h4>스트리머 채널</h4>
         <div id="chzzk-channels"></div>
-        <h4>스포티비 채널</h4>
+        <h4 class="toggle-header" onclick="toggleSpotv()">스포티비 채널</h4>
         <div id="spotv-channels"></div>
         <h4>야구 채널</h4>
         <div id="baseball-channels"></div>
@@ -450,6 +468,13 @@
             adjustPlayerLayout();
         }
 
+        function toggleSpotv() {
+            const spotvChannels = document.getElementById('spotv-channels');
+            const toggleHeader = document.querySelector('.toggle-header');
+            spotvChannels.classList.toggle('active');
+            toggleHeader.classList.toggle('collapsed');
+        }
+
         function extractM3u8Url(data) {
             const urlPattern = /(https?:\/\/[^\s]+\.m3u8[^\s]*)/i;
             const match = data.match(urlPattern);
@@ -507,7 +532,6 @@
             box.className = 'player-box active';
         }
 
-        // 입력 URL 처리 함수
         function processInputUrl(input) {
             if (!input) return null;
             if (input.includes('.m3u8')) return input;
@@ -518,7 +542,6 @@
             return null;
         }
 
-        // 사용자 입력 URL 재생 함수
         function playCustomUrl() {
             const customUrl = document.getElementById('custom-url-input').value.trim();
             if (customUrl) {
@@ -538,9 +561,8 @@
             }
         }
 
-        // 쿼리 파라미터에서 URL 읽기 및 자동 재생
         window.onload = () => {
-            setSplitScreen(1); // 기본 1분할 설정
+            setSplitScreen(1);
             const urlParams = new URLSearchParams(window.location.search);
             const m3u8Url = urlParams.get('url');
             if (m3u8Url) {
