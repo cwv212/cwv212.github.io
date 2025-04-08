@@ -274,7 +274,7 @@ function design() {
     const h = window.innerHeight;
     const isCollapsed = sidebar.classList.contains('collapsed');
 
-    const minChatHeight = h * 0.5; // 최소 채팅 높이를 50%로 증가 (기존 40%)
+    const minChatHeight = h * 0.4; // 최소 채팅 높이 40%
     const maxVideoHeight = h - minChatHeight - 50;
     const standardHeight = w * 9 / 16 + 25;
     const hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
