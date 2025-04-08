@@ -556,21 +556,24 @@
     };
 
 window.addEventListener('message', (event) => {
-    console.log('Received message:', event.data); // 디버깅용 로그
+    console.log('Received message in iframe:', event.data); // 수신 확인
     if (event.data.type === 'playM3u8' && event.data.url) {
         const finalUrl = processInputUrl(event.data.url);
-        console.log('Processed URL:', finalUrl); // 디버깅용 로그
+        console.log('Processed URL:', finalUrl); // URL 처리 결과
         if (finalUrl) {
             const playerBoxes = playerContainer.querySelectorAll('.player-box');
+            console.log('Player boxes found:', playerBoxes.length); // 플레이어 박스 확인
             if (playerBoxes.length > 0) {
                 loadPlayer(playerBoxes[0], finalUrl, 'm3u8');
-                console.log('Player loaded with URL:', finalUrl); // 디버깅용 로그
+                console.log('Player loaded with URL:', finalUrl); // 로드 완료
             } else {
-                console.error('No player boxes found');
+                console.error('No player boxes available');
             }
         } else {
             console.error('Invalid URL after processing:', event.data.url);
         }
+    } else {
+        console.warn('Invalid message format:', event.data);
     }
 }, false);
 </script>
