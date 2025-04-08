@@ -6,11 +6,166 @@
     <title>m3u8 플레이어 with Chat</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* 기존 스타일 유지 */
-        .player-box video {
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            background: #f4f7fa;
+            color: #333;
+        }
+        #sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+        #toggle-btn {
+            position: fixed;
+            top: 10px;
+            width: 30px;
+            height: 30px;
+            background: #007bff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            color: white;
+            transition: left 0.3s ease, background 0.3s;
+            z-index: 11;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        #toggle-btn:hover { background: #0056b3; }
+        #main-container {
+            height: 100vh;
             width: 100%;
-            height: 100%;
-            object-fit: contain;
+        }
+        #player-container {
+            background: #ffffff;
+            display: grid;
+            gap: 0;
+        }
+        .player-box {
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: none;
+            position: relative;
+        }
+        iframe { width: 100%; height: 100%; border: none; }
+        #chat-section {
+            background: #fff;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow: auto;
+        }
+        #chat-iframe { height: 100%; }
+        #baseball-channels, #chzzk-channels, #tv-channels, #lck-channels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        #spotv-channels {
+            display: none;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        #spotv-channels.active { display: flex; }
+        #lck-channels {
+            display: flex;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .lck-btn {
+            flex: 1;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            text-align: center;
+            position: relative;
+        }
+        .lck-btn:hover { background: #dee2e6; }
+        .lck-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 20;
+        }
+        .baseball-btn, .chzzk-btn, .tv-btn, .small-channel-btn {
+            padding: 6px;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px;
+        }
+        .baseball-btn:hover, .chzzk-btn:hover, .tv-btn:hover, .lck-btn:hover, .small-channel-btn:hover {
+            background: #dee2e6;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 5px 5px 5px 0;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        button:hover { background: #0056b3; }
+        h3, h4 { font-size: 16px; margin: 10px 0 5px; color: #495057; }
+        a { display: block; margin: 15px 0; color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; color: #0056b3; }
+        #custom-url-container { margin: 10px 0; }
+        #custom-url-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #split-screen-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+        .toggle-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toggle-header::after {
+            content: '▼';
+            font-size: 12px;
+        }
+        .toggle-header.collapsed::after {
+            content: '▶';
         }
     </style>
 </head>
