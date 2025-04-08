@@ -332,7 +332,7 @@
                 const [platform, channelId] = url.split('/');
                 switch (platform) {
                     case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
-                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=cwv212.github.io`;
+                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
                     case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
                     case 'kick': return `https://player.kick.com/${channelId}`;
                     case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
@@ -341,7 +341,7 @@
             }
             if (!url.startsWith('http')) { return null; }
             if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=cwv212.github.io`;
+            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
             if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/').pop()}/embed`;
@@ -349,7 +349,7 @@
                 const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
                 if (match) return `https://www.youtube.com/embed/${match[1]}`;
             }
-            if (url.startsWith('https://twitch.tv/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=cwv212.github.io`;
+            if (url.startsWith('https://twitch.tv/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
             if (url.startsWith('https://chzzk.naver.com/live/') || url.startsWith('https://chzzk.naver.com/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
             if (url.startsWith('https://kick.com/')) return `https://player.kick.com/${url.split('/').pop()}`;
             if (url.startsWith('https://play.sooplive.co.kr/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
