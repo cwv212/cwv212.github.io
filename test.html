@@ -291,7 +291,6 @@
             playerContainer.appendChild(toggleBtn);
 
             if (hg > wg) {
-                // 모바일: 상하 레이아웃 (슬라이드 위에서 내려옴)
                 sidebar.style.position = "fixed";
                 sidebar.style.width = "100%";
                 sidebar.style.height = "auto";
@@ -311,7 +310,6 @@
                 chatSection.style.position = "relative";
                 chatSection.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
             } else {
-                // PC: 좌우 레이아웃
                 const pcContainer = document.createElement('div');
                 pcContainer.style.display = 'flex';
                 pcContainer.style.height = '100%';
@@ -515,15 +513,29 @@
             playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(playerCount / 2)}, 1fr)`;
         }
 
-        function loadPlayer(box, url, type) {
+        async function loadPlayer(box, url, type) {
             while (box.firstChild) box.removeChild(box.firstChild);
             const iframe = document.createElement('iframe');
-            // 야구 채널인지 확인 (URL에 'soopbaseball' 포함)
+            
             if (type === 'm3u8' && url.includes('soopbaseball')) {
+                // 야구 채널은 Chrome 확장으로 재생
                 iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
+            } else if (type === 'm3u8' && url.includes('chzzk-api-proxy')) {
+                // 치지직 프록시 URL의 리다이렉트 처리
+                try {
+                    const response = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+                    const finalUrl = response.url; // 리다이렉트된 최종 URL
+                    iframe.src = `${hlsPlayerBaseUrl}${encodeURIComponent(finalUrl)}`;
+                } catch (error) {
+                    console.error('리다이렉트 URL 추출 실패:', error);
+                    // CORS 문제 등으로 실패 시 원본 URL로 시도
+                    iframe.src = `${hlsPlayerBaseUrl}${encodeURIComponent(url)}`;
+                }
             } else {
+                // 나머지 m3u8 또는 iframe 타입
                 iframe.src = type === 'm3u8' ? `${hlsPlayerBaseUrl}${encodeURIComponent(url)}` : url;
             }
+            
             box.appendChild(iframe);
             box.className = 'player-box active';
         }
