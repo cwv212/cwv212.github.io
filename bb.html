@@ -312,39 +312,36 @@ button:hover {
         let clickIndex = 0;
 
         // URL 변환 함수
-        function transformUrl(url) {
+function transformUrl(url) {
             if (!url) return null;
 
-            // 치지직 채널 ID 감지 (32자리 16진수 문자열)
             const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
             if (chzzkChannelIdPattern.test(url)) {
                 return `${chzzkProxyBaseUrl}${url}`;
             }
 
-            // m3u8 URL 처리
             if (url.includes('.m3u8')) {
-                return url; // m3u8 URL은 그대로 반환
-            }
-
-            // 단축 URL 및 기타 플랫폼 URL 처리
-            const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
-            if (url === 'https://play.sooplive.co.kr/aflol/281494910/embed') {
                 return url;
             }
+
+            const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
             if (isShortForm) {
                 const [platform, channelId] = url.split('/');
                 switch (platform) {
                     case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
-                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr`;
+                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
                     case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
                     case 'kick': return `https://player.kick.com/${channelId}`;
                     case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
                     default: return null;
                 }
             }
+            if (url.startsWith('https://twitch.tv/')) {
+                return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
+            }
             if (!url.startsWith('http')) { return null; }
             if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr`;
+            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
             if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/').pop()}/embed`;
@@ -352,14 +349,13 @@ button:hover {
                 const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
                 if (match) return `https://www.youtube.com/embed/${match[1]}`;
             }
-            if (url.startsWith('https://twitch.tv/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&lolcast.kr`;
             if (url.startsWith('https://chzzk.naver.com/live/') || url.startsWith('https://chzzk.naver.com/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
             if (url.startsWith('https://kick.com/')) return `https://player.kick.com/${url.split('/').pop()}`;
             if (url.startsWith('https://play.sooplive.co.kr/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
             if (url.startsWith('https://')) return url;
             return null;
         }
-
+        
         // 드롭 이벤트 핸들러 함수
         function createDropHandler(box) {
             return (e) => {
