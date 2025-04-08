@@ -19,7 +19,7 @@
             color: #333;
         }
         #sidebar {
-            width: 230px;
+            width: 220px;
             padding: 15px;
             background: rgba(255, 255, 255, 0.95);
             transition: transform 0.3s ease;
@@ -38,7 +38,7 @@
         #toggle-btn {
             position: fixed;
             top: 10px;
-            left: 215px;
+            left: 205px;
             width: 20px;
             height: 20px;
             background: #007bff;
@@ -76,8 +76,8 @@
             border: none;
             font-size: 12px;
             text-align: center;
-            min-width: 32px;
-            max-width: 32px;
+            min-width: 33px;
+            max-width: 33px;
         }
         .baseball-btn:hover, .chzzk-btn:hover, .tv-btn:hover {
             background: #dee2e6;
@@ -127,7 +127,7 @@
             border: none;
             font-size: 12px;
             text-align: center;
-            min-width: 30px;
+            min-width: 33px;
         }
         .small-channel-btn:hover {
             background: #dee2e6;
@@ -135,8 +135,8 @@
         #player-container {
             flex-grow: 1;
             display: grid;
-            gap: 10px;
-            padding: 10px;
+            gap: 0;
+            padding: 0;
             height: 100vh;
             width: 100%;
             transition: all 0.3s ease;
@@ -164,13 +164,14 @@
         }
         button {
             padding: 8px 15px;
-            margin: 5px 0;
+            margin: 5px 5px 5px 0;
             background: #007bff;
             color: white;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             transition: background 0.3s, transform 0.2s;
+            width: 90px;
         }
         button:hover {
             background: #0056b3;
@@ -203,30 +204,58 @@
             border-radius: 4px;
             font-size: 14px;
         }
+        #split-screen-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+        /* SPOTV 토글 관련 스타일 추가 */
+        .channel-section {
+            max-height: 50px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .channel-section.expanded {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .toggle-section-btn {
+            margin-left: 10px;
+            padding: 4px 8px;
+            font-size: 12px;
+            background: #28a745;
+            width: auto;
+        }
+        .toggle-section-btn:hover {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
         <h3>숙제 채널</h3>
         <div id="lck-channels"></div>
-        <h4>야구 채널</h4>
-        <div id="baseball-channels"></div>
         <h4>스트리머 채널</h4>
         <div id="chzzk-channels"></div>
-        <h4>스포티비 채널</h4>
-        <div id="spotv-channels"></div>
+        <h4>스포티비 채널<button id="spotv-toggle-btn" class="toggle-section-btn">열기</button></h4>
+        <div id="spotv-channels" class="channel-section collapsed"></div>
+        <h4>야구 채널</h4>
+        <div id="baseball-channels"></div>
         <h4>TV 채널</h4>
         <div id="tv-channels"></div>
         <h3>분할 화면 설정</h3>
-        <button onclick="setSplitScreen(1)">1분할</button>
-        <button onclick="setSplitScreen(2)">2분할</button>
-        <button onclick="setSplitScreen(3)">3분할</button>
-        <button onclick="setSplitScreen(4)">4분할</button>
+        <div id="split-screen-buttons">
+            <button onclick="setSplitScreen(1)">1분할</button>
+            <button onclick="setSplitScreen(2)">2분할</button>
+            <button onclick="setSplitScreen(3)">3분할</button>
+            <button onclick="setSplitScreen(4)">4분할</button>
+        </div>
         <div id="custom-url-container">
-            <input type="text" id="custom-url-input" placeholder="m3u8 URL 또는 채널 ID를 입력하세요">
+            <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
             <button onclick="playCustomUrl()">실행</button>
         </div>
-        <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 확장</a>
+        <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
+        <a href="https://baseball-hls-player-mook.hlsp.workers.dev/" target="_self">파폭용 페이지로 가기</a>
     </div>
     <div id="player-container">
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
@@ -266,10 +295,10 @@
         ];
 
         const tvChannels = [
-            { name: 'k1', url: 'https://stream.ogtv3.com/live/live1004.m3u8' },
-            { name: 'k2', url: 'https://stream.ogtv3.com/live/live1005.m3u8' },
-            { name: 'm', url: 'https://stream.ogtv3.com/live/live1003.m3u8' },
-            { name: 's', url: 'https://stream.ogtv3.com/live/live1006.m3u8' }
+            { name: 'K1', url: 'https://stream.ogtv3.com/live/live1004.m3u8' },
+            { name: 'K2', url: 'https://stream.ogtv3.com/live/live1005.m3u8' },
+            { name: 'M', url: 'https://stream.ogtv3.com/live/live1003.m3u8' },
+            { name: 'S', url: 'https://stream.ogtv3.com/live/live1006.m3u8' }
         ];
 
         const baseballChannelList = document.getElementById('baseball-channels');
@@ -339,30 +368,6 @@
             lckChannelList.appendChild(btn);
         });
 
-        // 야구 채널 목록 생성
-        baseballChannels.forEach(channel => {
-            const btn = document.createElement('div');
-            btn.className = 'baseball-btn';
-            btn.draggable = true;
-            btn.textContent = channel.name;
-            btn.dataset.url = channel.url;
-            btn.dataset.type = 'm3u8';
-            btn.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', channel.url);
-                e.dataTransfer.setData('text/type', 'm3u8');
-                console.log('Dragging baseball channel:', channel.url);
-            });
-            btn.addEventListener('click', () => {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, channel.url, 'm3u8');
-                    clickIndex++;
-                }
-            });
-            baseballChannelList.appendChild(btn);
-        });
-
         // 치지직 채널 목록 생성
         chzzkChannels.forEach(channel => {
             const btn = document.createElement('div');
@@ -412,6 +417,30 @@
             spotvChannelList.appendChild(btn);
         });
 
+        // 야구 채널 목록 생성
+        baseballChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'baseball-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
+            btn.dataset.type = 'm3u8';
+            btn.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', channel.url);
+                e.dataTransfer.setData('text/type', 'm3u8');
+                console.log('Dragging baseball channel:', channel.url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, channel.url, 'm3u8');
+                    clickIndex++;
+                }
+            });
+            baseballChannelList.appendChild(btn);
+        });
+
         // TV 채널 목록 생성
         tvChannels.forEach(channel => {
             const btn = document.createElement('div');
@@ -434,6 +463,21 @@
                 }
             });
             tvChannelList.appendChild(btn);
+        });
+
+        // SPOTV 토글 버튼 이벤트
+        const spotvToggleBtn = document.getElementById('spotv-toggle-btn');
+        const spotvChannelList = document.getElementById('spotv-channels');
+        spotvToggleBtn.addEventListener('click', () => {
+            if (spotvChannelList.classList.contains('collapsed')) {
+                spotvChannelList.classList.remove('collapsed');
+                spotvChannelList.classList.add('expanded');
+                spotvToggleBtn.textContent = '닫기';
+            } else {
+                spotvChannelList.classList.remove('expanded');
+                spotvChannelList.classList.add('collapsed');
+                spotvToggleBtn.textContent = '열기';
+            }
         });
 
         function toggleSidebar() {
@@ -471,7 +515,7 @@
         function adjustPlayerLayout() {
             const isCollapsed = sidebar.classList.contains('collapsed');
             playerContainer.style.padding = isCollapsed ? '0' : '10px';
-            playerContainer.style.gap = isCollapsed ? '0' : '10px';
+            playerContainer.style.gap = isCollapsed ? '0' : '0';
             playerContainer.style.gridTemplateColumns = `repeat(${Math.min(playerCount, 2)}, 1fr)`;
             playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(playerCount / 2)}, 1fr)`;
             playerContainer.style.marginLeft = isCollapsed ? '0' : '250px';
