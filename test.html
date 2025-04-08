@@ -274,7 +274,7 @@
             const h = window.innerHeight;
             const isCollapsed = sidebar.classList.contains('collapsed');
 
-            const minChatHeight = h * 0.5;
+            const minChatHeight = h * 0.4;
             const maxVideoHeight = h - minChatHeight - 50;
             const standardHeight = w * 9 / 16 + 25;
             const hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
@@ -301,12 +301,12 @@
                 toggleBtn.style.left = "10px";
 
                 playerContainer.style.width = "100%";
-                playerContainer.style.height = isCollapsed ? `${h * 0.4}px` : `${hgh}px`;
+                playerContainer.style.height = isCollapsed ? `${h * 0.5}px` : `${hgh}px`;
                 playerContainer.style.position = "relative";
                 playerContainer.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
 
                 chatSection.style.width = "100%";
-                chatSection.style.height = isCollapsed ? `${h * 0.6}px` : `${h - hgh - sidebar.offsetHeight}px`;
+                chatSection.style.height = isCollapsed ? `${h * 0.5}px` : `${h - hgh - sidebar.offsetHeight}px`;
                 chatSection.style.position = "relative";
                 chatSection.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
             } else {
