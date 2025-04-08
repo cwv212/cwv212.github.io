@@ -95,6 +95,7 @@
             gap: 5px;
             margin: 5px 0;
         }
+        
         #spotv-channels {
             display: none; /* 스포티비만 기본적으로 닫힌 상태 */
             flex-wrap: wrap;
@@ -104,7 +105,41 @@
         #spotv-channels.active {
             display: flex; /* 열릴 때 표시 */
         }
-        .baseball-btn, .chzzk-btn, .tv-btn, .lck-btn, .small-channel-btn {
+                #lck-channels {
+            display: flex;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .lck-btn {
+            flex: 1;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            text-align: center;
+            position: relative;
+        }
+        .lck-btn:hover {
+            background: #dee2e6;
+        }
+        .lck-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 20;
+        }
+        .baseball-btn, .chzzk-btn, .tv-btn, .small-channel-btn {
             padding: 6px;
             background: #e9ecef;
             border-radius: 4px;
