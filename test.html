@@ -7,66 +7,49 @@
     <style>
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
         body {
             font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
             display: flex;
             height: 100vh;
+            overflow: hidden;
             background: #f4f7fa;
             color: #333;
-            overflow: hidden;
         }
         #sidebar {
             width: 220px;
             padding: 15px;
-            background: #fff;
-            height: 100%;
-            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.95);
             transition: transform 0.3s ease;
-            position: fixed;
-            left: 0;
+            position: absolute;
             top: 0;
+            left: 0;
+            height: 100%;
             z-index: 10;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
         #sidebar.collapsed {
             transform: translateX(-100%);
         }
-        #player-container {
-            flex-grow: 1;
-            margin-left: 220px;
-            height: 100vh;
-            display: grid;
-            gap: 2px;
-            transition: margin-left 0.3s ease;
-        }
-        #sidebar.collapsed + #player-container {
-            margin-left: 0;
-        }
-        .player-box {
-            background: #f0f2f5;
-            overflow: hidden;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
         #toggle-btn {
             position: fixed;
             top: 10px;
-            left: 200px;
+            left: 205px;
             width: 20px;
             height: 20px;
             background: #007bff;
-            color: white;
             border: none;
             border-radius: 50%;
             cursor: pointer;
+            font-size: 14px;
+            color: white;
+            transition: left 0.3s ease, background 0.3s;
+            padding: 0;
             z-index: 11;
-            transition: left 0.3s ease;
+            line-height: 20px;
+            text-align: center;
         }
         #sidebar.collapsed + #player-container #toggle-btn {
             left: 10px;
@@ -74,48 +57,108 @@
         #toggle-btn:hover {
             background: #0056b3;
         }
-        h3, h4 {
-            font-size: 14px;
-            margin: 10px 0 5px;
-            color: #495057;
-        }
-        .channel-section {
+        #baseball-channels, #chzzk-channels, #spotv-channels, #tv-channels {
             display: flex;
             flex-wrap: wrap;
             gap: 5px;
-            margin-bottom: 10px;
-            max-height: 50px; /* 기본 닫힌 상태 */
-            overflow: hidden;
-            transition: max-height 0.3s ease;
+            margin: 5px 0;
         }
-        .channel-section.expanded {
-            max-height: 200px; /* 열린 상태 */
-            overflow-y: auto;
+        .baseball-btn, .chzzk-btn, .tv-btn {
+            flex: 1;
+            padding: 6px 0;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px;
+            max-width: 33px;
+        }
+        .baseball-btn:hover, .chzzk-btn:hover, .tv-btn:hover {
+            background: #dee2e6;
+        }
+        #lck-channels {
+            display: flex;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .lck-btn {
+            flex: 1;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            text-align: center;
+            position: relative;
+        }
+        .lck-btn:hover {
+            background: #dee2e6;
+        }
+        .lck-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 20;
         }
         .small-channel-btn {
+            display: inline-block;
             padding: 6px 10px;
             background: #e9ecef;
             border-radius: 4px;
-            text-align: center;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
             font-size: 12px;
-            cursor: pointer;
+            text-align: center;
             min-width: 33px;
         }
         .small-channel-btn:hover {
             background: #dee2e6;
         }
-        .toggle-section-btn {
-            margin-left: 10px;
-            padding: 4px 8px;
-            font-size: 12px;
-            background: #28a745;
-            color: white;
+        #player-container {
+            flex-grow: 1;
+            display: grid;
+            gap: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #ffffff;
             border: none;
-            border-radius: 4px;
-            cursor: pointer;
         }
-        .toggle-section-btn:hover {
-            background: #218838;
+        .player-box {
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: none;
+            position: relative;
+        }
+        .player-box.active {
+            border: none;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1;
         }
         button {
             padding: 8px 15px;
@@ -125,30 +168,79 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
             width: 90px;
         }
         button:hover {
             background: #0056b3;
+            transform: translateY(-2px);
+        }
+        h3, h4 {
+            font-size: 14px;
+            margin: 10px 0 5px;
+            color: #495057;
+        }
+        a {
+            display: block;
+            margin: 15px 0;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+            color: #0056b3;
+        }
+        #custom-url-container {
+            margin: 10px 0;
+        }
+        #custom-url-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
         }
         #split-screen-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 5px;
         }
+        /* 토글 스타일 추가 */
+        .toggle-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toggle-header::after {
+            content: '▼';
+            font-size: 12px;
+        }
+        .toggle-header.collapsed::after {
+            content: '▶';
+        }
+        #spotv-channels {
+            display: none; /* 기본적으로 닫힌 상태 */
+        }
+        #spotv-channels.active {
+            display: flex; /* 열릴 때 표시 */
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
         <h3>숙제 채널</h3>
-        <div id="lck-channels" class="channel-section"></div>
+        <div id="lck-channels"></div>
         <h4>스트리머 채널</h4>
-        <div id="chzzk-channels" class="channel-section"></div>
-        <h4>스포티비 채널<button id="spotv-toggle-btn" class="toggle-section-btn">열기</button></h4>
-        <div id="spotv-channels" class="channel-section collapsed"></div>
+        <div id="chzzk-channels"></div>
+        <h4 class="toggle-header" onclick="toggleSpotv()">스포티비 채널</h4>
+        <div id="spotv-channels"></div>
         <h4>야구 채널</h4>
-        <div id="baseball-channels" class="channel-section"></div>
+        <div id="baseball-channels"></div>
         <h4>TV 채널</h4>
-        <div id="tv-channels" class="channel-section"></div>
+        <div id="tv-channels"></div>
         <h3>분할 화면 설정</h3>
         <div id="split-screen-buttons">
             <button onclick="setSplitScreen(1)">1분할</button>
@@ -156,114 +248,334 @@
             <button onclick="setSplitScreen(3)">3분할</button>
             <button onclick="setSplitScreen(4)">4분할</button>
         </div>
+        <div id="custom-url-container">
+            <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
+            <button onclick="playCustomUrl()">실행</button>
+        </div>
+        <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
+        <a href="https://baseball-hls-player-mook.hlsp.workers.dev/" target="_self">파폭용 페이지로 가기</a>
     </div>
     <div id="player-container">
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
     </div>
 
     <script>
+        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
+        const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
+        const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
+        const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
+        
+        const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
+            name: `야${i + 1}`,
+            url: `${baseballBaseUrl}${i + 1}/master.m3u8`
+        }));
+        
         const spotvChannels = Array.from({ length: 40 }, (_, i) => {
             const channelNum = String(i + 1).padStart(2, '0');
-            return { name: `${i + 1}`, url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8` };
+            return {
+                name: `${i + 1}`,
+                url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8`
+            };
         });
+
+        const lckChannels = [
+            { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
+            { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
+            { name: 'K', url: 'https://www.youtube.com/embed/live_stream?channel=UCw1DsweY9b2AKGjV4kGJP1A', type: 'iframe', tooltip: 'youtube' }
+        ];
+
         const chzzkChannels = [
             { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced' },
             { name: '침', id: 'bb382c2c0cc9fa7c86ab3b037fb5799c' },
+            { name: '추', id: '181a3baebe508d3b5fa5d9fe4d6b5241' },
+            { name: '솝', id: '34a2bd4f5988e37693e94306f0bfe57f' },
+            { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181' }
         ];
-        const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
-            name: `야${i + 1}`, url: `https://global-media.sooplive.com/live/soopbaseball${i + 1}/master.m3u8`
-        }));
+
         const tvChannels = [
             { name: 'K1', url: 'https://stream.ogtv3.com/live/live1004.m3u8' },
             { name: 'K2', url: 'https://stream.ogtv3.com/live/live1005.m3u8' },
-        ];
-        const lckChannels = [
-            { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8' },
-            { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8' },
+            { name: 'M', url: 'https://stream.ogtv3.com/live/live1003.m3u8' },
+            { name: 'S', url: 'https://stream.ogtv3.com/live/live1006.m3u8' }
         ];
 
-        const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
-        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
-
-        const spotvChannelList = document.getElementById('spotv-channels');
-        const chzzkChannelList = document.getElementById('chzzk-channels');
         const baseballChannelList = document.getElementById('baseball-channels');
-        const tvChannelList = document.getElementById('tv-channels');
         const lckChannelList = document.getElementById('lck-channels');
+        const chzzkChannelList = document.getElementById('chzzk-channels');
+        const spotvChannelList = document.getElementById('spotv-channels');
+        const tvChannelList = document.getElementById('tv-channels');
         const playerContainer = document.getElementById('player-container');
         const sidebar = document.getElementById('sidebar');
         let playerCount = 1;
         let clickIndex = 0;
 
-        function createChannelButton(channel, container, type = 'm3u8') {
+        // 드롭 이벤트 핸들러 함수
+        function createDropHandler(box) {
+            return (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const textPlain = e.dataTransfer.getData('text/plain');
+                const textHtml = e.dataTransfer.getData('text/html');
+                const textUri = e.dataTransfer.getData('text/uri-list');
+                console.log('Dropped data - text/plain:', textPlain);
+                console.log('Dropped data - text/html:', textHtml);
+                console.log('Dropped data - text/uri-list:', textUri);
+
+                let url = textUri;
+                if (!url && textHtml) {
+                    url = extractM3u8Url(textHtml);
+                }
+                if (!url && textPlain) {
+                    url = extractM3u8Url(textPlain);
+                }
+
+                if (url) {
+                    const finalUrl = processInputUrl(url);
+                    if (finalUrl) {
+                        console.log('Extracted URL:', finalUrl);
+                        loadPlayer(box, finalUrl, 'm3u8');
+                    } else {
+                        console.log('No valid m3u8 or proxy URL found');
+                    }
+                }
+            };
+        }
+
+        // LCK 채널 추가
+        lckChannels.forEach(channel => {
             const btn = document.createElement('div');
-            btn.className = 'small-channel-btn';
+            btn.className = 'lck-btn';
+            btn.draggable = true;
             btn.textContent = channel.name;
-            btn.dataset.url = channel.url || `${chzzkProxyBaseUrl}${channel.id}`;
-            btn.dataset.type = type;
+            btn.dataset.url = channel.url;
+            btn.dataset.type = channel.type;
+            btn.title = channel.tooltip;
+            btn.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', channel.url);
+                e.dataTransfer.setData('text/type', channel.type);
+                console.log(`Dragging LCK ${channel.name} channel:`, channel.url);
+            });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
                 if (playerBoxes.length > 0) {
                     const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
+                    loadPlayer(targetBox, channel.url, channel.type);
                     clickIndex++;
                 }
             });
-            container.appendChild(btn);
-        }
+            lckChannelList.appendChild(btn);
+        });
 
-        function initializeChannels() {
-            console.log('Initializing channels...');
-            spotvChannels.forEach(channel => createChannelButton(channel, spotvChannelList));
-            chzzkChannels.forEach(channel => createChannelButton(channel, chzzkChannelList));
-            baseballChannels.forEach(channel => createChannelButton(channel, baseballChannelList));
-            tvChannels.forEach(channel => createChannelButton(channel, tvChannelList));
-            lckChannels.forEach(channel => createChannelButton(channel, lckChannelList, channel.type));
-        }
+        // 치지직 채널 목록 생성
+        chzzkChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'chzzk-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = `${chzzkProxyBaseUrl}${channel.id}`;
+            btn.dataset.type = 'm3u8';
+            btn.addEventListener('dragstart', (e) => {
+                const url = `${chzzkProxyBaseUrl}${channel.id}`;
+                e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/type', 'm3u8');
+                console.log('Dragging Chzzk channel:', url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, `${chzzkProxyBaseUrl}${channel.id}`, 'm3u8');
+                    clickIndex++;
+                }
+            });
+            chzzkChannelList.appendChild(btn);
+        });
 
-        const spotvToggleBtn = document.getElementById('spotv-toggle-btn');
-        spotvToggleBtn.addEventListener('click', () => {
-            if (spotvChannelList.classList.contains('collapsed')) {
-                spotvChannelList.classList.remove('collapsed');
-                spotvChannelList.classList.add('expanded');
-                spotvToggleBtn.textContent = '닫기';
-            } else {
-                spotvChannelList.classList.remove('expanded');
-                spotvChannelList.classList.add('collapsed');
-                spotvToggleBtn.textContent = '열기';
-            }
+        // SPOTV 채널 목록 생성
+        spotvChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'small-channel-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
+            btn.dataset.type = 'm3u8';
+            btn.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', channel.url);
+                e.dataTransfer.setData('text/type', 'm3u8');
+                console.log('Dragging SPOTV channel:', channel.url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, channel.url, 'm3u8');
+                    clickIndex++;
+                }
+            });
+            spotvChannelList.appendChild(btn);
+        });
+
+        // 야구 채널 목록 생성
+        baseballChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'baseball-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
+            btn.dataset.type = 'm3u8';
+            btn.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', channel.url);
+                e.dataTransfer.setData('text/type', 'm3u8');
+                console.log('Dragging baseball channel:', channel.url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, channel.url, 'm3u8');
+                    clickIndex++;
+                }
+            });
+            baseballChannelList.appendChild(btn);
+        });
+
+        // TV 채널 목록 생성
+        tvChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'tv-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
+            btn.dataset.type = 'm3u8';
+            btn.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', channel.url);
+                e.dataTransfer.setData('text/type', 'm3u8');
+                console.log('Dragging TV channel:', channel.url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, channel.url, 'm3u8');
+                    clickIndex++;
+                }
+            });
+            tvChannelList.appendChild(btn);
         });
 
         function toggleSidebar() {
             sidebar.classList.toggle('collapsed');
+            adjustPlayerLayout();
+        }
+
+        function toggleSpotv() {
+            const spotvChannels = document.getElementById('spotv-channels');
+            const toggleHeader = document.querySelector('.toggle-header');
+            spotvChannels.classList.toggle('active');
+            toggleHeader.classList.toggle('collapsed');
+        }
+
+        function extractM3u8Url(data) {
+            const urlPattern = /(https?:\/\/[^\s]+\.m3u8[^\s]*)/i;
+            const match = data.match(urlPattern);
+            return match ? match[0] : null;
         }
 
         function setSplitScreen(count) {
             playerCount = count;
             clickIndex = 0;
-            playerContainer.innerHTML = '<button id="toggle-btn" onclick="toggleSidebar()">☰</button>';
+            adjustPlayerLayout();
+            const existingToggleBtn = document.getElementById('toggle-btn');
+            playerContainer.innerHTML = '';
+            playerContainer.appendChild(existingToggleBtn);
             for (let i = 0; i < count; i++) {
                 const box = document.createElement('div');
                 box.className = 'player-box';
+                
+                box.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                box.addEventListener('drop', createDropHandler(box));
+                
                 playerContainer.appendChild(box);
             }
-            playerContainer.style.gridTemplateColumns = `repeat(${Math.min(count, 2)}, 1fr)`;
-            playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(count / 2)}, 1fr)`;
+        }
+
+        function adjustPlayerLayout() {
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            playerContainer.style.padding = isCollapsed ? '0' : '10px';
+            playerContainer.style.gap = isCollapsed ? '0' : '0';
+            playerContainer.style.gridTemplateColumns = `repeat(${Math.min(playerCount, 2)}, 1fr)`;
+            playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(playerCount / 2)}, 1fr)`;
+            playerContainer.style.marginLeft = isCollapsed ? '0' : '250px';
         }
 
         function loadPlayer(box, url, type) {
-            while (box.firstChild) box.removeChild(box.firstChild);
+            while (box.firstChild) {
+                box.removeChild(box.firstChild);
+            }
             const iframe = document.createElement('iframe');
-            iframe.src = type === 'm3u8' ? `chrome-extension://${extensionId}/player.html#${url}` : url;
+            if (type === 'm3u8') {
+                iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
+            } else if (type === 'iframe') {
+                iframe.src = url;
+            }
             box.appendChild(iframe);
-            console.log(`Loading player with URL: ${iframe.src}`);
+            
+            box.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+            box.addEventListener('drop', createDropHandler(box));
+            
+            box.className = 'player-box active';
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM fully loaded');
-            initializeChannels();
+        function processInputUrl(input) {
+            if (!input) return null;
+            if (input.includes('.m3u8')) return input;
+            if (input.startsWith(chzzkProxyBaseUrl)) return input;
+            if (/^[0-9a-fA-F]{32}$/.test(input)) {
+                return `${chzzkProxyBaseUrl}${input}`;
+            }
+            return null;
+        }
+
+        function playCustomUrl() {
+            const customUrl = document.getElementById('custom-url-input').value.trim();
+            if (customUrl) {
+                const finalUrl = processInputUrl(customUrl);
+                if (finalUrl) {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        loadPlayer(targetBox, finalUrl, 'm3u8');
+                        clickIndex++;
+                    }
+                } else {
+                    alert('유효한 m3u8 URL, Chzzk 프록시 URL, 또는 32자리 채널 ID를 입력해주세요.');
+                }
+            } else {
+                alert('URL 또는 채널 ID를 입력해주세요.');
+            }
+        }
+
+        window.onload = () => {
             setSplitScreen(1);
-        });
+            const urlParams = new URLSearchParams(window.location.search);
+            const m3u8Url = urlParams.get('url');
+            if (m3u8Url) {
+                console.log('Loading m3u8 from query param:', m3u8Url);
+                const finalUrl = processInputUrl(decodeURIComponent(m3u8Url));
+                if (finalUrl) {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        loadPlayer(playerBoxes[0], finalUrl, 'm3u8');
+                    }
+                }
+            }
+        };
     </script>
 </body>
 </html>
