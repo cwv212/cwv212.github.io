@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>롤캐 모바일용</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="sidebar">
+        <h3>숙제 채널</h3>
+        <div id="lck-channels"></div>
+        <h4>스트리머 채널</h4>
+        <div id="chzzk-channels"></div>
+        <h4>스포티비 채널</h4>
+        <div id="spotv-channels"></div>
+        <h4>야구 채널</h4>
+        <div id="baseball-channels"></div>
+        <h4>TV 채널</h4>
+        <div id="tv-channels"></div>
+    </div>
+    <div class="container">
+        <div class="menu-section" id="menu-section">
+            <button id="hrm-btn" class="menu-button">흐름</button>
+            <button id="youtube-btn" class="menu-button">숙제</button>
+            <button id="spo-btn" class="menu-button">스포</button>
+            <button id="flow-btn" class="menu-button">flow</button>
+            <button id="favorite-btn" class="menu-button">즐찾</button>
+            <button id="refresh-btn" class="menu-button">F5</button>
+            <button id="input-btn" class="menu-button">입력</button>
+        </div>
+        <div class="video-section" id="video-section">
+            <iframe id="video-iframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+        <div class="chat-section">
+            <iframe id="chat-iframe" src="" frameborder="0"></iframe>
+        </div>
+        <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
+    </div>
+
+    <!-- 입력 모달 -->
+    <div id="input-modal" style="display: none;">
+        <div style="display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" id="multiview-checkbox" style="margin-right: 5px;">
+                <label for="multiview-checkbox">멀티뷰 사용</label>
+            </div>
+            <div id="single-url-input-container">
+                <input type="text" id="url-input" class="url-input" placeholder="URL 입력" style="width: 100%; margin-bottom: 10px;" />
+            </div>
+            <div id="multiview-options" style="display: none;">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <label for="multiview-layout-select" style="margin-right: 10px;">분할:</label>
+                    <select id="multiview-layout-select">
+                        <option value="1">1분할</option>
+                        <option value="2">2분할</option>
+                        <option value="3">3분할</option>
+                        <option value="4">4분할</option>
+                    </select>
+                </div>
+                <div id="multiview-url-inputs"></div>
+                <div id="favorite-drag-container">
+                    <p class="favorite-drag-title">즐겨찾기 (드래그하여 입력 필드에 붙여넣기)</p>
+                    <div id="favorite-drag-list"></div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button id="go-btn" class="menu-button" style="flex-grow: 1; margin-right: 5px;">Go</button>
+                <button id="close-btn" class="menu-button" style="background-color: #dc3545; color: white;">닫기</button>
+            </div>
+            <div style="margin-top: 10px; color: #666; font-size: 12px; word-wrap: break-word;">
+                ex) 롤캐직링, 영상주소, m3u8(크롬,웨일,엣지는<a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">플레이어</a>설치)
+            </div>
+        </div>
+    </div>
+
+    <!-- 기존 즐겨찾기 모달 -->
+    <div id="favorite-modal" style="display: none;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <h3>즐겨찾기 목록</h3>
+            <input type="text" id="favorite-name-input" placeholder="이름 입력" class="favorite-input" style="flex: 1;" />
+            <div class="input-row">
+                <input type="text" id="favorite-url-input" placeholder="주소 입력" class="favorite-input" />
+            </div>
+            <button id="add-favorite-btn" class="menu-button">추가</button>
+        </div>
+        <ul id="favorite-list" style="list-style-type: none; padding: 0; width: 100%;"></ul>
+        <div class="button-container">
+            <button id="close-favorite-modal" class="menu-button" style="background-color: #dc3545; color: white;">닫기</button>
+        </div>
+    </div>
+
+    <script>
+        // 채널 데이터 정의
+        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
+        const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
+        const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
+
+        const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
+            name: `야${i + 1}`,
+            url: `${baseballBaseUrl}${i + 1}/master.m3u8`
+        }));
+
+        const spotvChannels = Array.from({ length: 40 }, (_, i) => {
+            const channelNum = String(i + 1).padStart(2, '0');
+            return {
+                name: `${i + 1}`,
+                url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8`
+            };
+        });
+
+        const lckChannels = [
+            { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
+            { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
+            { name: 'K', url: 'https://www.youtube.com/embed/live_stream?channel=UCw1DsweY9b2AKGjV4kGJP1A', type: 'iframe', tooltip: 'youtube' }
+        ];
+
+        const chzzkChannels = [
+            { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced' },
+            { name: '침', id: 'bb382c2c0cc9fa7c86ab3b037fb5799c' },
+            { name: '추', id: '181a3baebe508d3b5fa5d9fe4d6b5241' },
+            { name: '솝', id: '34a2bd4f5988e37693e94306f0bfe57f' },
+            { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181' }
+        ];
+
+        const tvChannels = [
+            { name: 'K1', url: 'https://stream.ogtv3.com/live/live1004.m3u8' },
+            { name: 'K2', url: 'https://stream.ogtv3.com/live/live1005.m3u8' },
+            { name: 'M', url: 'https://stream.ogtv3.com/live/live1003.m3u8' },
+            { name: 'S', url: 'https://stream.ogtv3.com/live/live1006.m3u8' }
+        ];
+
+        // DOM 요소
+        const baseballChannelList = document.getElementById('baseball-channels');
+        const lckChannelList = document.getElementById('lck-channels');
+        const chzzkChannelList = document.getElementById('chzzk-channels');
+        const spotvChannelList = document.getElementById('spotv-channels');
+        const tvChannelList = document.getElementById('tv-channels');
+        const videoIframe = document.getElementById('video-iframe');
+        let clickIndex = 0;
+
+        // 채널 버튼 생성 함수
+        function createChannelButton(channel, className, urlKey, typeKey) {
+            const btn = document.createElement('div');
+            btn.className = className;
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel[urlKey];
+            if (channel.tooltip) btn.title = channel.tooltip;
+            if (typeKey) btn.dataset.type = channel[typeKey];
+            btn.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', channel[urlKey]);
+                if (typeKey) e.dataTransfer.setData('text/type', channel[typeKey]);
+            });
+            btn.addEventListener('click', () => {
+                const url = typeKey === 'id' ? `${chzzkProxyBaseUrl}${channel[urlKey]}` : channel[urlKey];
+                const type = typeKey === 'id' ? 'm3u8' : (channel[typeKey] || 'm3u8');
+                loadPlayer(url, type);
+                clickIndex++;
+            });
+            return btn;
+        }
+
+        // 채널 목록 생성
+        lckChannels.forEach(channel => lckChannelList.appendChild(createChannelButton(channel, 'lck-btn', 'url', 'type')));
+        chzzkChannels.forEach(channel => chzzkChannelList.appendChild(createChannelButton(channel, 'chzzk-btn', 'id')));
+        spotvChannels.forEach(channel => spotvChannelList.appendChild(createChannelButton(channel, 'small-channel-btn', 'url')));
+        baseballChannels.forEach(channel => baseballChannelList.appendChild(createChannelButton(channel, 'baseball-btn', 'url')));
+        tvChannels.forEach(channel => tvChannelList.appendChild(createChannelButton(channel, 'tv-btn', 'url')));
+
+        // 플레이어 로드 함수
+        function loadPlayer(url, type) {
+            if (type === 'm3u8') {
+                videoIframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
+            } else {
+                videoIframe.src = url;
+            }
+        }
+
+        // 기존 레이아웃 함수
+        function getVideoarea(w, h, wr, hr) {
+            h = h - 25;
+            if (w <= 0 || h <= 0) return 0;
+            return (w * hr > h * wr) ? h * h * wr / hr : w * w * hr / wr;
+        }
+
+        function getUtility(x, n) {
+            return x / (x + n);
+        }
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function (...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        function adjustChatSectionHeight() {
+            const menuSection = document.getElementById('menu-section');
+            const chatSection = document.querySelector('.chat-section');
+            if (chatSection && menuSection) {
+                chatSection.style.height = `calc(100% - ${menuSection.offsetHeight}px)`;
+            }
+        }
+
+        function design() {
+            var win = window;
+            var doc = document;
+            var docElem = doc.documentElement;
+            var body = doc.getElementsByTagName('body')[0];
+            var w = win.innerWidth || docElem.clientWidth || body.clientWidth;
+            var h = win.innerHeight || docElem.clientHeight || body.clientHeight;
+
+            var minChatHeight = h * 0.4;
+            var maxVideoHeight = h - minChatHeight - 50;
+            var standardHeight = w * 9 / 16 + 25;
+            var hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
+
+            var wg = getUtility(getVideoarea(w - 320, h, 16, 9), 192 * 108 * 10) + getUtility(240 * h, 24 * 20 * 10);
+            var hg = getUtility(getVideoarea(w, hgh, 16, 9), 192 * 108 * 10) + getUtility((w > 240 ? 240 : w) * (h - hgh), 24 * 20 * 10);
+
+            const sidebar = document.getElementById('sidebar');
+            const menuSection = document.getElementById('menu-section');
+            const videoSection = document.getElementById('video-section');
+            const chatSection = document.querySelector('.chat-section');
+            const container = document.querySelector('.container');
+
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            container.style.marginLeft = isCollapsed ? '0' : '250px';
+
+            if (hg > wg) {
+                // 모바일: 상하 레이아웃
+                menuSection.style.position = "relative";
+                menuSection.style.width = "100%";
+                menuSection.style.height = "auto";
+                menuSection.style.display = "flex";
+                menuSection.style.justifyContent = "space-around";
+                menuSection.style.padding = "10px 0";
+
+                videoSection.style.width = "100%";
+                videoSection.style.height = (350 + hgh) + "px";
+                videoSection.style.position = "relative";
+
+                chatSection.style.width = "100%";
+                chatSection.style.height = (h - hgh - 350) + "px";
+                chatSection.style.position = "relative";
+            } else {
+                // PC: 좌우 레이아웃
+                const pcContainer = document.createElement('div');
+                pcContainer.style.display = 'flex';
+                pcContainer.style.height = '100%';
+                pcContainer.style.width = '100%';
+
+                const rightContainer = document.createElement('div');
+                rightContainer.style.width = '17.5%';
+                rightContainer.style.minWidth = '320px';
+                rightContainer.style.height = '100%';
+                rightContainer.style.float = 'right';
+
+                menuSection.style.position = "relative";
+                menuSection.style.width = "100%";
+                menuSection.style.height = "auto";
+                menuSection.style.display = "flex";
+                menuSection.style.flexDirection = "row";
+                menuSection.style.justifyContent = "space-around";
+                menuSection.style.padding = "10px";
+
+                chatSection.style.width = "100%";
+                chatSection.style.height = "calc(100% - " + menuSection.offsetHeight + "px)";
+                chatSection.style.position = "relative";
+
+                rightContainer.appendChild(menuSection);
+                rightContainer.appendChild(chatSection);
+                pcContainer.appendChild(videoSection);
+                pcContainer.appendChild(rightContainer);
+
+                container.innerHTML = '';
+                container.appendChild(pcContainer);
+
+                videoSection.style.width = "82.5%";
+                videoSection.style.height = "100%";
+                videoSection.style.position = "relative";
+                videoSection.style.float = "left";
+            }
+            adjustChatSectionHeight();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            design();
+        }
+
+        window.onload = function () {
+            const chatIframe = document.getElementById('chat-iframe');
+            const lgicurl = 'https://insagirl-toto.appspot.com/chatting/lgic/';
+            if (location.hash && location.hash.substring(1)) {
+                chatIframe.src = lgicurl + '#' + decodeURIComponent(location.hash.substring(1));
+            } else {
+                chatIframe.src = lgicurl;
+            }
+            design();
+            window.addEventListener('resize', debounce(design, 100));
+        };
+
+        const hrmBtn = document.getElementById('hrm-btn');
+        hrmBtn.addEventListener('click', () => {
+            const url = 'https://insagirl-toto.appspot.com/hrm/?where=1';
+            window.open(url, '_blank');
+        });
+
+        const refreshBtn = document.getElementById('refresh-btn');
+        refreshBtn.addEventListener('click', () => {
+            const chatIframe = document.getElementById('chat-iframe');
+            if (chatIframe) {
+                const baseUrl = 'https://insagirl-toto.appspot.com/chatting/lgic/';
+                const hashPart = window.location.hash ? '#' + decodeURIComponent(window.location.hash.substring(1)) : '';
+                chatIframe.src = baseUrl + '?cache=' + Math.random() + hashPart;
+            }
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>
