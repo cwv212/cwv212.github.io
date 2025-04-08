@@ -206,6 +206,7 @@
     </div>
 
     <script>
+        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
@@ -274,7 +275,7 @@
             const h = window.innerHeight;
             const isCollapsed = sidebar.classList.contains('collapsed');
 
-            const minChatHeight = h * 0.4;
+            const minChatHeight = h * 0.5;
             const maxVideoHeight = h - minChatHeight - 50;
             const standardHeight = w * 9 / 16 + 25;
             const hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
@@ -301,12 +302,12 @@
                 toggleBtn.style.left = "10px";
 
                 playerContainer.style.width = "100%";
-                playerContainer.style.height = isCollapsed ? `${h * 0.5}px` : `${hgh}px`;
+                playerContainer.style.height = isCollapsed ? `${h * 0.4}px` : `${hgh}px`;
                 playerContainer.style.position = "relative";
                 playerContainer.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
 
                 chatSection.style.width = "100%";
-                chatSection.style.height = isCollapsed ? `${h * 0.5}px` : `${h - hgh - sidebar.offsetHeight}px`;
+                chatSection.style.height = isCollapsed ? `${h * 0.6}px` : `${h - hgh - sidebar.offsetHeight}px`;
                 chatSection.style.position = "relative";
                 chatSection.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
             } else {
@@ -517,7 +518,12 @@
         function loadPlayer(box, url, type) {
             while (box.firstChild) box.removeChild(box.firstChild);
             const iframe = document.createElement('iframe');
-            iframe.src = type === 'm3u8' ? `${hlsPlayerBaseUrl}${encodeURIComponent(url)}` : url;
+            // 야구 채널인지 확인 (URL에 'soopbaseball' 포함)
+            if (type === 'm3u8' && url.includes('soopbaseball')) {
+                iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
+            } else {
+                iframe.src = type === 'm3u8' ? `${hlsPlayerBaseUrl}${encodeURIComponent(url)}` : url;
+            }
             box.appendChild(iframe);
             box.className = 'player-box active';
         }
