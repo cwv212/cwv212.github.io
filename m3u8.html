@@ -207,7 +207,6 @@
             grid-template-columns: 1fr 1fr;
             gap: 5px;
         }
-        /* 토글 스타일 추가 */
         .toggle-header {
             cursor: pointer;
             display: flex;
@@ -222,10 +221,10 @@
             content: '▶';
         }
         #spotv-channels {
-            display: none; /* 기본적으로 닫힌 상태 */
+            display: none;
         }
         #spotv-channels.active {
-            display: flex; /* 열릴 때 표시 */
+            display: flex;
         }
     </style>
 </head>
@@ -309,6 +308,55 @@
         let playerCount = 1;
         let clickIndex = 0;
 
+        // URL 변환 함수
+        function transformUrl(url) {
+            if (!url) return null;
+
+            // 치지직 채널 ID 감지 (32자리 16진수 문자열)
+            const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
+            if (chzzkChannelIdPattern.test(url)) {
+                return `${chzzkProxyBaseUrl}${url}`;
+            }
+
+            // m3u8 URL 처리
+            if (url.includes('.m3u8')) {
+                return url; // m3u8 URL은 그대로 반환
+            }
+
+            // 단축 URL 및 기타 플랫폼 URL 처리
+            const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
+            if (url === 'https://play.sooplive.co.kr/aflol/281494910/embed') {
+                return url;
+            }
+            if (isShortForm) {
+                const [platform, channelId] = url.split('/');
+                switch (platform) {
+                    case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
+                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=cwv212.github.io`;
+                    case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
+                    case 'kick': return `https://player.kick.com/${channelId}`;
+                    case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
+                    default: return null;
+                }
+            }
+            if (!url.startsWith('http')) { return null; }
+            if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
+            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=cwv212.github.io`;
+            if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
+            if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
+            if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/').pop()}/embed`;
+            if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
+                const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            }
+            if (url.startsWith('https://twitch.tv/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=cwv212.github.io`;
+            if (url.startsWith('https://chzzk.naver.com/live/') || url.startsWith('https://chzzk.naver.com/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
+            if (url.startsWith('https://kick.com/')) return `https://player.kick.com/${url.split('/').pop()}`;
+            if (url.startsWith('https://play.sooplive.co.kr/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
+            if (url.startsWith('https://')) return url;
+            return null;
+        }
+
         // 드롭 이벤트 핸들러 함수
         function createDropHandler(box) {
             return (e) => {
@@ -317,25 +365,20 @@
                 const textPlain = e.dataTransfer.getData('text/plain');
                 const textHtml = e.dataTransfer.getData('text/html');
                 const textUri = e.dataTransfer.getData('text/uri-list');
-                console.log('Dropped data - text/plain:', textPlain);
-                console.log('Dropped data - text/html:', textHtml);
-                console.log('Dropped data - text/uri-list:', textUri);
 
                 let url = textUri;
                 if (!url && textHtml) {
-                    url = extractM3u8Url(textHtml);
+                    url = extractM3u8Url(textHtml) || transformUrl(textHtml);
                 }
                 if (!url && textPlain) {
-                    url = extractM3u8Url(textPlain);
+                    url = extractM3u8Url(textPlain) || transformUrl(textPlain);
                 }
 
                 if (url) {
-                    const finalUrl = processInputUrl(url);
+                    const finalUrl = transformUrl(url);
                     if (finalUrl) {
-                        console.log('Extracted URL:', finalUrl);
-                        loadPlayer(box, finalUrl, 'm3u8');
-                    } else {
-                        console.log('No valid m3u8 or proxy URL found');
+                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(box, finalUrl, type);
                     }
                 }
             };
@@ -353,7 +396,6 @@
             btn.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', channel.url);
                 e.dataTransfer.setData('text/type', channel.type);
-                console.log(`Dragging LCK ${channel.name} channel:`, channel.url);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
@@ -378,7 +420,6 @@
                 const url = `${chzzkProxyBaseUrl}${channel.id}`;
                 e.dataTransfer.setData('text/plain', url);
                 e.dataTransfer.setData('text/type', 'm3u8');
-                console.log('Dragging Chzzk channel:', url);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
@@ -402,7 +443,6 @@
             btn.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', channel.url);
                 e.dataTransfer.setData('text/type', 'm3u8');
-                console.log('Dragging SPOTV channel:', channel.url);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
@@ -426,7 +466,6 @@
             btn.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', channel.url);
                 e.dataTransfer.setData('text/type', 'm3u8');
-                console.log('Dragging baseball channel:', channel.url);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
@@ -450,7 +489,6 @@
             btn.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', channel.url);
                 e.dataTransfer.setData('text/type', 'm3u8');
-                console.log('Dragging TV channel:', channel.url);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
@@ -516,9 +554,9 @@
                 box.removeChild(box.firstChild);
             }
             const iframe = document.createElement('iframe');
-            if (type === 'm3u8') {
+            if (type === 'm3u8' || url.includes('.m3u8')) {
                 iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
-            } else if (type === 'iframe') {
+            } else {
                 iframe.src = url;
             }
             box.appendChild(iframe);
@@ -532,29 +570,20 @@
             box.className = 'player-box active';
         }
 
-        function processInputUrl(input) {
-            if (!input) return null;
-            if (input.includes('.m3u8')) return input;
-            if (input.startsWith(chzzkProxyBaseUrl)) return input;
-            if (/^[0-9a-fA-F]{32}$/.test(input)) {
-                return `${chzzkProxyBaseUrl}${input}`;
-            }
-            return null;
-        }
-
         function playCustomUrl() {
             const customUrl = document.getElementById('custom-url-input').value.trim();
             if (customUrl) {
-                const finalUrl = processInputUrl(customUrl);
+                const finalUrl = transformUrl(customUrl);
                 if (finalUrl) {
                     const playerBoxes = playerContainer.querySelectorAll('.player-box');
                     if (playerBoxes.length > 0) {
                         const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, finalUrl, 'm3u8');
+                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(targetBox, finalUrl, type);
                         clickIndex++;
                     }
                 } else {
-                    alert('유효한 m3u8 URL, Chzzk 프록시 URL, 또는 32자리 채널 ID를 입력해주세요.');
+                    alert('유효한 URL 또는 채널 ID를 입력해주세요.');
                 }
             } else {
                 alert('URL 또는 채널 ID를 입력해주세요.');
@@ -566,12 +595,12 @@
             const urlParams = new URLSearchParams(window.location.search);
             const m3u8Url = urlParams.get('url');
             if (m3u8Url) {
-                console.log('Loading m3u8 from query param:', m3u8Url);
-                const finalUrl = processInputUrl(decodeURIComponent(m3u8Url));
+                const finalUrl = transformUrl(decodeURIComponent(m3u8Url));
                 if (finalUrl) {
                     const playerBoxes = playerContainer.querySelectorAll('.player-box');
                     if (playerBoxes.length > 0) {
-                        loadPlayer(playerBoxes[0], finalUrl, 'm3u8');
+                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(playerBoxes[0], finalUrl, type);
                     }
                 }
             }
