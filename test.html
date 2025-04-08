@@ -61,8 +61,9 @@
             background: #ffffff;
             display: grid;
             gap: 0;
-            flex-grow: 1;
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1; /* 사이드바 아래로 */
         }
         .player-box {
             background: #f0f2f5;
@@ -79,6 +80,8 @@
             box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
             overflow: auto;
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1; /* 사이드바 아래로 */
         }
         #chat-iframe { height: 100%; }
         #baseball-channels, #chzzk-channels, #tv-channels, #lck-channels {
@@ -202,6 +205,8 @@
             }
             #player-container {
                 width: calc(100% - 540px); /* 220px sidebar + 320px chat */
+                height: 100vh;
+                margin-top: 0;
             }
             #sidebar.collapsed ~ #player-container {
                 width: calc(100% - 320px);
@@ -209,6 +214,7 @@
             #chat-section {
                 width: 320px;
                 height: 100vh;
+                margin-top: 0;
             }
             #toggle-btn {
                 left: 205px;
@@ -222,18 +228,22 @@
         @media (max-width: 767px) {
             #player-container {
                 width: 100%;
-                height: 40vh; /* 모바일 기본 플레이어 높이 */
+                height: 40%; /* 기본 높이 비율 */
                 margin-top: 0;
             }
             #sidebar:not(.collapsed) ~ #player-container {
-                margin-top: 150px; /* 사이드바 높이에 따라 조정 */
+                margin-top: calc(150px); /* 사이드바 높이에 맞춤 */
             }
             #chat-section {
                 width: 100%;
-                height: calc(60vh - 150px); /* 남은 공간 */
+                height: calc(60% - 150px); /* 남은 공간 */
             }
             #sidebar:not(.collapsed) ~ #chat-section {
-                margin-top: 150px; /* 사이드바 높이에 맞춤 */
+                height: calc(60% - 150px);
+                margin-top: calc(150px + 40%);
+            }
+            #sidebar.collapsed ~ #chat-section {
+                margin-top: 40%; /* 플레이어 높이에 맞춤 */
             }
             #toggle-btn {
                 left: 10px;
@@ -331,10 +341,20 @@
             if (w >= 768) { // 데스크톱
                 playerContainer.style.marginTop = '0';
                 chatSection.style.marginTop = '0';
+                playerContainer.style.height = '100vh';
+                chatSection.style.height = '100vh';
             } else { // 모바일
-                playerContainer.style.height = isCollapsed ? '40vh' : `calc(40vh - ${sidebarHeight}px)`;
-                chatSection.style.height = isCollapsed ? '60vh' : `calc(60vh - ${sidebarHeight}px)`;
-                chatSection.style.marginTop = isCollapsed ? '40vh' : `${sidebarHeight + 40}px`;
+                if (isCollapsed) {
+                    playerContainer.style.height = '40%';
+                    playerContainer.style.marginTop = '0';
+                    chatSection.style.height = '60%';
+                    chatSection.style.marginTop = '40%';
+                } else {
+                    playerContainer.style.height = `calc(40% - ${sidebarHeight}px)`;
+                    playerContainer.style.marginTop = `${sidebarHeight}px`;
+                    chatSection.style.height = `calc(60% - ${sidebarHeight}px)`;
+                    chatSection.style.marginTop = `calc(${sidebarHeight}px + 40%)`;
+                }
             }
             adjustPlayerLayout();
         }
@@ -526,7 +546,7 @@
                 const [platform, channelId] = url.split('/');
                 switch (platform) {
                     case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
-                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=mobile.hlsp.workers.dev`;
+                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=mobile.hlsp.workers.dev`;
                     case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
                     case 'kick': return `https://player.kick.com/${channelId}`;
                     case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
@@ -534,11 +554,11 @@
                 }
             }
             if (url.startsWith('https://twitch.tv/')) {
-                return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=mobile.hlsp.workers.dev`;
+                return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=mobile.hlsp.workers.dev`;
             }
             if (!url.startsWith('http')) { return null; }
             if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=mobile.hlsp.workers.dev`;
+            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=mobile.hlsp.workers.dev`;
             if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/').pop()}/embed`;
