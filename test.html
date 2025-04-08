@@ -87,8 +87,12 @@
             box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
+            overflow: auto; /* 스크롤 추가 */
         }
-        #chat-iframe { flex-grow: 1; }
+        #chat-iframe {
+            flex-grow: 1;
+            min-height: 0; /* 잘리지 않도록 */
+        }
         #baseball-channels, #chzzk-channels, #tv-channels, #lck-channels {
             display: flex;
             flex-wrap: wrap;
@@ -96,13 +100,13 @@
             margin: 5px 0;
         }
         #spotv-channels {
-            display: none; /* 스포티비만 기본적으로 닫힌 상태 */
+            display: none;
             flex-wrap: wrap;
             gap: 5px;
             margin: 5px 0;
         }
         #spotv-channels.active {
-            display: flex; /* 열릴 때 표시 */
+            display: flex;
         }
         #lck-channels {
             display: flex;
@@ -181,7 +185,6 @@
             grid-template-columns: 1fr 1fr;
             gap: 5px;
         }
-        /* 토글 스타일 추가 - 스포티비에만 적용 */
         .toggle-header {
             cursor: pointer;
             display: flex;
@@ -196,7 +199,6 @@
             content: '▶';
         }
         @media (max-width: 768px) {
-            /* 모바일에서 상하 레이아웃으로 변경 */
             #main-container {
                 flex-direction: column;
                 margin-left: 0;
@@ -219,12 +221,17 @@
             }
             #player-container {
                 width: 100%;
-                height: 50%; /* 모바일에서 영상 높이 비율 */
+                height: 60%;
             }
             #chat-section {
                 width: 100%;
-                height: 45%; /* 모바일에서 채팅 높이 비율 */
-                min-width: unset; /* 모바일에서는 최소 너비 제거 */
+                height: 40%;
+                min-width: unset;
+                overflow: auto; /* 모바일에서 스크롤 가능 */
+            }
+            #chat-iframe {
+                width: 100%;
+                height: 100%;
             }
         }
     </style>
@@ -521,8 +528,10 @@
             chatIframe.src = baseUrl + '?cache=' + Math.random() + hashPart;
         });
 
+        window.addEventListener('resize', adjustChatHeight);
         window.onload = () => {
             setSplitScreen(1);
+            adjustChatHeight();
             const urlParams = new URLSearchParams(window.location.search);
             const m3u8Url = urlParams.get('url');
             if (m3u8Url) {
@@ -533,6 +542,18 @@
                 }
             }
         };
+
+        function adjustChatHeight() {
+            const chatSection = document.getElementById('chat-section');
+            const chatIframe = document.getElementById('chat-iframe');
+            if (window.innerWidth <= 768) {
+                chatSection.style.height = '40%';
+                chatIframe.style.height = '100%';
+            } else {
+                chatSection.style.height = '100%';
+                chatIframe.style.height = '100%';
+            }
+        }
     </script>
 </body>
 </html>
