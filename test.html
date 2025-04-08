@@ -34,21 +34,21 @@
             position: fixed;
             top: 10px;
             left: 205px;
-            width: 30px; /* 버튼 크기를 명시적으로 정사각형으로 설정 */
+            width: 30px;
             height: 30px;
             background: #007bff;
             border: none;
-            border-radius: 50%; /* 완벽한 원형 보장 */
+            border-radius: 50%;
             cursor: pointer;
             color: white;
             transition: left 0.3s ease, background 0.3s;
             z-index: 11;
-            display: flex; /* Flexbox로 중앙 정렬 */
+            display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px; /* 아이콘 크기 조정 */
-            padding: 0; /* 불필요한 패딩 제거 */
-            line-height: normal; /* 기본 라인 높이 제거 */
+            font-size: 16px;
+            padding: 0;
+            line-height: normal;
             text-align: center;
         }
         #sidebar.collapsed + #main-container #toggle-btn { left: 10px; }
@@ -90,10 +90,13 @@
         }
         #chat-iframe { flex-grow: 1; }
         #baseball-channels, #chzzk-channels, #spotv-channels, #tv-channels, #lck-channels {
-            display: flex;
+            display: none; /* 기본적으로 닫힌 상태로 변경 */
             flex-wrap: wrap;
             gap: 5px;
             margin: 5px 0;
+        }
+        #baseball-channels.active, #chzzk-channels.active, #spotv-channels.active, #tv-channels.active, #lck-channels.active {
+            display: flex; /* 열릴 때 표시 */
         }
         .baseball-btn, .chzzk-btn, .tv-btn, .lck-btn, .small-channel-btn {
             padding: 6px;
@@ -138,6 +141,20 @@
             grid-template-columns: 1fr 1fr;
             gap: 5px;
         }
+        /* 토글 스타일 추가 */
+        .toggle-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toggle-header::after {
+            content: '▼';
+            font-size: 12px;
+        }
+        .toggle-header.collapsed::after {
+            content: '▶';
+        }
         @media (max-width: 768px) {
             #main-container { flex-direction: column; margin-left: 0; }
             #sidebar { width: 100%; height: auto; position: relative; }
@@ -150,15 +167,15 @@
 </head>
 <body>
     <div id="sidebar">
-        <h3>숙제 채널</h3>
+        <h3 class="toggle-header" onclick="toggleChannel('lck-channels')">숙제 채널</h3> <!-- 토글 헤더 추가 -->
         <div id="lck-channels"></div>
-        <h4>스트리머 채널</h4>
+        <h4 class="toggle-header" onclick="toggleChannel('chzzk-channels')">스트리머 채널</h4> <!-- 토글 헤더 추가 -->
         <div id="chzzk-channels"></div>
-        <h4>스포티비 채널</h4>
+        <h4 class="toggle-header" onclick="toggleChannel('spotv-channels')">스포티비 채널</h4>
         <div id="spotv-channels"></div>
-        <h4>야구 채널</h4>
+        <h4 class="toggle-header" onclick="toggleChannel('baseball-channels')">야구 채널</h4> <!-- 토글 헤더 추가 -->
         <div id="baseball-channels"></div>
-        <h4>TV 채널</h4>
+        <h4 class="toggle-header" onclick="toggleChannel('tv-channels')">TV 채널</h4> <!-- 토글 헤더 추가 -->
         <div id="tv-channels"></div>
         <h3>분할 화면 설정</h3>
         <div id="split-screen-buttons">
@@ -204,7 +221,7 @@
             { name: 'K', url: 'https://www.youtube.com/embed/live_stream?channel=UCw1DsweY9b2AKGjV4kGJP1A', type: 'iframe', tooltip: 'youtube' }
         ];
         const chzzkChannels = [
-            { name: '플로', url: 'https://insagirl.github.io/syncwatchdemo/syncwatch2.html', type: 'iframe' },
+            { name: '플로우', url: 'https://insagirl.github.io/syncwatchdemo/syncwatch2.html', type: 'iframe' },
             { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced' },
             { name: '침', id: 'bb382c2c0cc9fa7c86ab3b037fb5799c' },
             { name: '추', id: '181a3baebe508d3b5fa5d9fe4d6b5241' },
@@ -365,6 +382,14 @@
         function toggleSidebar() {
             sidebar.classList.toggle('collapsed');
             adjustPlayerLayout();
+        }
+
+        // 새로운 토글 함수 추가
+        function toggleChannel(channelId) {
+            const channelList = document.getElementById(channelId);
+            const toggleHeader = channelList.previousElementSibling;
+            channelList.classList.toggle('active');
+            toggleHeader.classList.toggle('collapsed');
         }
 
         function setSplitScreen(count) {
