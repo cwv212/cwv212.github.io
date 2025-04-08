@@ -5,12 +5,237 @@
     <title>m3u8 플레이어</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* 기존 스타일 유지 */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background: #f4f7fa;
+            color: #333;
+        }
+        #sidebar {
+            width: 220px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            transition: transform 0.3s ease;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 10;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+        #sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        #toggle-btn {
+            position: fixed;
+            top: 10px;
+            left: 205px;
+            width: 20px;
+            height: 20px;
+            background: #007bff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            transition: left 0.3s ease, background 0.3s;
+            padding: 0;
+            z-index: 11;
+            line-height: 20px;
+            text-align: center;
+        }
+        #sidebar.collapsed + #player-container #toggle-btn {
+            left: 10px;
+        }
+        #toggle-btn:hover {
+            background: #0056b3;
+        }
+        #baseball-channels, #chzzk-channels, #spotv-channels, #tv-channels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .baseball-btn, .chzzk-btn, .tv-btn {
+            flex: 1;
+            padding: 6px 0;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px;
+            max-width: 33px;
+        }
+        .baseball-btn:hover, .chzzk-btn:hover, .tv-btn:hover {
+            background: #dee2e6;
+        }
+        #lck-channels {
+            display: flex;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .lck-btn {
+            flex: 1;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            text-align: center;
+            position: relative;
+        }
+        .lck-btn:hover {
+            background: #dee2e6;
+        }
+        .lck-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 20;
+        }
+        .small-channel-btn {
+            display: inline-block;
+            padding: 6px 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px;
+        }
+        .small-channel-btn:hover {
+            background: #dee2e6;
+        }
+        #player-container {
+            flex-grow: 1;
+            display: grid;
+            gap: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #ffffff;
+            border: none;
+        }
+        .player-box {
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: none;
+            position: relative;
+        }
+        .player-box.active {
+            border: none;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 5px 5px 5px 0; /* 오른쪽 마진 추가로 간격 조정 */
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            width: 90px; /* 고정 폭으로 버튼 크기 통일 */
+        }
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        h3, h4 {
+            font-size: 14px;
+            margin: 10px 0 5px;
+            color: #495057;
+        }
+        a {
+            display: block;
+            margin: 15px 0;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+            color: #0056b3;
+        }
+        #custom-url-container {
+            margin: 10px 0;
+        }
+        #custom-url-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #split-screen-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2열로 배치 */
+            gap: 5px;
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
-        <!-- 기존 사이드바 내용 유지 -->
+        <h3>숙제 채널</h3>
+        <div id="lck-channels"></div>
+        <h4>스트리머 채널</h4>
+        <div id="chzzk-channels"></div>
+        <h4>스포티비 채널</h4>
+        <div id="spotv-channels"></div>
+        <h4>야구 채널</h4>
+        <div id="baseball-channels"></div>
+        <h4>TV 채널</h4>
+        <div id="tv-channels"></div>
+        <h3>분할 화면 설정</h3>
+        <div id="split-screen-buttons">
+            <button onclick="setSplitScreen(1)">1분할</button>
+            <button onclick="setSplitScreen(2)">2분할</button>
+            <button onclick="setSplitScreen(3)">3분할</button>
+            <button onclick="setSplitScreen(4)">4분할</button>
+        </div>
+        <div id="custom-url-container">
+            <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
+            <button onclick="playCustomUrl()">실행</button>
+        </div>
+        <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
+        <a href="https://baseball-hls-player-mook.hlsp.workers.dev/" target="_self">파폭용 페이지로 가기</a>
     </div>
     <div id="player-container">
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
