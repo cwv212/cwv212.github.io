@@ -20,27 +20,28 @@
             height: 100vh;
             width: 100%;
             display: flex;
-            transition: all 0.3s ease; /* 부드러운 전환 */
+            flex-direction: column; /* 모바일 기본 레이아웃 */
+            transition: all 0.3s ease;
         }
         #sidebar {
             background: rgba(255, 255, 255, 0.95);
-            width: 220px;
-            height: 100%;
-            padding: 15px;
-            position: absolute;
-            top: 0;
-            left: 0;
             z-index: 10;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
             transition: transform 0.3s ease; /* 슬라이드 애니메이션 */
+            position: fixed;
+            width: 100%;
+            height: auto;
+            top: 0;
+            left: 0;
+            transform: translateY(0);
         }
         #sidebar.collapsed {
-            transform: translateX(-100%); /* 왼쪽으로 숨김 */
+            transform: translateY(-100%); /* 모바일에서 위로 슬라이드 */
         }
         #toggle-btn {
             position: fixed;
             top: 10px;
-            left: 205px; /* 기본 위치 */
             width: 30px;
             height: 30px;
             background: #007bff;
@@ -55,17 +56,13 @@
             justify-content: center;
             font-size: 16px;
         }
-        #sidebar.collapsed + #player-container #toggle-btn {
-            left: 10px; /* 사이드바 닫힐 때 버튼 이동 */
-        }
         #toggle-btn:hover { background: #0056b3; }
         #player-container {
-            flex-grow: 1;
             background: #ffffff;
             display: grid;
             gap: 0;
-            height: 100vh;
-            transition: all 0.3s ease; /* 부드러운 전환 */
+            flex-grow: 1;
+            transition: all 0.3s ease;
         }
         .player-box {
             background: #f0f2f5;
@@ -78,12 +75,10 @@
         }
         iframe { width: 100%; height: 100%; border: none; }
         #chat-section {
-            width: 320px;
             background: #fff;
             box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
             overflow: auto;
-            height: 100vh;
-            transition: all 0.3s ease; /* 부드러운 전환 */
+            transition: all 0.3s ease;
         }
         #chat-iframe { height: 100%; }
         #baseball-channels, #chzzk-channels, #tv-channels, #lck-channels {
@@ -160,7 +155,11 @@
         h3, h4 { font-size: 16px; margin: 10px 0 5px; color: #495057; }
         a { display: block; margin: 15px 0; color: #007bff; text-decoration: none; }
         a:hover { text-decoration: underline; color: #0056b3; }
-        #custom-url-container { margin: 10px 0; }
+        #custom-url-container {
+            margin: 10px 0;
+            position: relative;
+            z-index: 12; /* 키보드 위에 표시되도록 */
+        }
         #custom-url-input {
             width: 100%;
             padding: 8px;
@@ -186,6 +185,59 @@
         }
         .toggle-header.collapsed::after {
             content: '▶';
+        }
+
+        /* 데스크톱 레이아웃 */
+        @media (min-width: 768px) {
+            #main-container {
+                flex-direction: row;
+            }
+            #sidebar {
+                width: 220px;
+                height: 100%;
+                transform: translateX(0); /* PC에서 왼쪽 슬라이드 */
+            }
+            #sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+            #player-container {
+                width: calc(100% - 540px); /* 220px sidebar + 320px chat */
+            }
+            #sidebar.collapsed ~ #player-container {
+                width: calc(100% - 320px);
+            }
+            #chat-section {
+                width: 320px;
+                height: 100vh;
+            }
+            #toggle-btn {
+                left: 205px;
+            }
+            #sidebar.collapsed ~ #player-container #toggle-btn {
+                left: 10px;
+            }
+        }
+
+        /* 모바일 레이아웃 */
+        @media (max-width: 767px) {
+            #player-container {
+                width: 100%;
+                height: 40vh; /* 모바일 기본 플레이어 높이 */
+                margin-top: 0;
+            }
+            #sidebar:not(.collapsed) ~ #player-container {
+                margin-top: 150px; /* 사이드바 높이에 따라 조정 */
+            }
+            #chat-section {
+                width: 100%;
+                height: calc(60vh - 150px); /* 남은 공간 */
+            }
+            #sidebar:not(.collapsed) ~ #chat-section {
+                margin-top: 150px; /* 사이드바 높이에 맞춤 */
+            }
+            #toggle-btn {
+                left: 10px;
+            }
         }
     </style>
 </head>
@@ -228,10 +280,9 @@
     <script>
         const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
-        const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
         const hlsPlayerBaseUrl = 'https://www.hlsplayer.org/play?url=';
-        
+
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
             name: `야${i + 1}`,
             url: `${baseballBaseUrl}${i + 1}/master.m3u8`
@@ -275,21 +326,15 @@
             const w = window.innerWidth;
             const h = window.innerHeight;
             const isCollapsed = sidebar.classList.contains('collapsed');
+            const sidebarHeight = sidebar.offsetHeight;
 
-            if (w > 768) { // 데스크톱 레이아웃
-                playerContainer.style.marginLeft = isCollapsed ? '0' : '220px';
-                playerContainer.style.width = isCollapsed ? 'calc(100% - 320px)' : 'calc(100% - 540px)';
-                chatSection.style.width = '320px';
-            } else { // 모바일 레이아웃
-                const sidebarHeight = sidebar.offsetHeight;
-                playerContainer.style.marginLeft = '0';
-                playerContainer.style.width = '100%';
-                playerContainer.style.height = isCollapsed ? `${h * 0.4}px` : `${h * 0.4}px`; // 고정 높이로 조정 가능
-                chatSection.style.width = '100%';
-                chatSection.style.height = isCollapsed ? `${h * 0.6}px` : `${h - sidebarHeight - playerContainer.offsetHeight}px`;
-                chatSection.style.position = 'absolute';
-                chatSection.style.top = isCollapsed ? `${playerContainer.offsetHeight}px` : `${sidebarHeight + playerContainer.offsetHeight}px`;
-                sidebar.style.top = isCollapsed ? `-${sidebarHeight}px` : '0';
+            if (w >= 768) { // 데스크톱
+                playerContainer.style.marginTop = '0';
+                chatSection.style.marginTop = '0';
+            } else { // 모바일
+                playerContainer.style.height = isCollapsed ? '40vh' : `calc(40vh - ${sidebarHeight}px)`;
+                chatSection.style.height = isCollapsed ? '60vh' : `calc(60vh - ${sidebarHeight}px)`;
+                chatSection.style.marginTop = isCollapsed ? '40vh' : `${sidebarHeight + 40}px`;
             }
             adjustPlayerLayout();
         }
@@ -516,7 +561,7 @@
             } else {
                 iframe.src = type === 'm3u8' ? `${hlsPlayerBaseUrl}${encodeURIComponent(url)}` : url;
             }
-            box	appendChild(iframe);
+            box.appendChild(iframe);
             box.className = 'player-box active';
         }
 
@@ -548,6 +593,16 @@
             const baseUrl = 'https://insagirl-toto.appspot.com/chatting/lgic/';
             const hashPart = window.location.hash ? '#' + decodeURIComponent(window.location.hash.substring(1)) : '';
             chatIframe.src = baseUrl + '?cache=' + Math.random() + hashPart;
+        });
+
+        // 모바일 키보드 간섭 해결
+        document.getElementById('custom-url-input').addEventListener('focus', () => {
+            const w = window.innerWidth;
+            if (w < 768) { // 모바일에서만 동작
+                setTimeout(() => {
+                    sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300); // 키보드가 올라오는 시간 대기
+            }
         });
 
         window.addEventListener('resize', adjustLayout);
