@@ -23,10 +23,12 @@
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             padding: 15px;
         }
+        #sidebar.collapsed {
+            transform: translateX(-100%);
+        }
         #toggle-btn {
             position: fixed;
             top: 10px;
-            left: 205px;
             width: 30px;
             height: 30px;
             background: #007bff;
@@ -41,7 +43,6 @@
             justify-content: center;
             font-size: 16px;
         }
-        #sidebar.collapsed + #main-container #toggle-btn { left: 10px; }
         #toggle-btn:hover { background: #0056b3; }
         #main-container {
             height: 100vh;
@@ -249,6 +250,7 @@
         const playerContainer = document.getElementById('player-container');
         const sidebar = document.getElementById('sidebar');
         const chatSection = document.getElementById('chat-section');
+        const toggleBtn = document.getElementById('toggle-btn');
         let playerCount = 1;
         let clickIndex = 0;
 
@@ -273,6 +275,7 @@
         function design() {
             const w = window.innerWidth;
             const h = window.innerHeight;
+            const isCollapsed = sidebar.classList.contains('collapsed');
 
             const minChatHeight = h * 0.4;
             const maxVideoHeight = h - minChatHeight - 50;
@@ -282,13 +285,22 @@
             const wg = getUtility(getVideoarea(w - 320, h, 16, 9), 192 * 108 * 10) + getUtility(240 * h, 24 * 20 * 10);
             const hg = getUtility(getVideoarea(w, hgh, 16, 9), 192 * 108 * 10) + getUtility((w > 240 ? 240 : w) * (h - hgh), 24 * 20 * 10);
 
+            const mainContainer = document.getElementById('main-container');
+            mainContainer.innerHTML = '';
+            mainContainer.appendChild(sidebar);
+            mainContainer.appendChild(playerContainer);
+            mainContainer.appendChild(chatSection);
+            playerContainer.appendChild(toggleBtn);
+
             if (hg > wg) {
                 // 모바일: 상하 레이아웃
                 sidebar.style.position = "relative";
                 sidebar.style.width = "100%";
                 sidebar.style.height = "auto";
-                sidebar.style.display = "block";
-                sidebar.style.padding = "10px 0";
+                sidebar.style.display = isCollapsed ? "none" : "block";
+                sidebar.style.transform = "none"; // 모바일에서는 슬라이드 대신 숨김
+
+                toggleBtn.style.left = "10px";
 
                 playerContainer.style.width = "100%";
                 playerContainer.style.height = `${hgh}px`;
@@ -302,18 +314,21 @@
                 const pcContainer = document.createElement('div');
                 pcContainer.style.display = 'flex';
                 pcContainer.style.height = '100%';
-                pcContainer.style.width = '100%';
+                pcContainer.style.width = isCollapsed ? '100%' : 'calc(100% - 220px)';
+                pcContainer.style.marginLeft = isCollapsed ? '0' : '220px';
 
                 const rightContainer = document.createElement('div');
-                rightContainer.style.width = '17.5%';
-                rightContainer.style.minWidth = '320px';
+                rightContainer.style.width = '320px';
                 rightContainer.style.height = '100%';
 
-                sidebar.style.position = "relative";
+                sidebar.style.position = "absolute";
                 sidebar.style.width = "220px";
                 sidebar.style.height = "100%";
                 sidebar.style.display = "block";
-                sidebar.style.padding = "15px";
+                sidebar.style.left = "0";
+                sidebar.style.top = "0";
+
+                toggleBtn.style.left = isCollapsed ? "10px" : "205px";
 
                 chatSection.style.width = "100%";
                 chatSection.style.height = "100%";
@@ -323,12 +338,9 @@
                 pcContainer.appendChild(playerContainer);
                 pcContainer.appendChild(rightContainer);
 
-                const mainContainer = document.getElementById('main-container');
-                mainContainer.innerHTML = '';
-                mainContainer.appendChild(sidebar);
                 mainContainer.appendChild(pcContainer);
 
-                playerContainer.style.width = "calc(100% - 540px)"; // 220px (sidebar) + 320px (chat)
+                playerContainer.style.width = "calc(100% - 320px)";
                 playerContainer.style.height = "100%";
                 playerContainer.style.position = "relative";
             }
