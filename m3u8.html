@@ -555,18 +555,24 @@
         }
     };
 
-    // postMessage로 URL 수신
-    window.addEventListener('message', (event) => {
-        if (event.data.type === 'playM3u8' && event.data.url) {
-            const finalUrl = processInputUrl(event.data.url);
-            if (finalUrl) {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    loadPlayer(playerBoxes[0], finalUrl, 'm3u8');
-                }
+window.addEventListener('message', (event) => {
+    console.log('Received message:', event.data); // 디버깅용 로그
+    if (event.data.type === 'playM3u8' && event.data.url) {
+        const finalUrl = processInputUrl(event.data.url);
+        console.log('Processed URL:', finalUrl); // 디버깅용 로그
+        if (finalUrl) {
+            const playerBoxes = playerContainer.querySelectorAll('.player-box');
+            if (playerBoxes.length > 0) {
+                loadPlayer(playerBoxes[0], finalUrl, 'm3u8');
+                console.log('Player loaded with URL:', finalUrl); // 디버깅용 로그
+            } else {
+                console.error('No player boxes found');
             }
+        } else {
+            console.error('Invalid URL after processing:', event.data.url);
         }
-    }, false);
+    }
+}, false);
 </script>
 </body>
 </html>
