@@ -176,7 +176,7 @@
             transform: translateY(-2px);
         }
         h3, h4 {
-            font-size: 14px;
+            font-size: 16px;
             margin: 10px 0 5px;
             color: #495057;
         }
@@ -207,6 +207,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 5px;
         }
+        /* 토글 스타일 추가 */
         .toggle-header {
             cursor: pointer;
             display: flex;
@@ -221,10 +222,10 @@
             content: '▶';
         }
         #spotv-channels {
-            display: none;
+            display: none; /* 기본적으로 닫힌 상태 */
         }
         #spotv-channels.active {
-            display: flex;
+            display: flex; /* 열릴 때 표시 */
         }
     </style>
 </head>
@@ -284,7 +285,6 @@
         ];
 
         const chzzkChannels = [
-            { name: '플로', url: 'https://insagirl.github.io/syncwatchdemo/syncwatch2.html', type: 'iframe' },
             { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced' },
             { name: '침', id: 'bb382c2c0cc9fa7c86ab3b037fb5799c' },
             { name: '추', id: '181a3baebe508d3b5fa5d9fe4d6b5241' },
@@ -309,6 +309,7 @@
         let playerCount = 1;
         let clickIndex = 0;
 
+        // 드롭 이벤트 핸들러 함수
         function createDropHandler(box) {
             return (e) => {
                 e.preventDefault();
@@ -340,6 +341,7 @@
             };
         }
 
+        // LCK 채널 추가
         lckChannels.forEach(channel => {
             const btn = document.createElement('div');
             btn.className = 'lck-btn';
@@ -364,48 +366,32 @@
             lckChannelList.appendChild(btn);
         });
 
+        // 치지직 채널 목록 생성
         chzzkChannels.forEach(channel => {
             const btn = document.createElement('div');
             btn.className = 'chzzk-btn';
             btn.draggable = true;
             btn.textContent = channel.name;
-            if (channel.url && channel.type === 'iframe') {
-                btn.dataset.url = channel.url;
-                btn.dataset.type = 'iframe';
-                btn.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', channel.url);
-                    e.dataTransfer.setData('text/type', 'iframe');
-                    console.log('Dragging Flow channel:', channel.url);
-                });
-                btn.addEventListener('click', () => {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, channel.url, 'iframe');
-                        clickIndex++;
-                    }
-                });
-            } else {
-                btn.dataset.url = `${chzzkProxyBaseUrl}${channel.id}`;
-                btn.dataset.type = 'm3u8';
-                btn.addEventListener('dragstart', (e) => {
-                    const url = `${chzzkProxyBaseUrl}${channel.id}`;
-                    e.dataTransfer.setData('text/plain', url);
-                    e.dataTransfer.setData('text/type', 'm3u8');
-                    console.log('Dragging Chzzk channel:', url);
-                });
-                btn.addEventListener('click', () => {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, `${chzzkProxyBaseUrl}${channel.id}`, 'm3u8');
-                        clickIndex++;
-                    }
-                });
-            }
+            btn.dataset.url = `${chzzkProxyBaseUrl}${channel.id}`;
+            btn.dataset.type = 'm3u8';
+            btn.addEventListener('dragstart', (e) => {
+                const url = `${chzzkProxyBaseUrl}${channel.id}`;
+                e.dataTransfer.setData('text/plain', url);
+                e.dataTransfer.setData('text/type', 'm3u8');
+                console.log('Dragging Chzzk channel:', url);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, `${chzzkProxyBaseUrl}${channel.id}`, 'm3u8');
+                    clickIndex++;
+                }
+            });
             chzzkChannelList.appendChild(btn);
         });
 
+        // SPOTV 채널 목록 생성
         spotvChannels.forEach(channel => {
             const btn = document.createElement('div');
             btn.className = 'small-channel-btn';
@@ -429,6 +415,7 @@
             spotvChannelList.appendChild(btn);
         });
 
+        // 야구 채널 목록 생성
         baseballChannels.forEach(channel => {
             const btn = document.createElement('div');
             btn.className = 'baseball-btn';
@@ -452,6 +439,7 @@
             baseballChannelList.appendChild(btn);
         });
 
+        // TV 채널 목록 생성
         tvChannels.forEach(channel => {
             const btn = document.createElement('div');
             btn.className = 'tv-btn';
@@ -572,31 +560,6 @@
                 alert('URL 또는 채널 ID를 입력해주세요.');
             }
         }
-
-        // 메시지 중계 스크립트 추가
-        window.addEventListener("message", function(e) {
-            console.log("Received message in m3u8 player from:", e.origin, "Data:", e.data);
-            if (e.origin === "https://insagirl.github.io") { // syncwatch2.html에서 온 메시지
-                const topFrames = window.top.frames;
-                for (let i = 0; i < topFrames.length; i++) {
-                    if (topFrames[i].location.href.indexOf("https://insagirl-toto.appspot.com/chatting/lgic/") !== -1) {
-                        topFrames[i].postMessage(e.data, "https://insagirl-toto.appspot.com");
-                        console.log("Forwarded message to chat iframe:", e.data);
-                        break;
-                    }
-                }
-            } else if (e.origin === "https://insagirl-toto.appspot.com") { // 채팅창에서 온 메시지
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                for (let box of playerBoxes) {
-                    const iframe = box.querySelector('iframe');
-                    if (iframe && iframe.src.indexOf("https://insagirl.github.io/syncwatchdemo/syncwatch2.html") !== -1) {
-                        iframe.contentWindow.postMessage(e.data, "https://insagirl.github.io");
-                        console.log("Forwarded message to syncwatch2.html:", e.data);
-                        break;
-                    }
-                }
-            }
-        }, false);
 
         window.onload = () => {
             setSplitScreen(1);
