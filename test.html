@@ -190,7 +190,7 @@
                 <button onclick="setSplitScreen(4)">4분할</button>
             </div>
             <div id="custom-url-container">
-                <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
+                <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID, 유튜브, 트위치 등 입력">
                 <button onclick="playCustomUrl()">실행</button>
             </div>
             <button id="hrm-btn">흐름</button>
@@ -350,10 +350,13 @@
             return (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const url = e.dataTransfer.getData('text/plain');
-                if (url) {
-                    const finalUrl = processInputUrl(url);
-                    if (finalUrl) loadPlayer(box, finalUrl, 'm3u8');
+                const textPlain = e.dataTransfer.getData('text/plain');
+                const type = e.dataTransfer.getData('text/type');
+                if (textPlain) {
+                    const finalUrl = transformUrl(textPlain);
+                    if (finalUrl) {
+                        loadPlayer(box, finalUrl, type || (finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe'));
+                    }
                 }
             };
         }
@@ -513,6 +516,50 @@
             playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(playerCount / 2)}, 1fr)`;
         }
 
+        function transformUrl(url) {
+            if (!url) return null;
+
+            const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
+            if (chzzkChannelIdPattern.test(url)) {
+                return `${chzzkProxyBaseUrl}${url}`;
+            }
+
+            if (url.includes('.m3u8')) {
+                return url;
+            }
+
+            const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
+            if (isShortForm) {
+                const [platform, channelId] = url.split('/');
+                switch (platform) {
+                    case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
+                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=mobile.hlsp.workers.dev`;
+                    case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
+                    case 'kick': return `https://player.kick.com/${channelId}`;
+                    case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
+                    default: return null;
+                }
+            }
+            if (url.startsWith('https://twitch.tv/')) {
+                return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=mobile.hlsp.workers.dev`;
+            }
+            if (!url.startsWith('http')) { return null; }
+            if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
+            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=mobile.hlsp.workers.dev`;
+            if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
+            if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
+            if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/').pop()}/embed`;
+            if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
+                const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            }
+            if (url.startsWith('https://chzzk.naver.com/live/') || url.startsWith('https://chzzk.naver.com/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
+            if (url.startsWith('https://kick.com/')) return `https://player.kick.com/${url.split('/').pop()}`;
+            if (url.startsWith('https://play.sooplive.co.kr/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
+            if (url.startsWith('https://')) return url;
+            return null;
+        }
+
         function loadPlayer(box, url, type) {
             while (box.firstChild) box.removeChild(box.firstChild);
             const iframe = document.createElement('iframe');
@@ -527,27 +574,22 @@
             box.className = 'player-box active';
         }
 
-        function processInputUrl(input) {
-            if (!input) return null;
-            if (input.includes('.m3u8')) return input;
-            if (input.startsWith(chzzkProxyBaseUrl)) return input;
-            if (/^[0-9a-fA-F]{32}$/.test(input)) return `${chzzkProxyBaseUrl}${input}`;
-            return null;
-        }
-
         function playCustomUrl() {
             const customUrl = document.getElementById('custom-url-input').value.trim();
             if (customUrl) {
-                const finalUrl = processInputUrl(customUrl);
+                const finalUrl = transformUrl(customUrl);
                 if (finalUrl) {
                     const playerBoxes = playerContainer.querySelectorAll('.player-box');
                     if (playerBoxes.length > 0) {
-                        loadPlayer(playerBoxes[clickIndex % playerBoxes.length], finalUrl, 'm3u8');
+                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(playerBoxes[clickIndex % playerBoxes.length], finalUrl, type);
                         clickIndex++;
                     }
                 } else {
-                    alert('유효한 m3u8 URL 또는 치지직 채널 ID를 입력해주세요.');
+                    alert('유효한 URL 또는 채널 ID를 입력해주세요.');
                 }
+            } else {
+                alert('URL을 입력해주세요.');
             }
         }
 
@@ -569,10 +611,13 @@
             const urlParams = new URLSearchParams(window.location.search);
             const m3u8Url = urlParams.get('url');
             if (m3u8Url) {
-                const finalUrl = processInputUrl(decodeURIComponent(m3u8Url));
+                const finalUrl = transformUrl(decodeURIComponent(m3u8Url));
                 if (finalUrl) {
                     const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) loadPlayer(playerBoxes[0], finalUrl, 'm3u8');
+                    if (playerBoxes.length > 0) {
+                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(playerBoxes[0], finalUrl, type);
+                    }
                 }
             }
         };
