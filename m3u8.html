@@ -538,11 +538,9 @@
             }
         }
 
-        // 쿼리 파라미터에서 URL 읽기 및 해시 처리
+        // 쿼리 파라미터에서 URL 읽기 및 자동 재생
         window.onload = () => {
             setSplitScreen(1); // 기본 1분할 설정
-            
-            // 쿼리 파라미터 처리
             const urlParams = new URLSearchParams(window.location.search);
             const m3u8Url = urlParams.get('url');
             if (m3u8Url) {
@@ -553,26 +551,6 @@
                     if (playerBoxes.length > 0) {
                         loadPlayer(playerBoxes[0], finalUrl, 'm3u8');
                     }
-                }
-            }
-
-            // 해시 프래그먼트 처리
-            const hash = window.parent.location.hash;
-            console.log('Parent hash:', hash);
-            if (hash && hash.includes('#m3u8=')) {
-                const encodedUrl = hash.split('#m3u8=')[1];
-                const decodedUrl = decodeURIComponent(encodedUrl);
-                const finalUrl = processInputUrl(decodedUrl);
-                console.log('Processed hash URL:', finalUrl);
-                if (finalUrl) {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
-                        loadPlayer(playerBoxes[0], finalUrl, 'm3u8');
-                    } else {
-                        console.error('No player boxes found');
-                    }
-                } else {
-                    console.error('Invalid URL from hash:', decodedUrl);
                 }
             }
         };
