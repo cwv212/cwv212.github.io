@@ -195,7 +195,7 @@
             </div>
             <button id="hrm-btn">흐름</button>
             <button id="refresh-btn">F5</button>
-            <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
+            <a href="https://www.hlsplayer.org/" target="_blank">HLS 플레이어</a>
         </div>
         <div id="player-container">
             <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
@@ -206,10 +206,10 @@
     </div>
 
     <script>
-        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
+        const hlsPlayerBaseUrl = 'https://www.hlsplayer.org/play?url=';
         
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
             name: `야${i + 1}`,
@@ -269,83 +269,83 @@
             };
         }
 
-function design() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const isCollapsed = sidebar.classList.contains('collapsed');
+        function design() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const isCollapsed = sidebar.classList.contains('collapsed');
 
-    const minChatHeight = h * 0.4; // 최소 채팅 높이 40%
-    const maxVideoHeight = h - minChatHeight - 50;
-    const standardHeight = w * 9 / 16 + 25;
-    const hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
+            const minChatHeight = h * 0.5;
+            const maxVideoHeight = h - minChatHeight - 50;
+            const standardHeight = w * 9 / 16 + 25;
+            const hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
 
-    const wg = getUtility(getVideoarea(w - 320, h, 16, 9), 192 * 108 * 10) + getUtility(240 * h, 24 * 20 * 10);
-    const hg = getUtility(getVideoarea(w, hgh, 16, 9), 192 * 108 * 10) + getUtility((w > 240 ? 240 : w) * (h - hgh), 24 * 20 * 10);
+            const wg = getUtility(getVideoarea(w - 320, h, 16, 9), 192 * 108 * 10) + getUtility(240 * h, 24 * 20 * 10);
+            const hg = getUtility(getVideoarea(w, hgh, 16, 9), 192 * 108 * 10) + getUtility((w > 240 ? 240 : w) * (h - hgh), 24 * 20 * 10);
 
-    const mainContainer = document.getElementById('main-container');
-    mainContainer.innerHTML = '';
-    mainContainer.appendChild(sidebar);
-    mainContainer.appendChild(playerContainer);
-    mainContainer.appendChild(chatSection);
-    playerContainer.appendChild(toggleBtn);
+            const mainContainer = document.getElementById('main-container');
+            mainContainer.innerHTML = '';
+            mainContainer.appendChild(sidebar);
+            mainContainer.appendChild(playerContainer);
+            mainContainer.appendChild(chatSection);
+            playerContainer.appendChild(toggleBtn);
 
-    if (hg > wg) {
-        // 모바일: 상하 레이아웃 (슬라이드 위에서 내려옴)
-        sidebar.style.position = "fixed";
-        sidebar.style.width = "100%";
-        sidebar.style.height = "auto";
-        sidebar.style.top = isCollapsed ? "-100%" : "0";
-        sidebar.style.left = "0";
-        sidebar.style.transform = "none";
+            if (hg > wg) {
+                // 모바일: 상하 레이아웃 (슬라이드 위에서 내려옴)
+                sidebar.style.position = "fixed";
+                sidebar.style.width = "100%";
+                sidebar.style.height = "auto";
+                sidebar.style.top = isCollapsed ? "-100%" : "0";
+                sidebar.style.left = "0";
+                sidebar.style.transform = "none";
 
-        toggleBtn.style.left = "10px";
+                toggleBtn.style.left = "10px";
 
-        playerContainer.style.width = "100%";
-        playerContainer.style.height = isCollapsed ? `${h * 0.4}px` : `${hgh}px`; // 닫힘 시 비디오 40%, 열림 시 hgh 유지
-        playerContainer.style.position = "relative";
-        playerContainer.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
+                playerContainer.style.width = "100%";
+                playerContainer.style.height = isCollapsed ? `${h * 0.4}px` : `${hgh}px`;
+                playerContainer.style.position = "relative";
+                playerContainer.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
 
-        chatSection.style.width = "100%";
-        chatSection.style.height = isCollapsed ? `${h * 0.6}px` : `${h - hgh - sidebar.offsetHeight}px`; // 닫힘 시 채팅 60%
-        chatSection.style.position = "relative";
-        chatSection.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
-    } else {
-        // PC: 좌우 레이아웃 (변경 없음)
-        const pcContainer = document.createElement('div');
-        pcContainer.style.display = 'flex';
-        pcContainer.style.height = '100%';
-        pcContainer.style.width = isCollapsed ? '100%' : 'calc(100% - 220px)';
-        pcContainer.style.marginLeft = isCollapsed ? '0' : '220px';
+                chatSection.style.width = "100%";
+                chatSection.style.height = isCollapsed ? `${h * 0.6}px` : `${h - hgh - sidebar.offsetHeight}px`;
+                chatSection.style.position = "relative";
+                chatSection.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
+            } else {
+                // PC: 좌우 레이아웃
+                const pcContainer = document.createElement('div');
+                pcContainer.style.display = 'flex';
+                pcContainer.style.height = '100%';
+                pcContainer.style.width = isCollapsed ? '100%' : 'calc(100% - 220px)';
+                pcContainer.style.marginLeft = isCollapsed ? '0' : '220px';
 
-        const rightContainer = document.createElement('div');
-        rightContainer.style.width = '320px';
-        rightContainer.style.height = '100%';
+                const rightContainer = document.createElement('div');
+                rightContainer.style.width = '320px';
+                rightContainer.style.height = '100%';
 
-        sidebar.style.position = "absolute";
-        sidebar.style.width = "220px";
-        sidebar.style.height = "100%";
-        sidebar.style.left = isCollapsed ? "-220px" : "0";
-        sidebar.style.top = "0";
-        sidebar.style.transform = "none";
+                sidebar.style.position = "absolute";
+                sidebar.style.width = "220px";
+                sidebar.style.height = "100%";
+                sidebar.style.left = isCollapsed ? "-220px" : "0";
+                sidebar.style.top = "0";
+                sidebar.style.transform = "none";
 
-        toggleBtn.style.left = isCollapsed ? "10px" : "205px";
+                toggleBtn.style.left = isCollapsed ? "10px" : "205px";
 
-        chatSection.style.width = "100%";
-        chatSection.style.height = "100%";
-        chatSection.style.position = "relative";
+                chatSection.style.width = "100%";
+                chatSection.style.height = "100%";
+                chatSection.style.position = "relative";
 
-        rightContainer.appendChild(chatSection);
-        pcContainer.appendChild(playerContainer);
-        pcContainer.appendChild(rightContainer);
+                rightContainer.appendChild(chatSection);
+                pcContainer.appendChild(playerContainer);
+                pcContainer.appendChild(rightContainer);
 
-        mainContainer.appendChild(pcContainer);
+                mainContainer.appendChild(pcContainer);
 
-        playerContainer.style.width = "calc(100% - 320px)";
-        playerContainer.style.height = "100%";
-        playerContainer.style.position = "relative";
-    }
-    adjustPlayerLayout();
-}
+                playerContainer.style.width = "calc(100% - 320px)";
+                playerContainer.style.height = "100%";
+                playerContainer.style.position = "relative";
+            }
+            adjustPlayerLayout();
+        }
 
         function createDropHandler(box) {
             return (e) => {
@@ -517,7 +517,7 @@ function design() {
         function loadPlayer(box, url, type) {
             while (box.firstChild) box.removeChild(box.firstChild);
             const iframe = document.createElement('iframe');
-            iframe.src = type === 'm3u8' ? `chrome-extension://${extensionId}/player.html#${url}` : url;
+            iframe.src = type === 'm3u8' ? `${hlsPlayerBaseUrl}${encodeURIComponent(url)}` : url;
             box.appendChild(iframe);
             box.className = 'player-box active';
         }
