@@ -34,10 +34,10 @@ const favoriteDragList = document.getElementById('favorite-drag-list');
 let currentMultiviewLayout = 1;
 let multiviewUrlInputCounter = 0;
 
-// 즐겨찾기 데이터 (localStorage에서 불러오기)
+// 즐겨찾기 데이터
 let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
-/* ------------------------- 드래그 앤 드롭 관련 함수 ------------------------- */
+/* 드래그 앤 드롭 관련 함수 */
 function updateFavoriteDragContainer() {
     favoriteDragList.innerHTML = '';
     favorites.forEach((fav, index) => {
@@ -53,19 +53,15 @@ function updateFavoriteDragContainer() {
 }
 
 function addDragDropEvents(input) {
-    input.addEventListener('dragover', (e) => {
-        e.preventDefault();
-    });
+    input.addEventListener('dragover', (e) => e.preventDefault());
     input.addEventListener('drop', (e) => {
         e.preventDefault();
         const droppedUrl = e.dataTransfer.getData('text/plain');
-        if (droppedUrl) {
-            input.value = droppedUrl;
-        }
+        if (droppedUrl) input.value = droppedUrl;
     });
 }
 
-/* ------------------------- 멀티뷰 및 단일뷰 관련 함수 ------------------------- */
+/* 멀티뷰 및 단일뷰 관련 함수 */
 youtubeBtn.addEventListener('click', () => {
     multiviewCheckbox.checked = false;
     showSingleInput();
@@ -85,11 +81,8 @@ inputBtn.addEventListener('click', () => {
 });
 
 multiviewCheckbox.addEventListener('change', () => {
-    if (multiviewCheckbox.checked) {
-        showMultiviewOptions();
-    } else {
-        showSingleInput();
-    }
+    if (multiviewCheckbox.checked) showMultiviewOptions();
+    else showSingleInput();
 });
 
 multiviewLayoutSelect.addEventListener('change', () => {
@@ -98,11 +91,8 @@ multiviewLayoutSelect.addEventListener('change', () => {
 });
 
 goBtn.addEventListener('click', () => {
-    if (multiviewCheckbox.checked) {
-        startMultiview();
-    } else {
-        startSingleView();
-    }
+    if (multiviewCheckbox.checked) startMultiview();
+    else startSingleView();
     inputModal.style.display = 'none';
 });
 
@@ -121,9 +111,7 @@ function showMultiviewOptions() {
     multiviewOptions.style.display = 'block';
     multiviewUrlInputs.innerHTML = '';
     multiviewUrlInputCounter = 0;
-    for (let i = 0; i < currentMultiviewLayout; i++) {
-        addMultiviewInput();
-    }
+    for (let i = 0; i < currentMultiviewLayout; i++) addMultiviewInput();
     updateFavoriteDragContainer();
 }
 
@@ -131,9 +119,7 @@ function updateMultiviewUrlInputs() {
     const currentInputs = multiviewUrlInputs.querySelectorAll('.multiview-input');
     const diff = currentMultiviewLayout - currentInputs.length;
     if (diff > 0) {
-        for (let i = 0; i < diff; i++) {
-            addMultiviewInput();
-        }
+        for (let i = 0; i < diff; i++) addMultiviewInput();
     } else if (diff < 0) {
         for (let i = 0; i < -diff; i++) {
             if (multiviewUrlInputs.lastChild) {
@@ -163,11 +149,7 @@ function setSingleViewContent(url) {
     const transformedUrl = transformUrl(url);
     if (transformedUrl) {
         const urlWithoutQuery = transformedUrl.split('?')[0];
-        if (urlWithoutQuery.endsWith('.m3u8')) {
-            videoIframe.src = getPlayerUrl(transformedUrl);
-        } else {
-            videoIframe.src = transformedUrl;
-        }
+        videoIframe.src = urlWithoutQuery.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
     }
 }
 
@@ -178,9 +160,7 @@ function startMultiview() {
         const transformed = transformUrl(trimmed);
         if (!transformed) return '';
         const urlWithoutQuery = transformed.split('?')[0];
-        return urlWithoutQuery.endsWith('.m3u8')
-            ? getPlayerUrl(transformed)
-            : transformed;
+        return urlWithoutQuery.endsWith('.m3u8') ? getPlayerUrl(transformed) : transformed;
     });
 
     if (currentMultiviewLayout === 1) {
@@ -200,15 +180,6 @@ function startMultiview() {
             `).join('')}
         </div>
     `;
-
-    const multiviewItems = videoSection.querySelectorAll('.multiview-item');
-    multiviewItems.forEach(item => {
-        const iframe = item.querySelector('iframe');
-        if (iframe) {
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-        }
-    });
 }
 
 function getMultiviewColumns(layout) {
@@ -221,13 +192,47 @@ function getPlayerUrl(m3u8Url) {
     const isChrome = /Chrome/i.test(ua);
     const isWhale = /Whale/i.test(ua);
     const isEdge = /Edg/i.test(ua);
-    if (isMobile) {
-        return `https://www.livereacting.com/tools/hls-player-embed?url=${encodeURIComponent(m3u8Url)}`;
-    }
-    if (isChrome || isWhale || isEdge) {
-        return `chrome-extension://eakdijdofmnclopcffkkgmndadhbjgka/player.html#${m3u8Url}`;
-    }
+    if (isMobile) return `https://www.livereacting.com/tools/hls-player-embed?url=${encodeURIComponent(m3u8Url)}`;
+    if (isChrome || isWhale || isEdge) return `chrome-extension://eakdijdofmnclopcffkkgmndadhbjgka/player.html#${m3u8Url}`;
     return `https://www.livereacting.com/tools/hls-player-embed?url=${encodeURIComponent(m3u8Url)}`;
+}
+
+/* 분할 화면 설정 */
+function setSplitScreen(count) {
+    currentMultiviewLayout = count;
+    if (count === 1) {
+        videoSection.innerHTML = '<iframe id="video-iframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+    } else {
+        videoSection.innerHTML = `
+            <div class="multiview-container" style="grid-template-columns: repeat(${getMultiviewColumns(count)}, 1fr);">
+                ${Array.from({ length: count }, () => `
+                    <div class="multiview-item">
+                        <iframe src="" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+}
+
+/* 사용자 입력 URL 재생 */
+function playCustomUrl() {
+    const customUrl = document.getElementById('custom-url-input').value.trim();
+    if (customUrl) {
+        const transformedUrl = transformUrl(customUrl);
+        if (transformedUrl) {
+            if (currentMultiviewLayout === 1) {
+                setSingleViewContent(transformedUrl);
+            } else {
+                const iframes = videoSection.querySelectorAll('.multiview-item iframe');
+                if (iframes.length > 0) {
+                    iframes[0].src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
+                }
+            }
+        } else {
+            alert('유효한 URL을 입력해주세요.');
+        }
+    }
 }
 
 /* 즐겨찾기 모달 관련 함수 */
@@ -247,9 +252,7 @@ function renderFavorites() {
                 showSingleInput();
                 const transformedUrl = transformUrl(favorite.url);
                 if (transformedUrl) {
-                    videoIframe.src = transformedUrl.endsWith('.m3u8') 
-                        ? getPlayerUrl(transformedUrl) 
-                        : transformedUrl;
+                    videoIframe.src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
                     favoriteModal.style.display = 'none';
                 }
             }
@@ -282,7 +285,7 @@ function addFavorite(url, name) {
     localStorage.setItem('favorites', JSON.stringify(favorites));
     alert('즐겨찾기에 추가되었습니다.');
     renderFavorites();
-    renderSidebarFavorites(); // 슬라이드바 즐겨찾기 업데이트
+    renderSidebarFavorites();
     document.getElementById('favorite-name-input').value = '';
     document.getElementById('favorite-url-input').value = '';
 }
@@ -292,7 +295,7 @@ function deleteFavorite(index) {
         favorites.splice(index, 1);
         localStorage.setItem('favorites', JSON.stringify(favorites));
         renderFavorites();
-        renderSidebarFavorites(); // 슬라이드바 즐겨찾기 업데이트
+        renderSidebarFavorites();
     }
 }
 
@@ -306,20 +309,10 @@ addFavoriteBtn.addEventListener('click', () => {
 /* URL 변환 함수 */
 function transformUrl(url) {
     if (!url) return null;
-
     const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
-    if (chzzkChannelIdPattern.test(url)) {
-        return `https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/${url}`;
-    }
-
-    if (url.includes('.m3u8')) {
-        return url;
-    }
-
+    if (chzzkChannelIdPattern.test(url)) return `https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/${url}`;
+    if (url.includes('.m3u8')) return url;
     const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
-    if (url === 'https://play.sooplive.co.kr/aflol/281494910/embed') {
-        return url;
-    }
     if (isShortForm) {
         const [platform, channelId] = url.split('/');
         switch (platform) {
@@ -328,10 +321,10 @@ function transformUrl(url) {
             case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
             case 'kick': return `https://player.kick.com/${channelId}`;
             case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
-            default: alert('지원하지 않는 플랫폼입니다.'); return null;
+            default: return null;
         }
     }
-    if (!url.startsWith('http')) { alert('유효한 URL을 입력해주세요.'); return null; }
+    if (!url.startsWith('http')) return null;
     if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
     if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lc2122.github.io`;
     if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
@@ -346,59 +339,21 @@ function transformUrl(url) {
     if (url.startsWith('https://kick.com/')) return `https://player.kick.com/${url.split('/').pop()}`;
     if (url.startsWith('https://play.sooplive.co.kr/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
     if (url.startsWith('https://')) return url;
-    alert('지원하지 않는 URL 형식입니다.'); return null;
+    return null;
 }
 
 function handleHashChange() {
     const hash = window.location.hash;
-    if (hash.startsWith('#/twitch/')) {
-        setSingleViewContent(`https://player.twitch.tv/?channel=${hash.split('/')[2]}&parent=lc2122.github.io`);
-    } else if (hash.startsWith('#/youtube/')) {
-        setSingleViewContent(`https://www.youtube.com/embed/${hash.split('/')[2]}`);
-    } else if (hash.startsWith('#/chzzk/')) {
-        setSingleViewContent(`https://chzzk.naver.com/live/${hash.split('/')[2]}`);
-    } else if (hash.startsWith('#/soop/')) {
-        setSingleViewContent(`https://play.sooplive.co.kr/${hash.split('/')[2]}/embed`);
-    } else if (hash.startsWith('#/kick/')) {
-        setSingleViewContent(`https://player.kick.com/${hash.split('/')[2]}`);
-    } else if (hash.startsWith('#/hls/')) {
+    if (hash.startsWith('#/twitch/')) setSingleViewContent(`https://player.twitch.tv/?channel=${hash.split('/')[2]}&parent=lc2122.github.io`);
+    else if (hash.startsWith('#/youtube/')) setSingleViewContent(`https://www.youtube.com/embed/${hash.split('/')[2]}`);
+    else if (hash.startsWith('#/chzzk/')) setSingleViewContent(`https://chzzk.naver.com/live/${hash.split('/')[2]}`);
+    else if (hash.startsWith('#/soop/')) setSingleViewContent(`https://play.sooplive.co.kr/${hash.split('/')[2]}/embed`);
+    else if (hash.startsWith('#/kick/')) setSingleViewContent(`https://player.kick.com/${hash.split('/')[2]}`);
+    else if (hash.startsWith('#/hls/')) {
         const m3u8Url = decodeURIComponent(hash.split('#/hls/')[1]);
-        if (m3u8Url.includes('.m3u8')) {
-            setSingleViewContent(m3u8Url);
-        }
-    } else {
-        setSingleViewContent(CHANNELS.flow.url());
-    }
+        if (m3u8Url.includes('.m3u8')) setSingleViewContent(m3u8Url);
+    } else setSingleViewContent(CHANNELS.flow.url());
 }
 
-window.addEventListener('load', () => {
-    handleHashChange();
-});
-
-window.addEventListener('hashchange', () => {
-    handleHashChange();
-});
-
-// 슬라이드바 즐겨찾기 렌더링 함수 (index.html과 중복 방지를 위해 여기에 통합)
-function renderSidebarFavorites() {
-    const sidebarFavoriteList = document.getElementById('sidebar-favorite-list');
-    sidebarFavoriteList.innerHTML = '';
-    const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    favorites.forEach(favorite => {
-        const btn = document.createElement('button');
-        btn.className = 'sidebar-favorite-btn';
-        btn.textContent = favorite.name;
-        btn.addEventListener('click', () => {
-            const transformedUrl = transformUrl(favorite.url);
-            if (transformedUrl) {
-                const videoIframe = document.getElementById('video-iframe');
-                videoIframe.src = transformedUrl.endsWith('.m3u8') 
-                    ? getPlayerUrl(transformedUrl) 
-                    : transformedUrl;
-                document.getElementById('sidebar').classList.remove('open');
-                design(); // index.html에서 정의된 design 함수 호출
-            }
-        });
-        sidebarFavoriteList.appendChild(btn);
-    });
-}
+window.addEventListener('load', handleHashChange);
+window.addEventListener('hashchange', handleHashChange);
