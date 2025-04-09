@@ -57,27 +57,7 @@
     <div id="input-modal" style="display: none;">
         <div style="display: flex; flex-direction: column;">
             <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <input type="checkbox" id="multiview-checkbox" style="margin-right: 5px;">
-                <label for="multiview-checkbox">멀티뷰 사용</label>
-            </div>
-            <div id="single-url-input-container">
                 <input type="text" id="url-input" class="url-input" placeholder="URL 입력" style="width: 100%; margin-bottom: 10px;" />
-            </div>
-            <div id="multiview-options" style="display: none;">
-                <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                    <label for="multiview-layout-select" style="margin-right: 10px;">분할:</label>
-                    <select id="multiview-layout-select">
-                        <option value="1">1분할</option>
-                        <option value="2">2분할</option>
-                        <option value="3">3분할</option>
-                        <option value="4">4분할</option>
-                    </select>
-                </div>
-                <div id="multiview-url-inputs"></div>
-                <div id="favorite-drag-container">
-                    <p class="favorite-drag-title">즐겨찾기 (드래그하여 입력 필드에 붙여넣기)</p>
-                    <div id="favorite-drag-list"></div>
-                </div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <button id="go-btn" class="menu-button" style="flex-grow: 1; margin-right: 5px;">Go</button>
@@ -236,6 +216,17 @@
             const sidebar = document.getElementById('sidebar');
             const container = document.querySelector('.container');
 
+            // 슬라이드바 스타일 동적 적용
+            if (hg > wg) {
+                // 모바일: 슬라이드 상단
+                sidebar.classList.remove('sidebar-pc');
+                sidebar.classList.add('sidebar-mobile');
+            } else {
+                // PC: 슬라이드 좌측
+                sidebar.classList.remove('sidebar-mobile');
+                sidebar.classList.add('sidebar-pc');
+            }
+
             container.innerHTML = '';
             container.appendChild(sidebar);
             container.appendChild(menuSection);
@@ -247,6 +238,7 @@
                 container.style.display = 'flex';
                 container.style.flexDirection = 'column';
                 container.style.height = '100%';
+                container.style.marginTop = sidebar.classList.contains('open') ? '150px' : '0';
 
                 menuSection.style.position = "relative";
                 menuSection.style.width = "100%";
@@ -260,19 +252,20 @@
                 videoSection.style.position = "relative";
 
                 chatSection.style.width = "100%";
-                chatSection.style.height = `calc(100% - ${hgh + menuSection.offsetHeight}px)`;
+                chatSection.style.height = `calc(100% - ${hgh + menuSection.offsetHeight}px - ${sidebar.classList.contains('open') ? 150 : 0}px)`;
                 chatSection.style.position = "relative";
             } else {
                 // PC: 좌우 레이아웃, 슬라이드 좌측
                 container.style.display = 'flex';
                 container.style.flexDirection = 'row';
                 container.style.height = '100%';
+                container.style.marginLeft = sidebar.classList.contains('open') ? '220px' : '0';
 
                 const contentWrapper = document.createElement('div');
                 contentWrapper.className = 'content-wrapper';
                 contentWrapper.style.display = 'flex';
                 contentWrapper.style.flexDirection = 'column';
-                contentWrapper.style.width = sidebar.classList.contains('open') ? 'calc(100% - 220px)' : '100%';
+                contentWrapper.style.width = '100%';
                 contentWrapper.style.height = '100%';
 
                 menuSection.style.position = "relative";
