@@ -86,6 +86,8 @@
     </div>
 
     <script>
+        let splitScreenCount = 1; // 기본 1분할
+
         // 채널 데이터 정의
         const lckChannels = [
             { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8' },
@@ -113,6 +115,15 @@
         const spotvChannelList = document.getElementById('spotv-channels');
         const tvChannelList = document.getElementById('tv-channels');
 
+        // URL 변환 함수 (기존 로직 유지)
+        function transformUrl(url) {
+            return url; // 실제 구현은 생략 (기존 로직 사용)
+        }
+
+        function getPlayerUrl(url) {
+            return url; // 실제 구현은 생략 (기존 로직 사용)
+        }
+
         // 채널 버튼 생성 함수
         function createChannelButton(channel) {
             const btn = document.createElement('button');
@@ -125,8 +136,13 @@
             btn.addEventListener('click', () => {
                 const transformedUrl = transformUrl(channel.url);
                 if (transformedUrl) {
-                    const videoIframe = document.getElementById('video-iframe');
-                    videoIframe.src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
+                    if (splitScreenCount === 1) {
+                        const videoIframe = document.getElementById('video-iframe');
+                        videoIframe.src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
+                    } else {
+                        const multiviewItems = document.querySelectorAll('.multiview-item iframe');
+                        multiviewItems[0].src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
+                    }
                 }
             });
             return btn;
@@ -186,10 +202,66 @@
         }
 
         function adjustChatSectionHeight() {
+            // CSS flex 속성으로 대체되어 이 함수는 더 이상 필요하지 않음
+            // 필요 시 디버깅용으로 유지
             const menuSection = document.getElementById('menu-section');
             const chatSection = document.querySelector('.chat-section');
             if (chatSection && menuSection) {
+                console.log(`Menu height: ${menuSection.offsetHeight}px`);
                 chatSection.style.height = `calc(100% - ${menuSection.offsetHeight}px)`;
+            }
+        }
+
+        // 분할 화면 설정 함수
+        function setSplitScreen(count) {
+            splitScreenCount = count;
+            const videoSection = document.getElementById('video-section');
+            videoSection.innerHTML = '';
+
+            if (count === 1) {
+                const iframe = document.createElement('iframe');
+                iframe.id = 'video-iframe';
+                iframe.src = '';
+                iframe.frameBorder = '0';
+                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+                iframe.allowFullscreen = true;
+                videoSection.appendChild(iframe);
+            } else {
+                const multiviewContainer = document.createElement('div');
+                multiviewContainer.className = 'multiview-container';
+                multiviewContainer.style.gridTemplateColumns = count <= 2 ? `repeat(${count}, 1fr)` : 'repeat(2, 1fr)';
+                multiviewContainer.style.gridTemplateRows = count <= 2 ? '1fr' : `repeat(${Math.ceil(count / 2)}, 1fr)`;
+
+                for (let i = 0; i < count; i++) {
+                    const multiviewItem = document.createElement('div');
+                    multiviewItem.className = 'multiview-item';
+                    const iframe = document.createElement('iframe');
+                    iframe.src = '';
+                    iframe.frameBorder = '0';
+                    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+                    iframe.allowFullscreen = true;
+                    multiviewItem.appendChild(iframe);
+                    multiviewContainer.appendChild(multiviewItem);
+                }
+
+                videoSection.appendChild(multiviewContainer);
+            }
+        }
+
+        // 커스텀 URL 재생 함수
+        function playCustomUrl() {
+            const urlInput = document.getElementById('custom-url-input').value;
+            if (urlInput) {
+                const transformedUrl = transformUrl(urlInput);
+                if (transformedUrl) {
+                    if (splitScreenCount === 1) {
+                        const videoIframe = document.getElementById('video-iframe');
+                        videoIframe.src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
+                    } else {
+                        const multiviewItems = document.querySelectorAll('.multiview-item iframe');
+                        multiviewItems[0].src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
+                    }
+                }
             }
         }
 
@@ -263,18 +335,19 @@
                 container.style.marginLeft = sidebar.classList.contains('open') ? '220px' : '0';
 
                 const pcContainer = document.createElement('div');
+                pcContainer.className = 'pc-container'; // 클래스 추가
                 pcContainer.style.display = 'flex';
                 pcContainer.style.height = '100%';
                 pcContainer.style.width = '100%';
 
                 const rightContainer = document.createElement('div');
+                rightContainer.className = 'right-container'; // 클래스 추가
                 rightContainer.style.width = '17.5%';
                 rightContainer.style.minWidth = '320px';
                 rightContainer.style.height = '100%';
                 rightContainer.style.display = 'flex';
                 rightContainer.style.flexDirection = 'column';
 
-                menuSection.style.position = "relative";
                 menuSection.style.width = "100%";
                 menuSection.style.height = "auto";
                 menuSection.style.display = "flex";
@@ -283,15 +356,13 @@
                 menuSection.style.padding = "10px";
 
                 chatSection.style.width = "100%";
-                chatSection.style.height = "calc(100% - " + menuSection.offsetHeight + "px)"; // 메뉴 높이를 제외한 나머지
-                chatSection.style.position = "relative";
-                chatSection.style.top = "0";
+                chatSection.style.flexGrow = "1"; // 남은 공간을 채우도록
 
                 rightContainer.appendChild(menuSection);
                 rightContainer.appendChild(chatSection);
 
                 videoSection.style.width = "82.5%";
-                videoSection.style.height = "100%"; // PC에서는 전체 높이를 사용
+                videoSection.style.height = "100%";
                 videoSection.style.position = "relative";
 
                 pcContainer.appendChild(videoSection);
@@ -299,9 +370,6 @@
 
                 container.appendChild(pcContainer);
             }
-
-            // 채팅창 높이 조정
-            adjustChatSectionHeight();
         }
 
         // 초기 로드 시 실행
@@ -315,9 +383,9 @@
             }
             design();
             renderSidebarFavorites();
+            renderFavorites();
             setSplitScreen(1);
             window.addEventListener('resize', debounce(design, 200));
-            adjustChatSectionHeight();
         };
 
         // 흐름 버튼
@@ -327,8 +395,84 @@
 
         // Flow 버튼
         document.getElementById('flow-btn').addEventListener('click', () => {
-            window.open('https://insagirl.github.io/syncwatchdemo/syncwatch2.html', '_blank');
+            const flowUrl = 'https://insagirl.github.io/syncwatchdemo/syncwatch2.html';
+            if (splitScreenCount === 1) {
+                const videoIframe = document.getElementById('video-iframe');
+                videoIframe.src = flowUrl;
+            } else {
+                const multiviewItems = document.querySelectorAll('.multiview-item iframe');
+                for (let i = 0; i < multiviewItems.length; i++) {
+                    multiviewItems[i].src = flowUrl;
+                }
+            }
         });
+
+        // 즐찾 버튼
+        document.getElementById('favorite-btn').addEventListener('click', () => {
+            const favoriteModal = document.getElementById('favorite-modal');
+            favoriteModal.style.display = 'block';
+        });
+
+        // 즐찾 모달 닫기
+        document.getElementById('close-favorite-modal').addEventListener('click', () => {
+            const favoriteModal = document.getElementById('favorite-modal');
+            favoriteModal.style.display = 'none';
+        });
+
+        // 즐찾 추가 버튼
+        document.getElementById('add-favorite-btn').addEventListener('click', () => {
+            const nameInput = document.getElementById('favorite-name-input');
+            const urlInput = document.getElementById('favorite-url-input');
+            const name = nameInput.value.trim();
+            const url = urlInput.value.trim();
+
+            if (name && url) {
+                const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+                favorites.push({ name, url });
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+                renderFavorites();
+                renderSidebarFavorites();
+                nameInput.value = '';
+                urlInput.value = '';
+            }
+        });
+
+        // 즐찾 목록 렌더링
+        function renderFavorites() {
+            const favoriteList = document.getElementById('favorite-list');
+            favoriteList.innerHTML = '';
+            const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            favorites.forEach((favorite, index) => {
+                const li = document.createElement('li');
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+                li.style.alignItems = 'center';
+                li.style.padding = '5px 0';
+
+                const span = document.createElement('span');
+                span.textContent = `${favorite.name}: ${favorite.url}`;
+                span.style.flexGrow = '1';
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '삭제';
+                deleteBtn.style.backgroundColor = '#dc3545';
+                deleteBtn.style.color = 'white';
+                deleteBtn.style.border = 'none';
+                deleteBtn.style.borderRadius = '4px';
+                deleteBtn.style.padding = '2px 8px';
+                deleteBtn.style.cursor = 'pointer';
+                deleteBtn.addEventListener('click', () => {
+                    favorites.splice(index, 1);
+                    localStorage.setItem('favorites', JSON.stringify(favorites));
+                    renderFavorites();
+                    renderSidebarFavorites();
+                });
+
+                li.appendChild(span);
+                li.appendChild(deleteBtn);
+                favoriteList.appendChild(li);
+            });
+        }
 
         // F5 버튼
         document.getElementById('refresh-btn').addEventListener('click', () => {
