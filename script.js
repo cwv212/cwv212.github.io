@@ -286,15 +286,17 @@ addFavoriteBtn.addEventListener('click', () => {
     addFavorite(url, name);
 });
 
-/* URL 변환 함수 수정 */
+/* URL 변환 함수 */
 function transformUrl(url) {
     if (!url) return null;
+
+    // 기본 화면 URL 직접 허용
+    if (url === 'https://insagirl.github.io/syncwatchdemo/syncwatch2.html') return url;
 
     const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
     if (chzzkChannelIdPattern.test(url)) return `https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/${url}`;
     if (url.includes('.m3u8')) return url;
 
-    // lolcast.kr 형식 지원
     if (url.startsWith('https://lolcast.kr/#/player/')) {
         const parts = url.split('/');
         const platform = parts[4];
