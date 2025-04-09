@@ -56,22 +56,6 @@
         </div>
     </div>
 
-    <!-- 입력 모달 -->
-    <div id="input-modal" style="display: none;">
-        <div style="display: flex; flex-direction: column;">
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <input type="text" id="url-input" class="url-input" placeholder="URL 입력" style="width: 100%; margin-bottom: 10px;" />
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <button id="go-btn" class="menu-button" style="flex-grow: 1; margin-right: 5px;">Go</button>
-                <button id="close-btn" class="menu-button" style="background-color: #dc3545; color: white;">닫기</button>
-            </div>
-            <div style="margin-top: 10px; color: #666; font-size: 12px; word-wrap: break-word;">
-                ex) 롤캐직링, 영상주소, m3u8(크롬,웨일,엣지는<a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">플레이어</a>설치)
-            </div>
-        </div>
-    </div>
-
     <!-- 즐겨찾기 모달 -->
     <div id="favorite-modal" class="modal">
         <div style="display: flex; flex-direction: column; align-items: center;">
@@ -251,7 +235,7 @@
                 chatIframe.src = lgicurl;
             }
             renderSidebarFavorites();
-            renderFavorites(); // 즐찾 목록만 렌더링, 모달은 표시하지 않음
+            renderFavorites();
             setSplitScreen(1);
         };
 
@@ -277,15 +261,15 @@
         // 즐찾 버튼
         document.getElementById('favorite-btn').addEventListener('click', () => {
             const favoriteModal = document.getElementById('favorite-modal');
-            favoriteModal.style.display = 'block'; // 버튼 클릭 시 모달 표시
-            console.log('Favorite button clicked, modal should be visible'); // 디버깅용 로그
+            favoriteModal.style.display = 'block';
+            console.log('Favorite button clicked, modal should be visible');
         });
 
         // 즐찾 모달 닫기
         document.getElementById('close-favorite-modal').addEventListener('click', () => {
             const favoriteModal = document.getElementById('favorite-modal');
             favoriteModal.style.display = 'none';
-            console.log('Close button clicked, modal should be hidden'); // 디버깅용 로그
+            console.log('Close button clicked, modal should be hidden');
         });
 
         // 즐찾 추가 버튼
