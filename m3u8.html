@@ -799,25 +799,25 @@
             box.className = 'player-box active';
         }
 
-        function playCustomUrl() {
-            const customUrl = document.getElementById('custom-url-input').value.trim();
-            if (customUrl) {
-                const finalUrl = transformUrl(customUrl);
-                if (finalUrl) {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
-                        loadPlayer(targetBox, finalUrl, type);
-                        clickIndex++;
-                    }
-                } else {
-                    alert('유효한 URL 또는 채널 ID를 입력해주세요.');
-                }
-            } else {
-                alert('URL 또는 채널 ID를 입력해주세요.');
+function playCustomUrl() {
+    const customUrl = document.getElementById('custom-url-input').value.trim();
+    if (customUrl) {
+        const finalUrl = transformUrl(customUrl);
+        if (finalUrl) {
+            const playerBoxes = playerContainer.querySelectorAll('.player-box');
+            if (playerBoxes.length > 0) {
+                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                const type = finalUrl.includes('chzzk-api-proxy') || finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe'; // 치지직 프록시 URL도 m3u8로 강제 처리
+                loadPlayer(targetBox, finalUrl, type);
+                clickIndex++;
             }
+        } else {
+            alert('유효한 URL 또는 채널 ID를 입력해주세요.');
         }
+    } else {
+        alert('URL 또는 채널 ID를 입력해주세요.');
+    }
+}
 
         window.onload = () => {
             setSplitScreen(1);
