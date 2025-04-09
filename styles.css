@@ -190,7 +190,6 @@ body {
 }
 
 /* 모달 스타일 */
-#input-modal,
 #favorite-modal {
     position: fixed;
     top: 50%;
