@@ -332,44 +332,34 @@
         let clickIndex = 0;
 
         function adjustLayout() {
-            const w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-            const h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-            const isCollapsed = sidebar.classList.contains('collapsed');
-            const sidebarHeight = sidebar.offsetHeight || 150; // 기본값 150px
+    const w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+    const h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    const sidebarHeight = sidebar.offsetHeight || 150; // 기본값 150px
 
-            if (w < 768) { // 모바일
-                // 최소 채팅 높이와 최대 플레이어 높이 계산
-                const minChatHeight = h * 0.35; // 채팅 최소 25%
-                const maxPlayerHeight = h - minChatHeight; // 플레이어 최대 높이
-                const standardHeight = w * 9 / 16; // 16:9 비율 기준 높이
+    if (w < 768) { // 모바일
+        const minChatHeight = h * 0.35; // 채팅 최소 25%
+        const maxPlayerHeight = h - minChatHeight; // 플레이어 최대 높이
+        const playerHeight = maxPlayerHeight; // 최대 높이로 고정
 
-                // 플레이어 높이를 최대화하면서 16:9 유지
-                let playerHeight = maxPlayerHeight;
-                let playerWidth = playerHeight * 16 / 9; // 16:9 비율로 너비 계산
-
-                if (playerWidth > w) { // 너비가 뷰포트를 초과하면 조정
-                    playerWidth = w;
-                    playerHeight = playerWidth * 9 / 16; // 높이를 너비에 맞춤
-                }
-
-                if (isCollapsed) {
-                    playerContainer.style.height = `${playerHeight}px`;
-                    playerContainer.style.width = `${playerWidth}px`; // 너비 조정
-                    playerContainer.style.marginTop = '0';
-                    chatSection.style.height = `${h - playerHeight}px`;
-                } else {
-                    playerContainer.style.height = `${playerHeight}px`;
-                    playerContainer.style.width = `${playerWidth}px`; // 너비 조정
-                    playerContainer.style.marginTop = `${sidebarHeight}px`;
-                    chatSection.style.height = `${h - playerHeight - sidebarHeight}px`;
-                }
-
-                // 플레이어 중앙 정렬 (선택 사항)
-                playerContainer.style.marginLeft = 'auto';
-                playerContainer.style.marginRight = 'auto';
-            }
-            adjustPlayerLayout();
+        if (isCollapsed) {
+            playerContainer.style.height = `${playerHeight}px`;
+            playerContainer.style.width = '100%'; // 너비 100%로 고정
+            playerContainer.style.marginTop = '0';
+            chatSection.style.height = `${h - playerHeight}px`;
+        } else {
+            playerContainer.style.height = `${playerHeight}px`;
+            playerContainer.style.width = '100%'; // 너비 100%로 고정
+            playerContainer.style.marginTop = `${sidebarHeight}px`;
+            chatSection.style.height = `${h - playerHeight - sidebarHeight}px`;
         }
+
+        // 중앙 정렬 제거 (필요 시 유지 가능)
+        playerContainer.style.marginLeft = '0';
+        playerContainer.style.marginRight = '0';
+    }
+    adjustPlayerLayout();
+}
 
         function openSidebar() {
             sidebar.classList.remove('collapsed');
