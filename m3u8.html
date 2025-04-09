@@ -593,95 +593,97 @@
             tvChannelList.appendChild(btn);
         });
 
-        // 즐겨찾기 채널 렌더링
-        function renderSidebarFavorites() {
-            favoriteChannelList.innerHTML = '';
-            favorites.forEach(favorite => {
-                const btn = document.createElement('div');
-                btn.className = 'favorite-btn-channel';
-                btn.draggable = true;
-                btn.textContent = favorite.name;
-                const transformedUrl = transformUrl(favorite.url); // URL 변환
-                btn.dataset.url = transformedUrl;
-                btn.dataset.type = transformedUrl && transformedUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
-                btn.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', transformedUrl);
-                    e.dataTransfer.setData('text/type', btn.dataset.type);
-                });
-                btn.addEventListener('click', () => {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0 && transformedUrl) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, transformedUrl, btn.dataset.type);
-                        clickIndex++;
-                    }
-                });
-                favoriteChannelList.appendChild(btn);
-            });
-        }
+// 즐겨찾기 채널 렌더링
+function renderSidebarFavorites() {
+    favoriteChannelList.innerHTML = '';
+    favorites.forEach(favorite => {
+        const btn = document.createElement('div');
+        btn.className = 'favorite-btn-channel';
+        btn.draggable = true;
+        btn.textContent = favorite.name;
+        const transformedUrl = transformUrl(favorite.url); // URL 변환
+        btn.dataset.url = transformedUrl;
+        // 치지직 프록시 URL이거나 .m3u8이 포함된 경우 강제로 m3u8 타입으로 설정
+        btn.dataset.type = (transformedUrl && (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8'))) ? 'm3u8' : 'iframe';
+        btn.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', transformedUrl);
+            e.dataTransfer.setData('text/type', btn.dataset.type);
+        });
+        btn.addEventListener('click', () => {
+            const playerBoxes = playerContainer.querySelectorAll('.player-box');
+            if (playerBoxes.length > 0 && transformedUrl) {
+                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe'; // 강제로 m3u8 처리
+                loadPlayer(targetBox, transformedUrl, type);
+                clickIndex++;
+            }
+        });
+        favoriteChannelList.appendChild(btn);
+    });
+}
 
-        // 모달 내 즐겨찾기 목록 렌더링
-        function renderFavorites() {
-            favoriteList.innerHTML = '';
-            favorites.forEach((favorite, index) => {
-                const li = document.createElement('li');
-                li.style.display = 'flex';
-                li.style.justifyContent = 'space-between';
-                li.style.alignItems = 'center';
-                li.style.padding = '5px 0';
-                li.style.borderBottom = '1px solid #eee';
+// 모달 내 즐겨찾기 목록 렌더링
+function renderFavorites() {
+    favoriteList.innerHTML = '';
+    favorites.forEach((favorite, index) => {
+        const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.justifyContent = 'space-between';
+        li.style.alignItems = 'center';
+        li.style.padding = '5px 0';
+        li.style.borderBottom = '1px solid #eee';
 
-                const contentContainer = document.createElement('div');
-                contentContainer.style.flexGrow = '1';
-                contentContainer.style.marginRight = '10px';
-                contentContainer.style.cursor = 'pointer';
+        const contentContainer = document.createElement('div');
+        contentContainer.style.flexGrow = '1';
+        contentContainer.style.marginRight = '10px';
+        contentContainer.style.cursor = 'pointer';
 
-                const nameSpan = document.createElement('span');
-                nameSpan.textContent = favorite.name;
-                nameSpan.style.fontWeight = '500';
-                nameSpan.style.display = 'block';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = favorite.name;
+        nameSpan.style.fontWeight = '500';
+        nameSpan.style.display = 'block';
 
-                const urlSpan = document.createElement('span');
-                urlSpan.textContent = favorite.url; // 원본 URL 표시
-                urlSpan.style.fontSize = '0.8em';
-                urlSpan.style.color = '#555';
-                urlSpan.style.wordBreak = 'break-all';
+        const urlSpan = document.createElement('span');
+        urlSpan.textContent = favorite.url; // 원본 URL 표시
+        urlSpan.style.fontSize = '0.8em';
+        urlSpan.style.color = '#555';
+        urlSpan.style.wordBreak = 'break-all';
 
-                contentContainer.appendChild(nameSpan);
-                contentContainer.appendChild(urlSpan);
+        contentContainer.appendChild(nameSpan);
+        contentContainer.appendChild(urlSpan);
 
-                contentContainer.addEventListener('click', () => {
-                    const transformedUrl = transformUrl(favorite.url); // 변환된 URL 사용
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0 && transformedUrl) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        const type = transformedUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
-                        loadPlayer(targetBox, transformedUrl, type);
-                        clickIndex++;
-                        favoriteModal.style.display = 'none';
-                    }
-                });
+        contentContainer.addEventListener('click', () => {
+            const transformedUrl = transformUrl(favorite.url); // 변환된 URL 사용
+            const playerBoxes = playerContainer.querySelectorAll('.player-box');
+            if (playerBoxes.length > 0 && transformedUrl) {
+                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe'; // 강제로 m3u8 처리
+                loadPlayer(targetBox, transformedUrl, type);
+                clickIndex++;
+                favoriteModal.style.display = 'none';
+            }
+        });
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = '삭제';
-                deleteBtn.style.backgroundColor = '#dc3545';
-                deleteBtn.style.color = 'white';
-                deleteBtn.style.border = 'none';
-                deleteBtn.style.borderRadius = '4px';
-                deleteBtn.style.padding = '3px 8px';
-                deleteBtn.style.fontSize = '12px';
-                deleteBtn.style.cursor = 'pointer';
-                deleteBtn.style.flexShrink = '0';
-                deleteBtn.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    deleteFavorite(index);
-                });
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '삭제';
+        deleteBtn.style.backgroundColor = '#dc3545';
+        deleteBtn.style.color = 'white';
+        deleteBtn.style.border = 'none';
+        deleteBtn.style.borderRadius = '4px';
+        deleteBtn.style.padding = '3px 8px';
+        deleteBtn.style.fontSize = '12px';
+        deleteBtn.style.cursor = 'pointer';
+        deleteBtn.style.flexShrink = '0';
+        deleteBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            deleteFavorite(index);
+        });
 
-                li.appendChild(contentContainer);
-                li.appendChild(deleteBtn);
-                favoriteList.appendChild(li);
-            });
-        }
+        li.appendChild(contentContainer);
+        li.appendChild(deleteBtn);
+        favoriteList.appendChild(li);
+    });
+}
 
         // 즐겨찾기 추가
         function addFavorite() {
