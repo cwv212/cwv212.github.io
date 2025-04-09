@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>롤캐 모바일용</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* 기존 스타일 유지 */
+        .menu-button {
+            padding: 5px 10px;
+            font-size: 14px;
+            margin: 2px;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .multiview-container {
+            display: grid;
+            gap: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .multiview-item {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .multiview-item iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* 슬라이드바 스타일 */
+        #sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 10;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            transition: transform 0.3s ease;
+            position: fixed;
+            width: 100%;
+            height: auto;
+            top: 0;
+            left: 0;
+            transform: translateY(-100%);
+        }
+
+        #sidebar.open {
+            transform: translateY(0);
+        }
+
+        #close-sidebar-btn {
+            padding: 8px 15px;
+            margin: 10px 0 0;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            text-align: center;
+        }
+
+        #close-sidebar-btn:hover {
+            background: #c82333;
+        }
+
+        #toggle-btn {
+            padding: 5px 10px;
+            font-size: 14px;
+            margin: 2px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #toggle-btn:hover {
+            background: #0056b3;
+        }
+
+        /* 슬라이드바 즐찾 채널 버튼 스타일 */
+        #sidebar-favorite-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 5px 0;
+        }
+
+        .sidebar-favorite-btn {
+            padding: 6px 12px;
+            background: #e9ecef;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .sidebar-favorite-btn:hover {
+            background: #dee2e6;
+        }
+
+        @media (min-width: 768px) {
+            #sidebar {
+                width: 220px;
+                height: 100%;
+                top: 0;
+                left: 0;
+                transform: translateX(-100%);
+            }
+
+            #sidebar.open {
+                transform: translateX(0);
+            }
+
+            #sidebar.open ~ .container {
+                margin-left: 220px;
+                width: calc(100% - 220px);
+            }
+        }
+
+        @media (max-width: 767px) {
+            #sidebar:not(.open) ~ .container {
+                margin-top: 0;
+            }
+
+            #sidebar.open ~ .container {
+                margin-top: 150px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 슬라이드바에 즐찾 채널 추가 -->
+    <div id="sidebar">
+        <h3>즐찾 채널</h3>
+        <div id="sidebar-favorite-list">
+            <!-- 즐겨찾기 버튼이 여기에 동적으로 추가됩니다 -->
+        </div>
+        <button id="close-sidebar-btn">닫기</button>
+    </div>
+
+    <div class="container">
+        <div class="menu-section" id="menu-section">
+            <button id="hrm-btn" class="menu-button">흐름</button>
+            <button id="youtube-btn" class="menu-button">숙제</button>
+            <button id="toggle-btn" class="menu-button">☰</button>
+            <button id="flow-btn" class="menu-button">flow</button>
+            <button id="favorite-btn" class="menu-button">즐찾</button>
+            <button id="refresh-btn" class="menu-button">F5</button>
+            <button id="input-btn" class="menu-button">입력</button>
+        </div>
+
+        <div class="video-section" id="video-section">
+            <iframe id="video-iframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+
+        <div class="chat-section">
+            <iframe id="chat-iframe" src="" frameborder="0"></iframe>
+        </div>
+    </div>
+
+    <!-- 입력 모달 (기존 코드 유지) -->
+    <div id="input-modal" style="display: none;">
+        <div style="display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" id="multiview-checkbox" style="margin-right: 5px;">
+                <label for="multiview-checkbox">멀티뷰 사용</label>
+            </div>
+            <div id="single-url-input-container">
+                <input type="text" id="url-input" class="url-input" placeholder="URL 입력" style="width: 100%; margin-bottom: 10px;" />
+            </div>
+            <div id="multiview-options" style="display: none;">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <label for="multiview-layout-select" style="margin-right: 10px;">분할:</label>
+                    <select id="multiview-layout-select">
+                        <option value="1">1분할</option>
+                        <option value="2">2분할</option>
+                        <option value="3">3분할</option>
+                        <option value="4">4분할</option>
+                    </select>
+                </div>
+                <div id="multiview-url-inputs">
+                    <!-- 동적으로 URL 입력 필드가 추가됩니다 -->
+                </div>
+                <div id="favorite-drag-container">
+                    <p class="favorite-drag-title">즐겨찾기 (드래그하여 입력 필드에 붙여넣기)</p>
+                    <div id="favorite-drag-list">
+                        <!-- 즐겨찾기 항목이 여기에 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button id="go-btn" class="menu-button" style="flex-grow: 1; margin-right: 5px;">Go</button>
+                <button id="close-btn" class="menu-button" style="background-color: #dc3545; color: white;">닫기</button>
+            </div>
+            <div style="margin-top: 10px; color: #666; font-size: 12px; word-wrap: break-word;">
+                ex) 롤캐직링, 영상주소, m3u8(크롬,웨일,엣지는<a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">플레이어</a>설치)
+            </div>
+        </div>
+    </div>
+
+    <!-- 기존 즐겨찾기 모달 -->
+    <div id="favorite-modal" style="display: none;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <h3>즐겨찾기 목록</h3>
+            <input type="text" id="favorite-name-input" placeholder="이름 입력" class="favorite-input" style="flex: 1;" />
+            <div class="input-row">
+                <input type="text" id="favorite-url-input" placeholder="주소 입력" class="favorite-input" />
+            </div>
+            <button id="add-favorite-btn" class="menu-button">추가</button>
+        </div>
+        <ul id="favorite-list" style="list-style-type: none; padding: 0; width: 100%;">
+            <!-- 즐겨찾기 항목이 여기에 동적으로 추가됩니다 -->
+        </ul>
+        <div class="button-container">
+            <button id="close-favorite-modal" class="menu-button" style="background-color: #dc3545; color: white;">닫기</button>
+        </div>
+    </div>
+
+    <script>
+        // 기존 스크립트 유지
+        function getVideoarea(w, h, wr, hr) {
+            h = h - 25;
+            if (w <= 0 || h <= 0) {
+                return 0;
+            } else if (w * hr > h * wr) {
+                return h * h * wr / hr;
+            } else {
+                return w * w * hr / wr;
+            }
+        }
+
+        function getUtility(x, n) {
+            return x / (x + n);
+        }
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+        function adjustChatSectionHeight() {
+            const menuSection = document.getElementById('menu-section');
+            const chatSection = document.querySelector('.chat-section');
+            const sidebar = document.getElementById('sidebar');
+            const isSidebarOpen = sidebar.classList.contains('open');
+
+            if (chatSection && menuSection) {
+                let offset = menuSection.offsetHeight;
+                if (isSidebarOpen && window.innerWidth <= 767) {
+                    offset += sidebar.offsetHeight;
+                }
+                chatSection.style.height = `calc(100% - ${offset}px)`;
+            }
+        }
+
+        function design() {
+            var win = window;
+            var doc = document;
+            var docElem = doc.documentElement;
+            var body = doc.getElementsByTagName('body')[0];
+            var w = win.innerWidth || docElem.clientWidth || body.clientWidth;
+            var h = win.innerHeight || docElem.clientHeight || body.clientHeight;
+
+            var minChatHeight = h * 0.4;
+            var maxVideoHeight = h - minChatHeight - 50;
+            var standardHeight = w * 9 / 16 + 25;
+
+            var hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
+
+            var wg = getUtility(getVideoarea(w - 320, h, 16, 9), 192 * 108 * 10) + getUtility(240 * h, 24 * 20 * 10);
+            var hg = getUtility(getVideoarea(w, hgh, 16, 9), 192 * 108 * 10) + getUtility((w > 240 ? 240 : w) * (h - hgh), 24 * 20 * 10);
+
+            const menuSection = document.getElementById('menu-section');
+            const videoSection = document.getElementById('video-section');
+            const chatSection = document.querySelector('.chat-section');
+            const videoIframe = document.getElementById('video-iframe');
+            const chatIframe = document.getElementById('chat-iframe');
+            const sidebar = document.getElementById('sidebar');
+            const isSidebarOpen = sidebar.classList.contains('open');
+
+            if (hg > wg) {
+                menuSection.style.position = "relative";
+                menuSection.style.width = "100%";
+                menuSection.style.height = "auto";
+                menuSection.style.display = "flex";
+                menuSection.style.justifyContent = "space-around";
+                menuSection.style.padding = "10px 0";
+
+                videoSection.style.width = "100%";
+                videoSection.style.height = (350 + hgh) + "px";
+                videoSection.style.position = "relative";
+
+                chatSection.style.width = "100%";
+                chatSection.style.height = (h - hgh - 350) + "px";
+                chatSection.style.position = "relative";
+
+                if (isSidebarOpen) {
+                    videoSection.style.marginTop = `${sidebar.offsetHeight}px`;
+                } else {
+                    videoSection.style.marginTop = "0";
+                }
+            } else {
+                const pcContainer = document.createElement('div');
+                pcContainer.style.display = 'flex';
+                pcContainer.style.height = '100%';
+                pcContainer.style.width = '100%';
+
+                const rightContainer = document.createElement('div');
+                rightContainer.style.width = '17.5%';
+                rightContainer.style.minWidth = '320px';
+                rightContainer.style.height = '100%';
+                rightContainer.style.float = 'right';
+
+                menuSection.style.position = "relative";
+                menuSection.style.width = "100%";
+                menuSection.style.height = "auto";
+                menuSection.style.display = "flex";
+                menuSection.style.flexDirection = "row";
+                menuSection.style.justifyContent = "space-around";
+                menuSection.style.padding = "10px";
+
+                chatSection.style.width = "100%";
+                chatSection.style.height = "calc(100% - " + menuSection.offsetHeight + "px)";
+                chatSection.style.position = "relative";
+                chatSection.style.top = "0";
+
+                rightContainer.appendChild(menuSection);
+                rightContainer.appendChild(chatSection);
+
+                pcContainer.appendChild(videoSection);
+                pcContainer.appendChild(rightContainer);
+
+                const container = document.querySelector('.container');
+                container.innerHTML = '';
+                container.appendChild(pcContainer);
+
+                videoSection.style.width = "82.5%";
+                videoSection.style.height = "100%";
+                videoSection.style.position = "relative";
+                videoSection.style.float = "left";
+
+                if (isSidebarOpen) {
+                    container.style.marginLeft = "220px";
+                    container.style.width = "calc(100% - 220px)";
+                } else {
+                    container.style.marginLeft = "0";
+                    container.style.width = "100%";
+                }
+            }
+
+            window.addEventListener('resize', adjustChatSectionHeight);
+            adjustChatSectionHeight();
+        }
+
+        // 슬라이드바 토글 기능
+        document.getElementById('toggle-btn').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+            design();
+        });
+
+        document.getElementById('close-sidebar-btn').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.remove('open');
+            design();
+        });
+
+        // 초기 로드 시 실행
+        window.onload = function() {
+            const chatIframe = document.getElementById('chat-iframe');
+            const lgicurl = 'https://insagirl-toto.appspot.com/chatting/lgic/';
+            if (location.hash && location.hash.substring(1)) {
+                chatIframe.src = lgicurl + '#' + decodeURIComponent(location.hash.substring(1));
+            } else {
+                chatIframe.src = lgicurl;
+            }
+            design();
+            renderSidebarFavorites(); // 초기 즐겨찾기 버튼 렌더링
+        };
+
+        // "흐름" 버튼 클릭 이벤트
+        const hrmBtn = document.getElementById('hrm-btn');
+        hrmBtn.addEventListener('click', () => {
+            const url = 'https://insagirl-toto.appspot.com/hrm/?where=1';
+            window.open(url, '_blank');
+        });
+
+        // F5 버튼 클릭 시 채팅창 새로고침
+        const refreshBtn = document.getElementById('refresh-btn');
+        refreshBtn.addEventListener('click', () => {
+            const chatIframe = document.getElementById('chat-iframe');
+            if (chatIframe) {
+                const baseUrl = 'https://insagirl-toto.appspot.com/chatting/lgic/';
+                const hashPart = window.location.hash ? '#' + decodeURIComponent(window.location.hash.substring(1)) : '';
+                chatIframe.src = baseUrl + '?cache=' + Math.random() + hashPart;
+            }
+        });
+
+        // 슬라이드바 즐겨찾기 렌더링 함수
+        function renderSidebarFavorites() {
+            const sidebarFavoriteList = document.getElementById('sidebar-favorite-list');
+            sidebarFavoriteList.innerHTML = '';
+            const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            favorites.forEach(favorite => {
+                const btn = document.createElement('button');
+                btn.className = 'sidebar-favorite-btn';
+                btn.textContent = favorite.name;
+                btn.addEventListener('click', () => {
+                    const transformedUrl = transformUrl(favorite.url);
+                    if (transformedUrl) {
+                        const videoIframe = document.getElementById('video-iframe');
+                        videoIframe.src = transformedUrl.endsWith('.m3u8') 
+                            ? getPlayerUrl(transformedUrl) 
+                            : transformedUrl;
+                        document.getElementById('sidebar').classList.remove('open');
+                        design();
+                    }
+                });
+                sidebarFavoriteList.appendChild(btn);
+            });
+        }
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>
