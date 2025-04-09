@@ -643,21 +643,25 @@
 
         window.addEventListener('resize', adjustLayout);
         window.onload = () => {
-            setSplitScreen(1);
-            adjustLayout();
-            const urlParams = new URLSearchParams(window.location.search);
-            const m3u8Url = urlParams.get('url');
-            if (m3u8Url) {
-                const finalUrl = transformUrl(decodeURIComponent(m3u8Url));
-                if (finalUrl) {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
-                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
-                        loadPlayer(playerBoxes[0], finalUrl, type);
-                    }
-                }
+    setSplitScreen(1);
+    const chatIframe = document.getElementById('chat-iframe');
+    chatIframe.onload = () => {
+        adjustLayout(); // iframe 로드 후 레이아웃 조정
+    };
+    adjustLayout(); // 초기 로드 시에도 실행
+    const urlParams = new URLSearchParams(window.location.search);
+    const m3u8Url = urlParams.get('url');
+    if (m3u8Url) {
+        const finalUrl = transformUrl(decodeURIComponent(m3u8Url));
+        if (finalUrl) {
+            const playerBoxes = playerContainer.querySelectorAll('.player-box');
+            if (playerBoxes.length > 0) {
+                const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                loadPlayer(playerBoxes[0], finalUrl, type);
             }
-        };
+        }
+    }
+ };
     </script>
 </body>
 </html>
