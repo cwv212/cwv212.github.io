@@ -784,7 +784,7 @@
             }
             const iframe = document.createElement('iframe');
             if (type === 'm3u8' || url.includes('.m3u8')) {
-                iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
+                iframe.src = `moz-extension://${extensionId}/player.html#${url}`;
             } else {
                 iframe.src = url;
             }
