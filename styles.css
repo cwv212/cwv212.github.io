@@ -15,10 +15,15 @@ body {
 
 .container {
     display: flex;
-    flex-direction: column;
     height: 100%;
     overflow: hidden;
     transition: margin 0.3s ease;
+}
+
+.content-wrapper {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
 }
 
 .multiview-container {
@@ -48,15 +53,12 @@ body {
     padding: 15px;
     transition: transform 0.3s ease;
     position: fixed;
-    width: 100%;
-    height: auto;
     top: 0;
     left: 0;
-    transform: translateY(0);
 }
 
-#sidebar:not(.open) {
-    transform: translateY(-100%);
+#sidebar.open {
+    transform: translateX(0);
 }
 
 #close-sidebar-btn {
@@ -154,36 +156,26 @@ body {
 }
 
 /* 미디어 쿼리 */
+@media (max-width: 767px) {
+    #sidebar {
+        width: 100%;
+        height: auto;
+        transform: translateY(-100%);
+    }
+
+    #sidebar.open {
+        transform: translateY(0);
+    }
+}
+
 @media (min-width: 768px) {
     #sidebar {
         width: 220px;
         height: 100%;
-        top: 0;
-        left: 0;
-        transform: translateX(0);
-    }
-
-    #sidebar:not(.open) {
         transform: translateX(-100%);
     }
 
-    #sidebar.open ~ .container {
-        margin-left: 220px;
-        width: calc(100% - 220px);
-    }
-
-    #sidebar:not(.open) ~ .container {
-        margin-left: 0;
-        width: 100%;
-    }
-}
-
-@media (max-width: 767px) {
-    #sidebar.open ~ .container {
-        margin-top: 150px;
-    }
-
-    #sidebar:not(.open) ~ .container {
-        margin-top: 0;
+    #sidebar.open {
+        transform: translateX(0);
     }
 }
