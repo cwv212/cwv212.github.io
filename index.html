@@ -283,9 +283,9 @@
                 menuSection.style.padding = "10px";
 
                 chatSection.style.width = "100%";
-                chatSection.style.height = `calc(100% - ${menuSection.offsetHeight}px)`; // 메뉴 높이를 제외한 나머지
+                chatSection.style.height = "calc(100% - " + menuSection.offsetHeight + "px)"; // 메뉴 높이를 제외한 나머지
                 chatSection.style.position = "relative";
-                chatSection.style.flexGrow = "1"; // 남은 공간을 채우도록
+                chatSection.style.top = "0";
 
                 rightContainer.appendChild(menuSection);
                 rightContainer.appendChild(chatSection);
