@@ -265,6 +265,6 @@ body {
 
     #chat-section {
         width: 100%;
-        height: auto; /* flex-grow로 조정 */
+        height: "calc(100% - " 50"px)"; /* flex-grow로 조정 */
     }
 }
