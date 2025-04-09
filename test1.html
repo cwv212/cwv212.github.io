@@ -299,10 +299,10 @@
         }
         /* 즐겨찾기 버튼 스타일 */
         .favorite-btn {
-            background: #28a745;
+            background: #007bff;
         }
         .favorite-btn:hover {
-            background: #218838;
+            background: #0056b3;
         }
     </style>
 </head>
@@ -601,17 +601,18 @@
                 btn.className = 'favorite-btn-channel';
                 btn.draggable = true;
                 btn.textContent = favorite.name;
-                btn.dataset.url = favorite.url;
-                btn.dataset.type = favorite.url.includes('.m3u8') ? 'm3u8' : 'iframe';
+                const transformedUrl = transformUrl(favorite.url); // URL 변환
+                btn.dataset.url = transformedUrl;
+                btn.dataset.type = transformedUrl && transformedUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
                 btn.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', favorite.url);
+                    e.dataTransfer.setData('text/plain', transformedUrl);
                     e.dataTransfer.setData('text/type', btn.dataset.type);
                 });
                 btn.addEventListener('click', () => {
                     const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
+                    if (playerBoxes.length > 0 && transformedUrl) {
                         const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, favorite.url, btn.dataset.type);
+                        loadPlayer(targetBox, transformedUrl, btn.dataset.type);
                         clickIndex++;
                     }
                 });
@@ -641,7 +642,7 @@
                 nameSpan.style.display = 'block';
 
                 const urlSpan = document.createElement('span');
-                urlSpan.textContent = favorite.url;
+                urlSpan.textContent = favorite.url; // 원본 URL 표시
                 urlSpan.style.fontSize = '0.8em';
                 urlSpan.style.color = '#555';
                 urlSpan.style.wordBreak = 'break-all';
@@ -650,11 +651,12 @@
                 contentContainer.appendChild(urlSpan);
 
                 contentContainer.addEventListener('click', () => {
+                    const transformedUrl = transformUrl(favorite.url); // 변환된 URL 사용
                     const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
+                    if (playerBoxes.length > 0 && transformedUrl) {
                         const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        const type = favorite.url.includes('.m3u8') ? 'm3u8' : 'iframe';
-                        loadPlayer(targetBox, favorite.url, type);
+                        const type = transformedUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(targetBox, transformedUrl, type);
                         clickIndex++;
                         favoriteModal.style.display = 'none';
                     }
