@@ -28,6 +28,7 @@
             flex-direction: column;
             height: 100%;
             overflow: hidden;
+            transition: margin 0.3s ease; /* 부드러운 이동 */
         }
 
         .multiview-container {
@@ -61,11 +62,11 @@
             height: auto;
             top: 0;
             left: 0;
-            transform: translateY(-100%);
+            transform: translateY(0); /* 기본적으로 열려 있음 */
         }
 
-        #sidebar.open {
-            transform: translateY(0);
+        #sidebar:not(.open) {
+            transform: translateY(-100%);
         }
 
         #close-sidebar-btn {
@@ -104,15 +105,15 @@
             background: #0056b3;
         }
 
-        /* 슬라이드바 즐찾 채널 버튼 스타일 */
-        #sidebar-favorite-list {
+        /* 채널 버튼 스타일 */
+        #lck-channels, #baseball-channels, #spotv-channels {
             display: flex;
             flex-wrap: wrap;
             gap: 5px;
             margin: 5px 0;
         }
 
-        .sidebar-favorite-btn {
+        .channel-btn {
             padding: 6px 12px;
             background: #e9ecef;
             border-radius: 4px;
@@ -123,8 +124,30 @@
             transition: background 0.2s;
         }
 
-        .sidebar-favorite-btn:hover {
+        .channel-btn:hover {
             background: #dee2e6;
+        }
+
+        /* 분할 버튼 스타일 */
+        #split-screen-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin: 5px 0;
+        }
+
+        /* 입력창 스타일 */
+        #custom-url-container {
+            margin: 10px 0;
+        }
+
+        #custom-url-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
         }
 
         @media (min-width: 768px) {
@@ -133,37 +156,57 @@
                 height: 100%;
                 top: 0;
                 left: 0;
-                transform: translateX(-100%);
+                transform: translateX(0); /* 기본적으로 �려 있음 */
             }
 
-            #sidebar.open {
-                transform: translateX(0);
+            #sidebar:not(.open) {
+                transform: translateX(-100%);
             }
 
             #sidebar.open ~ .container {
                 margin-left: 220px;
                 width: calc(100% - 220px);
             }
+
+            #sidebar:not(.open) ~ .container {
+                margin-left: 0;
+                width: 100%;
+            }
         }
 
         @media (max-width: 767px) {
-            #sidebar:not(.open) ~ .container {
-                margin-top: 0;
+            #sidebar.open ~ .container {
+                margin-top: 150px; /* 슬라이드바 높이에 맞게 조정 */
             }
 
-            #sidebar.open ~ .container {
-                margin-top: 150px;
+            #sidebar:not(.open) ~ .container {
+                margin-top: 0;
             }
         }
     </style>
 </head>
 
 <body>
-    <!-- 슬라이드바에 즐찾 채널 추가 -->
-    <div id="sidebar">
+    <!-- 슬라이드바에 채널 및 기능 추가 -->
+    <div id="sidebar" class="open">
+        <h3>LCK 채널</h3>
+        <div id="lck-channels"></div>
+        <h3>야구 채널</h3>
+        <div id="baseball-channels"></div>
+        <h3>스포티비 채널</h3>
+        <div id="spotv-channels"></div>
         <h3>즐찾 채널</h3>
-        <div id="sidebar-favorite-list">
-            <!-- 즐겨찾기 버튼이 여기에 동적으로 추가됩니다 -->
+        <div id="sidebar-favorite-list"></div>
+        <h3>분할 화면 설정</h3>
+        <div id="split-screen-buttons">
+            <button class="channel-btn" onclick="setSplitScreen(1)">1분할</button>
+            <button class="channel-btn" onclick="setSplitScreen(2)">2분할</button>
+            <button class="channel-btn" onclick="setSplitScreen(3)">3분할</button>
+            <button class="channel-btn" onclick="setSplitScreen(4)">4분할</button>
+        </div>
+        <div id="custom-url-container">
+            <input type="text" id="custom-url-input" placeholder="URL 입력">
+            <button class="channel-btn" onclick="playCustomUrl()">실행</button>
         </div>
         <button id="close-sidebar-btn">닫기</button>
     </div>
@@ -188,7 +231,7 @@
         </div>
     </div>
 
-    <!-- 입력 모달 (기존 코드 유지) -->
+    <!-- 입력 모달 -->
     <div id="input-modal" style="display: none;">
         <div style="display: flex; flex-direction: column;">
             <div style="display: flex; align-items: center; margin-bottom: 10px;">
@@ -208,14 +251,10 @@
                         <option value="4">4분할</option>
                     </select>
                 </div>
-                <div id="multiview-url-inputs">
-                    <!-- 동적으로 URL 입력 필드가 추가됩니다 -->
-                </div>
+                <div id="multiview-url-inputs"></div>
                 <div id="favorite-drag-container">
                     <p class="favorite-drag-title">즐겨찾기 (드래그하여 입력 필드에 붙여넣기)</p>
-                    <div id="favorite-drag-list">
-                        <!-- 즐겨찾기 항목이 여기에 동적으로 추가됩니다 -->
-                    </div>
+                    <div id="favorite-drag-list"></div>
                 </div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -228,7 +267,7 @@
         </div>
     </div>
 
-    <!-- 기존 즐겨찾기 모달 -->
+    <!-- 즐겨찾기 모달 -->
     <div id="favorite-modal" style="display: none;">
         <div style="display: flex; flex-direction: column; align-items: center;">
             <h3>즐겨찾기 목록</h3>
@@ -238,63 +277,72 @@
             </div>
             <button id="add-favorite-btn" class="menu-button">추가</button>
         </div>
-        <ul id="favorite-list" style="list-style-type: none; padding: 0; width: 100%;">
-            <!-- 즐겨찾기 항목이 여기에 동적으로 추가됩니다 -->
-        </ul>
+        <ul id="favorite-list" style="list-style-type: none; padding: 0; width: 100%;"></ul>
         <div class="button-container">
             <button id="close-favorite-modal" class="menu-button" style="background-color: #dc3545; color: white;">닫기</button>
         </div>
     </div>
 
     <script>
-        // 기존 스크립트 유지
-        function getVideoarea(w, h, wr, hr) {
-            h = h - 25;
-            if (w <= 0 || h <= 0) {
-                return 0;
-            } else if (w * hr > h * wr) {
-                return h * h * wr / hr;
-            } else {
-                return w * w * hr / wr;
-            }
-        }
+        // 채널 데이터 정의
+        const lckChannels = [
+            { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8' },
+            { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202' },
+            { name: 'K', url: 'https://www.youtube.com/embed/live_stream?channel=UCw1DsweY9b2AKGjV4kGJP1A' }
+        ];
+        const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
+            name: `야${i + 1}`,
+            url: `https://global-media.sooplive.com/live/soopbaseball${i + 1}/master.m3u8`
+        }));
+        const spotvChannels = Array.from({ length: 40 }, (_, i) => {
+            const channelNum = String(i + 1).padStart(2, '0');
+            return { name: `${i + 1}`, url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8` };
+        });
 
-        function getUtility(x, n) {
-            return x / (x + n);
-        }
+        // DOM 요소 선택
+        const lckChannelList = document.getElementById('lck-channels');
+        const baseballChannelList = document.getElementById('baseball-channels');
+        const spotvChannelList = document.getElementById('spotv-channels');
 
-        function debounce(func, delay) {
-            let timeoutId;
-            return function(...args) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => {
-                    func.apply(this, args);
-                }, delay);
-            };
-        }
-
-        function adjustChatSectionHeight() {
-            const menuSection = document.getElementById('menu-section');
-            const chatSection = document.querySelector('.chat-section');
-            const sidebar = document.getElementById('sidebar');
-            const isSidebarOpen = sidebar.classList.contains('open');
-
-            if (chatSection && menuSection) {
-                let offset = menuSection.offsetHeight;
-                if (isSidebarOpen && window.innerWidth <= 767) {
-                    offset += sidebar.offsetHeight;
+        // 채널 버튼 생성 함수
+        function createChannelButton(channel) {
+            const btn = document.createElement('button');
+            btn.className = 'channel-btn';
+            btn.textContent = channel.name;
+            btn.draggable = true;
+            btn.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', channel.url);
+            });
+            btn.addEventListener('click', () => {
+                const transformedUrl = transformUrl(channel.url);
+                if (transformedUrl) {
+                    const videoIframe = document.getElementById('video-iframe');
+                    videoIframe.src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
                 }
-                chatSection.style.height = `calc(100% - ${offset}px)`;
-            }
+            });
+            return btn;
         }
 
+        // 채널 버튼 렌더링
+        lckChannels.forEach(channel => lckChannelList.appendChild(createChannelButton(channel)));
+        baseballChannels.forEach(channel => baseballChannelList.appendChild(createChannelButton(channel)));
+        spotvChannels.forEach(channel => spotvChannelList.appendChild(createChannelButton(channel)));
+
+        // 슬라이드바 토글 기능
+        document.getElementById('toggle-btn').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        });
+
+        document.getElementById('close-sidebar-btn').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.remove('open');
+        });
+
+        // 기존 레이아웃 함수 (필요 시 최소화)
         function design() {
-            var win = window;
-            var doc = document;
-            var docElem = doc.documentElement;
-            var body = doc.getElementsByTagName('body')[0];
-            var w = win.innerWidth || docElem.clientWidth || body.clientWidth;
-            var h = win.innerHeight || docElem.clientHeight || body.clientHeight;
+            var w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+            var h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 
             var minChatHeight = h * 0.4;
             var maxVideoHeight = h - minChatHeight - 50;
@@ -302,103 +350,18 @@
 
             var hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
 
-            var wg = getUtility(getVideoarea(w - 320, h, 16, 9), 192 * 108 * 10) + getUtility(240 * h, 24 * 20 * 10);
-            var hg = getUtility(getVideoarea(w, hgh, 16, 9), 192 * 108 * 10) + getUtility((w > 240 ? 240 : w) * (h - hgh), 24 * 20 * 10);
-
             const menuSection = document.getElementById('menu-section');
             const videoSection = document.getElementById('video-section');
             const chatSection = document.querySelector('.chat-section');
-            const videoIframe = document.getElementById('video-iframe');
-            const chatIframe = document.getElementById('chat-iframe');
-            const sidebar = document.getElementById('sidebar');
-            const isSidebarOpen = sidebar.classList.contains('open');
 
-            if (hg > wg) {
-                menuSection.style.position = "relative";
-                menuSection.style.width = "100%";
-                menuSection.style.height = "auto";
-                menuSection.style.display = "flex";
-                menuSection.style.justifyContent = "space-around";
-                menuSection.style.padding = "10px 0";
-
-                videoSection.style.width = "100%";
+            if (w <= 767) {
                 videoSection.style.height = (350 + hgh) + "px";
-                videoSection.style.position = "relative";
-
-                chatSection.style.width = "100%";
                 chatSection.style.height = (h - hgh - 350) + "px";
-                chatSection.style.position = "relative";
-
-                if (isSidebarOpen) {
-                    videoSection.style.marginTop = `${sidebar.offsetHeight}px`;
-                } else {
-                    videoSection.style.marginTop = "0";
-                }
             } else {
-                const pcContainer = document.createElement('div');
-                pcContainer.style.display = 'flex';
-                pcContainer.style.height = '100%';
-                pcContainer.style.width = '100%';
-
-                const rightContainer = document.createElement('div');
-                rightContainer.style.width = '17.5%';
-                rightContainer.style.minWidth = '320px';
-                rightContainer.style.height = '100%';
-                rightContainer.style.float = 'right';
-
-                menuSection.style.position = "relative";
-                menuSection.style.width = "100%";
-                menuSection.style.height = "auto";
-                menuSection.style.display = "flex";
-                menuSection.style.flexDirection = "row";
-                menuSection.style.justifyContent = "space-around";
-                menuSection.style.padding = "10px";
-
-                chatSection.style.width = "100%";
-                chatSection.style.height = "calc(100% - " + menuSection.offsetHeight + "px)";
-                chatSection.style.position = "relative";
-                chatSection.style.top = "0";
-
-                rightContainer.appendChild(menuSection);
-                rightContainer.appendChild(chatSection);
-
-                pcContainer.appendChild(videoSection);
-                pcContainer.appendChild(rightContainer);
-
-                const container = document.querySelector('.container');
-                container.innerHTML = '';
-                container.appendChild(pcContainer);
-
-                videoSection.style.width = "82.5%";
                 videoSection.style.height = "100%";
-                videoSection.style.position = "relative";
-                videoSection.style.float = "left";
-
-                if (isSidebarOpen) {
-                    container.style.marginLeft = "220px";
-                    container.style.width = "calc(100% - 220px)";
-                } else {
-                    container.style.marginLeft = "0";
-                    container.style.width = "100%";
-                }
+                chatSection.style.height = `calc(100% - ${menuSection.offsetHeight}px)`;
             }
-
-            window.addEventListener('resize', adjustChatSectionHeight);
-            adjustChatSectionHeight();
         }
-
-        // 슬라이드바 토글 기능
-        document.getElementById('toggle-btn').addEventListener('click', () => {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('open');
-            design();
-        });
-
-        document.getElementById('close-sidebar-btn').addEventListener('click', () => {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.remove('open');
-            design();
-        });
 
         // 초기 로드 시 실행
         window.onload = function() {
@@ -410,47 +373,30 @@
                 chatIframe.src = lgicurl;
             }
             design();
-            renderSidebarFavorites(); // 초기 즐겨찾기 버튼 렌더링
+            renderSidebarFavorites();
+            setSplitScreen(1); // 초기 1분할 설정
         };
 
-        // "흐름" 버튼 클릭 이벤트
-        const hrmBtn = document.getElementById('hrm-btn');
-        hrmBtn.addEventListener('click', () => {
-            const url = 'https://insagirl-toto.appspot.com/hrm/?where=1';
-            window.open(url, '_blank');
+        // 흐름 버튼
+        document.getElementById('hrm-btn').addEventListener('click', () => {
+            window.open('https://insagirl-toto.appspot.com/hrm/?where=1', '_blank');
         });
 
-        // F5 버튼 클릭 시 채팅창 새로고침
-        const refreshBtn = document.getElementById('refresh-btn');
-        refreshBtn.addEventListener('click', () => {
+        // F5 버튼
+        document.getElementById('refresh-btn').addEventListener('click', () => {
             const chatIframe = document.getElementById('chat-iframe');
-            if (chatIframe) {
-                const baseUrl = 'https://insagirl-toto.appspot.com/chatting/lgic/';
-                const hashPart = window.location.hash ? '#' + decodeURIComponent(window.location.hash.substring(1)) : '';
-                chatIframe.src = baseUrl + '?cache=' + Math.random() + hashPart;
-            }
+            const baseUrl = 'https://insagirl-toto.appspot.com/chatting/lgic/';
+            const hashPart = window.location.hash ? '#' + decodeURIComponent(window.location.hash.substring(1)) : '';
+            chatIframe.src = baseUrl + '?cache=' + Math.random() + hashPart;
         });
 
-        // 슬라이드바 즐겨찾기 렌더링 함수
+        // 슬라이드바 즐겨찾기 렌더링
         function renderSidebarFavorites() {
             const sidebarFavoriteList = document.getElementById('sidebar-favorite-list');
             sidebarFavoriteList.innerHTML = '';
             const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
             favorites.forEach(favorite => {
-                const btn = document.createElement('button');
-                btn.className = 'sidebar-favorite-btn';
-                btn.textContent = favorite.name;
-                btn.addEventListener('click', () => {
-                    const transformedUrl = transformUrl(favorite.url);
-                    if (transformedUrl) {
-                        const videoIframe = document.getElementById('video-iframe');
-                        videoIframe.src = transformedUrl.endsWith('.m3u8') 
-                            ? getPlayerUrl(transformedUrl) 
-                            : transformedUrl;
-                        document.getElementById('sidebar').classList.remove('open');
-                        design();
-                    }
-                });
+                const btn = createChannelButton(favorite);
                 sidebarFavoriteList.appendChild(btn);
             });
         }
