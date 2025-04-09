@@ -11,10 +11,6 @@
     transition: background 0.3s;
 }
 
-.menu-button:hover {
-    background: #0056b3;
-}
-
 html,
 body {
     height: 100%;
