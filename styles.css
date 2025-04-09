@@ -1,252 +1,189 @@
-/* General styles */
+/* 기본 스타일 */
+.menu-button {
+    padding: 5px 10px;
+    font-size: 14px;
+    margin: 2px;
+}
+
+html,
 body {
-    font-family: Arial, sans-serif;
+    height: 100%;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
+    overflow: hidden;
 }
 
 .container {
     display: flex;
     flex-direction: column;
     height: 100%;
-}
-
-/* Menu section styles */
-.menu-section {
-    display: flex;
-    justify-content: space-around;
-    padding: 10px;
-    background-color: #f8f8f8;
-}
-
-.menu-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    background-color: #555;
-}
-
-/* Input modal styles */
-#input-modal {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 400px;
-    margin: 20px auto;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    background-color: white;
-    z-index: 1000;
-    box-sizing: border-box;
-}
-
-#input-modal > div {
-    display: flex;
-    flex-direction: column;
-}
-
-#input-modal label {
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-#input-modal input[type="checkbox"] {
-    margin-right: 5px;
-}
-
-#single-url-input-container, #multiview-options {
-    margin-bottom: 10px;
-}
-
-.url-input, #multiview-options select {
-    width: 100%;
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    margin-bottom: 5px;
-}
-
-#multiview-url-inputs > input {
-    width: 100%;
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    margin-bottom: 5px;
-}
-
-/* Go & Close buttons in modal */
-#go-btn, #close-btn {
-    width: 50px; 
-    padding: 8px;
-    font-size: 12px;
-}
-
-#go-btn {
-    background-color: #555;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-#close-btn {
-    background-color: #555;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-#input-modal > div > div:last-child {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-#input-modal > div > div:last-child button {
-    flex-grow: 1;
-}
-
-/* Top section styles */
-.top-section {
-    flex: 2;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-#video-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* Bottom section styles */
-.bottom-section {
-    flex: 1.5;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-#chat-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    zoom: 1.2;
     overflow: hidden;
+    transition: margin 0.3s ease;
 }
 
-/* 기존 즐겨찾기 모달 스타일 */
-#favorite-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    width: 90%;
-    max-width: 400px;
-    box-sizing: border-box;
-}
-
-#favorite-list {
-    max-height: 200px;
-    overflow-y: auto;
+.multiview-container {
+    display: grid;
+    gap: 0;
     width: 100%;
+    height: 100%;
 }
 
-#favorite-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 10px 0;
-    padding: 5px;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    word-break: break-all;
+.multiview-item {
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
 
-#favorite-list li button {
-    background-color: #dc3545;
+.multiview-item iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* 슬라이드바 스타일 */
+#sidebar {
+    background: rgba(255, 255, 255, 0.95);
+    z-index: 10;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    transition: transform 0.3s ease;
+    position: fixed;
+    width: 100%;
+    height: auto;
+    top: 0;
+    left: 0;
+    transform: translateY(0);
+}
+
+#sidebar:not(.open) {
+    transform: translateY(-100%);
+}
+
+#close-sidebar-btn {
+    padding: 8px 15px;
+    margin: 10px 0 0;
+    background: #dc3545;
     color: white;
     border: none;
-    padding: 5px 10px;
-    border-radius: 3px;
+    border-radius: 6px;
     cursor: pointer;
+    transition: background 0.3s;
+    width: 100%;
+    text-align: center;
+}
+
+#close-sidebar-btn:hover {
+    background: #c82333;
+}
+
+#toggle-btn {
+    padding: 5px 10px;
     font-size: 14px;
+    margin: 2px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-#favorite-list li button:hover {
-    background-color: #c82333;
+#toggle-btn:hover {
+    background: #0056b3;
 }
 
-.favorite-input {
-    height: 40px;
+/* 채널 버튼 스타일 */
+#lck-channels, #baseball-channels, #spotv-channels, #tv-channels, #sidebar-favorite-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 5px 0;
+}
+
+.channel-btn {
+    padding: 6px 12px;
+    background: #e9ecef;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    text-align: center;
+    transition: background 0.2s;
+}
+
+.channel-btn:hover {
+    background: #dee2e6;
+}
+
+/* 스포티비 토글 스타일 */
+#spotv-channels {
+    display: none;
+}
+
+#spotv-channels.active {
+    display: flex;
+}
+
+.toggle-header {
+    cursor: pointer;
+}
+
+/* 분할 버튼 스타일 */
+#split-screen-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    margin: 5px 0;
+}
+
+/* 입력창 스타일 */
+#custom-url-container {
+    margin: 10px 0;
+}
+
+#custom-url-input {
     width: 100%;
     padding: 8px;
-    font-size: 14px;
-    box-sizing: border-box;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
-
-.input-row {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-    margin-bottom: 10px;
-}
-
-.button-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 10px;
-}
-
-/* 멀티뷰 즐겨찾기 드래그 영역 스타일 */
-#favorite-drag-container {
-    margin-top: 10px;
-    border: 1px solid #ccc;
-    padding: 5px;
-    max-height: 200px;
-    overflow-y: auto;
-    background-color: #fafafa;
-}
-
-.favorite-drag-title {
-    font-size: 13px;
-    color: #333;
     margin-bottom: 5px;
-}
-
-.favorite-drag-item {
-    padding: 5px;
-    margin-bottom: 3px;
-    background-color: #e9e9e9;
     border: 1px solid #ccc;
-    border-radius: 3px;
-    cursor: move;
+    border-radius: 4px;
+    font-size: 14px;
 }
 
-.favorite-drag-item:hover {
-    background-color: #dcdcdc;
+/* 미디어 쿼리 */
+@media (min-width: 768px) {
+    #sidebar {
+        width: 220px;
+        height: 100%;
+        top: 0;
+        left: 0;
+        transform: translateX(0);
+    }
+
+    #sidebar:not(.open) {
+        transform: translateX(-100%);
+    }
+
+    #sidebar.open ~ .container {
+        margin-left: 220px;
+        width: calc(100% - 220px);
+    }
+
+    #sidebar:not(.open) ~ .container {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 767px) {
+    #sidebar.open ~ .container {
+        margin-top: 150px;
+    }
+
+    #sidebar:not(.open) ~ .container {
+        margin-top: 0;
+    }
 }
