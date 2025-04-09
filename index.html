@@ -11,12 +11,11 @@
 
 <body>
     <div id="main-container">
-        <div id="sidebar" class="open">
-            <h3>LCK 채널</h3>
+        <div id="sidebar" class="collapsed"> <h3>LCK 채널</h3>
             <div id="lck-channels"></div>
             <h3>야구 채널</h3>
             <div id="baseball-channels"></div>
-            <h3 class="toggle-header" onclick="toggleSpotv()">스포티비 채널 <span id="spotv-arrow">▼</span></h3>
+            <h3 class="toggle-header" id="spotv-toggle">스포티비 채널 <span id="spotv-arrow">▼</span></h3>
             <div id="spotv-channels"></div>
             <h3>TV 채널</h3>
             <div id="tv-channels"></div>
@@ -24,28 +23,27 @@
             <div id="sidebar-favorite-list"></div>
             <h3>분할 화면 설정</h3>
             <div id="split-screen-buttons">
-                <button class="channel-btn" onclick="setSplitScreen(1)">1분할</button>
-                <button class="channel-btn" onclick="setSplitScreen(2)">2분할</button>
-                <button class="channel-btn" onclick="setSplitScreen(3)">3분할</button>
-                <button class="channel-btn" onclick="setSplitScreen(4)">4분할</button>
+                <button class="channel-btn" data-split="1">1분할</button>
+                <button class="channel-btn" data-split="2">2분할</button>
+                <button class="channel-btn" data-split="3">3분할</button>
+                <button class="channel-btn" data-split="4">4분할</button>
             </div>
             <div id="custom-url-container">
                 <input type="text" id="custom-url-input" placeholder="URL 입력">
-                <button class="channel-btn" onclick="playCustomUrl()">실행</button>
+                <button class="channel-btn" id="play-custom-url-btn">실행</button>
             </div>
             <button id="close-sidebar-btn">닫기</button>
         </div>
 
         <div id="player-container">
             <div class="video-section" id="video-section">
-                <iframe id="video-iframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
+                </div>
         </div>
 
         <div class="right-container" id="right-container">
             <div class="menu-section" id="menu-section">
                 <button id="hrm-btn" class="menu-button">흐름</button>
-                <button id="toggle-btn" class="menu-button">슬라이드</button>
+                <button id="toggle-sidebar-btn" class="menu-button">슬라이드</button>
                 <button id="flow-btn" class="menu-button">flow</button>
                 <button id="favorite-btn" class="menu-button">즐찾</button>
                 <button id="refresh-btn" class="menu-button">F5</button>
@@ -56,7 +54,6 @@
         </div>
     </div>
 
-    <!-- 즐겨찾기 모달 -->
     <div id="favorite-modal" class="modal">
         <div style="display: flex; flex-direction: column; align-items: center;">
             <h3>즐겨찾기 목록</h3>
@@ -72,287 +69,7 @@
         </div>
     </div>
 
-    <script>
-        let splitScreenCount = 1; // 기본 1분할
-
-        // 채널 데이터 정의
-        const lckChannels = [
-            { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8' },
-            { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202' },
-            { name: 'K', url: 'https://www.youtube.com/embed/live_stream?channel=UCw1DsweY9b2AKGjV4kGJP1A' }
-        ];
-        const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
-            name: `야${i + 1}`,
-            url: `https://global-media.sooplive.com/live/soopbaseball${i + 1}/master.m3u8`
-        }));
-        const spotvChannels = Array.from({ length: 40 }, (_, i) => {
-            const channelNum = String(i + 1).padStart(2, '0');
-            return { name: `${i + 1}`, url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8` };
-        });
-        const tvChannels = [
-            { name: 'SBS', url: 'https://bpplus-stream.sbs.co.kr/live/sbslive01/playlist.m3u8' },
-            { name: 'KBS1', url: 'https://bpplus-stream.sbs.co.kr/live/kbs1live01/playlist.m3u8' },
-            { name: 'KBS2', url: 'https://bpplus-stream.sbs.co.kr/live/kbs2live01/playlist.m3u8' },
-            { name: 'MBC', url: 'https://bpplus-stream.sbs.co.kr/live/mbclive01/playlist.m3u8' }
-        ];
-
-        // DOM 요소 선택
-        const lckChannelList = document.getElementById('lck-channels');
-        const baseballChannelList = document.getElementById('baseball-channels');
-        const spotvChannelList = document.getElementById('spotv-channels');
-        const tvChannelList = document.getElementById('tv-channels');
-
-        // URL 변환 함수 (기존 로직 유지)
-        function transformUrl(url) {
-            return url; // 실제 구현은 생략 (기존 로직 사용)
-        }
-
-        function getPlayerUrl(url) {
-            return url; // 실제 구현은 생략 (기존 로직 사용)
-        }
-
-        // 채널 버튼 생성 함수
-        function createChannelButton(channel) {
-            const btn = document.createElement('button');
-            btn.className = 'channel-btn';
-            btn.textContent = channel.name;
-            btn.draggable = true;
-            btn.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', channel.url);
-            });
-            btn.addEventListener('click', () => {
-                const transformedUrl = transformUrl(channel.url);
-                if (transformedUrl) {
-                    if (splitScreenCount === 1) {
-                        const videoIframe = document.getElementById('video-iframe');
-                        videoIframe.src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
-                    } else {
-                        const multiviewItems = document.querySelectorAll('.multiview-item iframe');
-                        multiviewItems[0].src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
-                    }
-                }
-            });
-            return btn;
-        }
-
-        // 채널 버튼 렌더링
-        lckChannels.forEach(channel => lckChannelList.appendChild(createChannelButton(channel)));
-        baseballChannels.forEach(channel => baseballChannelList.appendChild(createChannelButton(channel)));
-        spotvChannels.forEach(channel => spotvChannelList.appendChild(createChannelButton(channel)));
-        tvChannels.forEach(channel => tvChannelList.appendChild(createChannelButton(channel)));
-
-        // 스포티비 토글 함수
-        function toggleSpotv() {
-            const spotvChannels = document.getElementById('spotv-channels');
-            const arrow = document.getElementById('spotv-arrow');
-            spotvChannels.classList.toggle('active');
-            arrow.textContent = spotvChannels.classList.contains('active') ? '▲' : '▼';
-        }
-
-        // 슬라이드바 토글 기능
-        document.getElementById('toggle-btn').addEventListener('click', () => {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('open');
-            sidebar.classList.toggle('collapsed');
-        });
-
-        document.getElementById('close-sidebar-btn').addEventListener('click', () => {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.remove('open');
-            sidebar.classList.add('collapsed');
-        });
-
-        function debounce(func, delay) {
-            let timeoutId;
-            return function(...args) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => {
-                    func.apply(this, args);
-                }, delay);
-            };
-        }
-
-        // 분할 화면 설정 함수
-        function setSplitScreen(count) {
-            splitScreenCount = count;
-            const videoSection = document.getElementById('video-section');
-            videoSection.innerHTML = '';
-
-            if (count === 1) {
-                const iframe = document.createElement('iframe');
-                iframe.id = 'video-iframe';
-                iframe.src = '';
-                iframe.frameBorder = '0';
-                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-                iframe.allowFullscreen = true;
-                videoSection.appendChild(iframe);
-            } else {
-                const multiviewContainer = document.createElement('div');
-                multiviewContainer.className = 'multiview-container';
-                multiviewContainer.style.gridTemplateColumns = count <= 2 ? `repeat(${count}, 1fr)` : 'repeat(2, 1fr)';
-                multiviewContainer.style.gridTemplateRows = count <= 2 ? '1fr' : `repeat(${Math.ceil(count / 2)}, 1fr)`;
-
-                for (let i = 0; i < count; i++) {
-                    const multiviewItem = document.createElement('div');
-                    multiviewItem.className = 'multiview-item';
-                    const iframe = document.createElement('iframe');
-                    iframe.src = '';
-                    iframe.frameBorder = '0';
-                    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-                    iframe.allowFullscreen = true;
-                    multiviewItem.appendChild(iframe);
-                    multiviewContainer.appendChild(multiviewItem);
-                }
-
-                videoSection.appendChild(multiviewContainer);
-            }
-        }
-
-        // 커스텀 URL 재생 함수
-        function playCustomUrl() {
-            const urlInput = document.getElementById('custom-url-input').value;
-            if (urlInput) {
-                const transformedUrl = transformUrl(urlInput);
-                if (transformedUrl) {
-                    if (splitScreenCount === 1) {
-                        const videoIframe = document.getElementById('video-iframe');
-                        videoIframe.src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
-                    } else {
-                        const multiviewItems = document.querySelectorAll('.multiview-item iframe');
-                        multiviewItems[0].src = transformedUrl.endsWith('.m3u8') ? getPlayerUrl(transformedUrl) : transformedUrl;
-                    }
-                }
-            }
-        }
-
-        // 초기 로드 시 실행
-        window.onload = function() {
-            const chatIframe = document.getElementById('chat-iframe');
-            const lgicurl = 'https://insagirl-toto.appspot.com/chatting/lgic/';
-            if (location.hash && location.hash.substring(1)) {
-                chatIframe.src = lgicurl + '#' + decodeURIComponent(location.hash.substring(1));
-            } else {
-                chatIframe.src = lgicurl;
-            }
-            // 즐찾 모달 초기화
-            const favoriteModal = document.getElementById('favorite-modal');
-            favoriteModal.style.display = 'none';
-            console.log('Page loaded, favorite modal display:', favoriteModal.style.display);
-
-            renderSidebarFavorites();
-            renderFavorites();
-            setSplitScreen(1);
-        };
-
-        // 흐름 버튼
-        document.getElementById('hrm-btn').addEventListener('click', () => {
-            window.open('https://insagirl-toto.appspot.com/hrm/?where=1', '_blank');
-        });
-
-        // Flow 버튼
-        document.getElementById('flow-btn').addEventListener('click', () => {
-            const flowUrl = 'https://insagirl.github.io/syncwatchdemo/syncwatch2.html';
-            if (splitScreenCount === 1) {
-                const videoIframe = document.getElementById('video-iframe');
-                videoIframe.src = flowUrl;
-            } else {
-                const multiviewItems = document.querySelectorAll('.multiview-item iframe');
-                for (let i = 0; i < multiviewItems.length; i++) {
-                    multiviewItems[i].src = flowUrl;
-                }
-            }
-        });
-
-        // 즐찾 버튼
-        document.getElementById('favorite-btn').addEventListener('click', () => {
-            const favoriteModal = document.getElementById('favorite-modal');
-            favoriteModal.style.display = 'block';
-            console.log('Favorite button clicked, modal display:', favoriteModal.style.display);
-        });
-
-        // 즐찾 모달 닫기
-        document.getElementById('close-favorite-modal').addEventListener('click', () => {
-            const favoriteModal = document.getElementById('favorite-modal');
-            favoriteModal.style.display = 'none';
-            console.log('Close button clicked, modal display:', favoriteModal.style.display);
-        });
-
-        // 즐찾 추가 버튼
-        document.getElementById('add-favorite-btn').addEventListener('click', () => {
-            const nameInput = document.getElementById('favorite-name-input');
-            const urlInput = document.getElementById('favorite-url-input');
-            const name = nameInput.value.trim();
-            const url = urlInput.value.trim();
-
-            if (name && url) {
-                const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-                favorites.push({ name, url });
-                localStorage.setItem('favorites', JSON.stringify(favorites));
-                renderFavorites();
-                renderSidebarFavorites();
-                nameInput.value = '';
-                urlInput.value = '';
-            }
-        });
-
-        // 즐찾 목록 렌더링
-        function renderFavorites() {
-            const favoriteList = document.getElementById('favorite-list');
-            favoriteList.innerHTML = '';
-            const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-            favorites.forEach((favorite, index) => {
-                const li = document.createElement('li');
-                li.style.display = 'flex';
-                li.style.justifyContent = 'space-between';
-                li.style.alignItems = 'center';
-                li.style.padding = '5px 0';
-
-                const span = document.createElement('span');
-                span.textContent = `${favorite.name}: ${favorite.url}`;
-                span.style.flexGrow = '1';
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = '삭제';
-                deleteBtn.style.backgroundColor = '#dc3545';
-                deleteBtn.style.color = 'white';
-                deleteBtn.style.border = 'none';
-                deleteBtn.style.borderRadius = '4px';
-                deleteBtn.style.padding = '2px 8px';
-                deleteBtn.style.cursor = 'pointer';
-                deleteBtn.addEventListener('click', () => {
-                    favorites.splice(index, 1);
-                    localStorage.setItem('favorites', JSON.stringify(favorites));
-                    renderFavorites();
-                    renderSidebarFavorites();
-                });
-
-                li.appendChild(span);
-                li.appendChild(deleteBtn);
-                favoriteList.appendChild(li);
-            });
-            console.log('Favorites rendered, modal display:', document.getElementById('favorite-modal').style.display);
-        }
-
-        // F5 버튼
-        document.getElementById('refresh-btn').addEventListener('click', () => {
-            const chatIframe = document.getElementById('chat-iframe');
-            const baseUrl = 'https://insagirl-toto.appspot.com/chatting/lgic/';
-            const hashPart = window.location.hash ? '#' + decodeURIComponent(window.location.hash.substring(1)) : '';
-            chatIframe.src = baseUrl + '?cache=' + Math.random() + hashPart;
-        });
-
-        // 슬라이드바 즐겨찾기 렌더링
-        function renderSidebarFavorites() {
-            const sidebarFavoriteList = document.getElementById('sidebar-favorite-list');
-            sidebarFavoriteList.innerHTML = '';
-            const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-            favorites.forEach(favorite => {
-                const btn = createChannelButton(favorite);
-                sidebarFavoriteList.appendChild(btn);
-            });
-        }
-    </script>
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 
 </html>
