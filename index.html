@@ -234,6 +234,11 @@
             } else {
                 chatIframe.src = lgicurl;
             }
+            // 즐찾 모달 초기화
+            const favoriteModal = document.getElementById('favorite-modal');
+            favoriteModal.style.display = 'none';
+            console.log('Page loaded, favorite modal display:', favoriteModal.style.display);
+
             renderSidebarFavorites();
             renderFavorites();
             setSplitScreen(1);
@@ -262,14 +267,14 @@
         document.getElementById('favorite-btn').addEventListener('click', () => {
             const favoriteModal = document.getElementById('favorite-modal');
             favoriteModal.style.display = 'block';
-            console.log('Favorite button clicked, modal should be visible');
+            console.log('Favorite button clicked, modal display:', favoriteModal.style.display);
         });
 
         // 즐찾 모달 닫기
         document.getElementById('close-favorite-modal').addEventListener('click', () => {
             const favoriteModal = document.getElementById('favorite-modal');
             favoriteModal.style.display = 'none';
-            console.log('Close button clicked, modal should be hidden');
+            console.log('Close button clicked, modal display:', favoriteModal.style.display);
         });
 
         // 즐찾 추가 버튼
@@ -325,6 +330,7 @@
                 li.appendChild(deleteBtn);
                 favoriteList.appendChild(li);
             });
+            console.log('Favorites rendered, modal display:', document.getElementById('favorite-modal').style.display);
         }
 
         // F5 버튼
