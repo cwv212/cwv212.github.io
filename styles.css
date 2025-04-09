@@ -1,18 +1,12 @@
 /* 기본 스타일 */
 .menu-button {
-    padding: 5px 10px;
-    font-size: 14px;
-    margin: 2px;
-    background: #007bff; /* 모든 버튼 동일 색상 */
+    padding: 10px 20px;
+    font-size: 16px;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    transition: background 0.3s;
-}
-
-.menu-button:hover {
-    background: #0056b3;
+    background-color: #555;
 }
 
 html,
