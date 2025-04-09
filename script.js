@@ -1,11 +1,5 @@
 /* CHANNELS 객체 및 기본 DOM 요소 선택 */
 const CHANNELS = {
-    youtube: {
-        id: 'UCw1DsweY9b2AKGjV4kGJP1A',
-        buttonLabel: '숙제1',
-        color: '#FF0000',
-        url: (id) => `https://www.youtube.com/embed/live_stream?channel=${id}`
-    },
     flow: {
         buttonLabel: 'flow',
         color: '#00FFA3',
@@ -15,9 +9,7 @@ const CHANNELS = {
 
 const videoSection = document.getElementById('video-section');
 const videoIframe = document.getElementById('video-iframe');
-const youtubeBtn = document.getElementById('youtube-btn');
 const flowBtn = document.getElementById('flow-btn');
-const inputBtn = document.getElementById('input-btn');
 const goBtn = document.getElementById('go-btn');
 const closeBtn = document.getElementById('close-btn');
 const inputModal = document.getElementById('input-modal');
@@ -62,22 +54,10 @@ function addDragDropEvents(input) {
 }
 
 /* 멀티뷰 및 단일뷰 관련 함수 */
-youtubeBtn.addEventListener('click', () => {
-    multiviewCheckbox.checked = false;
-    showSingleInput();
-    setSingleViewContent(CHANNELS.youtube.url(CHANNELS.youtube.id));
-});
-
 flowBtn.addEventListener('click', () => {
     multiviewCheckbox.checked = false;
     showSingleInput();
     setSingleViewContent(CHANNELS.flow.url());
-});
-
-inputBtn.addEventListener('click', () => {
-    inputModal.style.display = 'block';
-    multiviewCheckbox.checked = false;
-    showSingleInput();
 });
 
 multiviewCheckbox.addEventListener('change', () => {
@@ -306,12 +286,29 @@ addFavoriteBtn.addEventListener('click', () => {
     addFavorite(url, name);
 });
 
-/* URL 변환 함수 */
+/* URL 변환 함수 수정 */
 function transformUrl(url) {
     if (!url) return null;
+
     const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
     if (chzzkChannelIdPattern.test(url)) return `https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/${url}`;
     if (url.includes('.m3u8')) return url;
+
+    // lolcast.kr 형식 지원
+    if (url.startsWith('https://lolcast.kr/#/player/')) {
+        const parts = url.split('/');
+        const platform = parts[4];
+        const id = parts[5];
+        switch (platform) {
+            case 'youtube': return `https://www.youtube.com/embed/${id}`;
+            case 'twitch': return `https://player.twitch.tv/?channel=${id}&parent=lc2122.github.io`;
+            case 'chzzk': return `https://chzzk.naver.com/live/${id}`;
+            case 'kick': return `https://player.kick.com/${id}`;
+            case 'afreeca': return `https://play.sooplive.co.kr/${id}/embed`;
+            default: return null;
+        }
+    }
+
     const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
     if (isShortForm) {
         const [platform, channelId] = url.split('/');
@@ -324,12 +321,8 @@ function transformUrl(url) {
             default: return null;
         }
     }
+
     if (!url.startsWith('http')) return null;
-    if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
-    if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lc2122.github.io`;
-    if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
-    if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
-    if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/').pop()}/embed`;
     if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
         const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
         if (match) return `https://www.youtube.com/embed/${match[1]}`;
