@@ -1,7 +1,8 @@
 /* 기본 스타일 */
 .menu-button {
-    padding: 10px 20px;
-    font-size: 16px;
+    padding: 5px 10px;
+    font-size: 14px;
+    margin: 2px;
     color: white;
     border: none;
     border-radius: 5px;
