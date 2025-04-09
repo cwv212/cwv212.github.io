@@ -42,7 +42,7 @@
         #toggle-btn {
             position: fixed;
             top: 10px;
-            left: 10px; /* 기본 위치 고정 */
+            left: 10px; /* 항상 왼쪽 위에 고정 */
             width: 30px;
             height: 30px;
             background: #007bff;
@@ -50,17 +50,27 @@
             border-radius: 50%;
             cursor: pointer;
             color: white;
-            transition: left 0.3s ease, background 0.3s;
-            z-index: 11; /* 항상 슬라이드바 위에 유지 */
+            transition: background 0.3s;
+            z-index: 11; /* 항상 최상단 */
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 16px;
         }
-        #sidebar:not(.collapsed) ~ #player-container #toggle-btn {
-            left: 205px; /* 슬라이드바가 열릴 때만 이동 */
-        }
         #toggle-btn:hover { background: #0056b3; }
+        #close-sidebar-btn {
+            padding: 8px 15px;
+            margin: 10px 0 0;
+            background: #dc3545; /* 빨간색으로 닫기 버튼 강조 */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            text-align: center;
+        }
+        #close-sidebar-btn:hover { background: #c82333; }
         #player-container {
             background: #ffffff;
             display: grid;
@@ -273,9 +283,10 @@
             <button id="hrm-btn">흐름</button>
             <button id="refresh-btn">F5</button>
             <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
+            <button id="close-sidebar-btn" onclick="closeSidebar()">닫기</button>
         </div>
         <div id="player-container">
-            <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
+            <button id="toggle-btn" onclick="openSidebar()">☰</button>
         </div>
         <div id="chat-section">
             <iframe id="chat-iframe" src="https://insagirl-toto.appspot.com/chatting/lgic/" frameborder="0"></iframe>
@@ -352,6 +363,16 @@
                 }
             }
             adjustPlayerLayout();
+        }
+
+        function openSidebar() {
+            sidebar.classList.remove('collapsed');
+            adjustLayout();
+        }
+
+        function closeSidebar() {
+            sidebar.classList.add('collapsed');
+            adjustLayout();
         }
 
         function createDropHandler(box) {
@@ -490,11 +511,6 @@
             });
             tvChannelList.appendChild(btn);
         });
-
-        function toggleSidebar() {
-            sidebar.classList.toggle('collapsed');
-            adjustLayout();
-        }
 
         function toggleSpotv() {
             const spotvChannels = document.getElementById('spotv-channels');
