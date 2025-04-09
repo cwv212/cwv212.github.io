@@ -73,7 +73,7 @@
     </div>
 
     <!-- 즐겨찾기 모달 -->
-    <div id="favorite-modal" style="display: none;">
+    <div id="favorite-modal" class="modal">
         <div style="display: flex; flex-direction: column; align-items: center;">
             <h3>즐겨찾기 목록</h3>
             <input type="text" id="favorite-name-input" placeholder="이름 입력" class="favorite-input" style="flex: 1;" />
@@ -251,7 +251,7 @@
                 chatIframe.src = lgicurl;
             }
             renderSidebarFavorites();
-            renderFavorites();
+            renderFavorites(); // 즐찾 목록만 렌더링, 모달은 표시하지 않음
             setSplitScreen(1);
         };
 
@@ -277,7 +277,7 @@
         // 즐찾 버튼
         document.getElementById('favorite-btn').addEventListener('click', () => {
             const favoriteModal = document.getElementById('favorite-modal');
-            favoriteModal.style.display = 'block';
+            favoriteModal.style.display = 'block'; // 버튼 클릭 시에만 표시
         });
 
         // 즐찾 모달 닫기
