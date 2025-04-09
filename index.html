@@ -277,13 +277,15 @@
         // 즐찾 버튼
         document.getElementById('favorite-btn').addEventListener('click', () => {
             const favoriteModal = document.getElementById('favorite-modal');
-            favoriteModal.style.display = 'block'; // 버튼 클릭 시에만 표시
+            favoriteModal.style.display = 'block'; // 버튼 클릭 시 모달 표시
+            console.log('Favorite button clicked, modal should be visible'); // 디버깅용 로그
         });
 
         // 즐찾 모달 닫기
         document.getElementById('close-favorite-modal').addEventListener('click', () => {
             const favoriteModal = document.getElementById('favorite-modal');
             favoriteModal.style.display = 'none';
+            console.log('Close button clicked, modal should be hidden'); // 디버깅용 로그
         });
 
         // 즐찾 추가 버튼
