@@ -42,6 +42,7 @@
         #toggle-btn {
             position: fixed;
             top: 10px;
+            left: 10px; /* 기본 위치 고정 */
             width: 30px;
             height: 30px;
             background: #007bff;
@@ -50,11 +51,14 @@
             cursor: pointer;
             color: white;
             transition: left 0.3s ease, background 0.3s;
-            z-index: 11;
+            z-index: 11; /* 항상 슬라이드바 위에 유지 */
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 16px;
+        }
+        #sidebar:not(.collapsed) ~ #player-container #toggle-btn {
+            left: 205px; /* 슬라이드바가 열릴 때만 이동 */
         }
         #toggle-btn:hover { background: #0056b3; }
         #player-container {
@@ -216,12 +220,6 @@
                 height: 100vh;
                 margin-top: 0;
             }
-            #toggle-btn {
-                left: 205px;
-            }
-            #sidebar.collapsed ~ #player-container #toggle-btn {
-                left: 10px;
-            }
         }
 
         /* 모바일 레이아웃 */
@@ -244,9 +242,6 @@
             }
             #sidebar.collapsed ~ #chat-section {
                 margin-top: 40%; /* 플레이어 높이에 맞춤 */
-            }
-            #toggle-btn {
-                left: 10px;
             }
         }
     </style>
