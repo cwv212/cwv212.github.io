@@ -244,11 +244,12 @@
             }
             #player-container {
                 width: 100%;
-                flex: 0 0 50%; /* 플레이어 높이 40% 고정 */
+                flex: 0 0 50%; /* 플레이어 높이 50% 고정 */
                 margin-top: 0;
             }
             #sidebar:not(.collapsed) ~ #player-container {
-                margin-top: calc(150px); /* 사이드바가 열린 상태에서 여백 */
+                flex: 0 0 calc(50% - 150px); /* 사이드바 높이를 뺀 50% */
+                margin-top: 150px; /* 사이드바가 열린 상태에서 여백 */
             }
             #chat-section {
                 width: 100%;
@@ -256,7 +257,7 @@
                 margin-top: 0; /* 불필요한 여백 제거 */
             }
             #sidebar:not(.collapsed) ~ #chat-section {
-                margin-top: calc(150px); /* 사이드바가 열린 상태에서 여백 */
+                margin-top: 0; /* 여백 제거 */
             }
         }
     </style>
@@ -345,26 +346,16 @@
 
         function adjustLayout() {
             const w = window.innerWidth;
-            const h = window.innerHeight;
             const isCollapsed = sidebar.classList.contains('collapsed');
             const sidebarHeight = sidebar.offsetHeight;
 
-            if (w >= 768) { // 데스크톱
-                playerContainer.style.marginTop = '0';
-                chatSection.style.marginTop = '0';
-                playerContainer.style.height = '100vh';
-                chatSection.style.height = '100vh';
-            } else { // 모바일
+            if (w < 768) { // 모바일
                 if (isCollapsed) {
-                    playerContainer.style.height = '40vh'; /* 고정 높이로 설정 */
-                    playerContainer.style.marginTop = '0';
-                    chatSection.style.height = '60vh'; /* 남은 공간 채움 */
-                    chatSection.style.marginTop = '0'; /* 여백 제거 */
+                    playerContainer.style.height = '50vh'; /* 고정 높이 */
+                    chatSection.style.height = '50vh'; /* 나머지 공간 */
                 } else {
-                    playerContainer.style.height = `calc(40vh - ${sidebarHeight}px)`;
-                    playerContainer.style.marginTop = `${sidebarHeight}px`;
-                    chatSection.style.height = `calc(60vh - ${sidebarHeight}px)`;
-                    chatSection.style.marginTop = '0'; /* 여백 제거 */
+                    playerContainer.style.height = `calc(50vh - ${sidebarHeight}px)`;
+                    chatSection.style.height = `calc(50vh + ${sidebarHeight}px)`; /* 사이드바 높이 포함 */
                 }
             }
             adjustPlayerLayout();
