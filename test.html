@@ -255,7 +255,10 @@
             }
             #sidebar:not(.collapsed) ~ #player-container {
                 flex: 0 0 40%; /* 사이드바 열림 시에도 40% 유지 */
-                margin-top: 0; /* 사이드바가 열린 상태에서 여백 */
+                margin-top: 150px; /* 사이드바가 열린 상태에서 여백 */
+            }
+            #sidebar.collapsed ~ #player-container {
+                margin-top: 0; /* 사이드바 닫힘 시 상단 여백 제거 */
             }
             #chat-section {
                 width: 100%;
@@ -367,6 +370,7 @@
             if (w < 768) { // 모바일
                 if (isCollapsed) {
                     playerContainer.style.height = '40vh'; /* 플레이어 고정 높이 */
+                    playerContainer.style.marginTop = '0'; /* 상단 여백 제거 */
                     chatSection.style.height = 'auto'; /* 남은 공간 채움 */
                     chatSection.style.flex = '1';
                 } else {
