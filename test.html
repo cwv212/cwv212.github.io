@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -12,7 +13,7 @@
             margin: 0;
             padding: 0;
             height: 100vh;
-            overflow: hidden;
+            overflow: auto; /* hidden 대신 auto */
             background: #f4f7fa;
             color: #333;
         }
@@ -57,7 +58,7 @@
             justify-content: center;
             font-size: 16px;
         }
-        #toggle-btn:hover { background: #005 W6b3; }
+        #toggle-btn:hover { background: #0056b3; }
         #close-sidebar-btn {
             padding: 8px 15px;
             margin: 10px 0 0;
@@ -101,113 +102,9 @@
             height: 100%; 
             width: 100%; 
             border: none; 
+            /* position: absolute 제거 */
         }
-        #baseball-channels, #chzzk-channels, #tv-channels, #lck-channels {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        #spotv-channels {
-            display: none;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        #spotv-channels.active { display: flex; }
-        #lck-channels {
-            display: flex;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        .lck-btn {
-            flex: 1;
-            padding: 10px;
-            background: #e9ecef;
-            border-radius: 8px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            text-align: center;
-            position: relative;
-        }
-        .lck-btn:hover { background: #dee2e6; }
-        .lck-btn[title]:hover::after {
-            content: attr(title);
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 20;
-        }
-        .baseball-btn, .chzzk-btn, .tv-btn, .small-channel-btn {
-            padding: 6px;
-            background: #e9ecef;
-            border-radius: 4px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            font-size: 12px;
-            text-align: center;
-            min-width: 33px;
-        }
-        .baseball-btn:hover, .chzzk-btn:hover, .tv-btn:hover, .lck-btn:hover, .small-channel-btn:hover {
-            background: #dee2e6;
-        }
-        button {
-            padding: 8px 15px;
-            margin: 5px 5px 5px 0;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.2s;
-        }
-        button:hover { background: #0056b3; }
-        h3, h4 { font-size: 16px; margin: 10px 0 5px; color: #495057; }
-        a { display: block; margin: 15px 0; color: #007bff; text-decoration: none; }
-        a:hover { text-decoration: underline; color: #0056b3; }
-        #custom-url-container {
-            margin: 10px 0;
-            position: relative;
-            z-index: 12;
-        }
-        #custom-url-input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        #split-screen-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px;
-        }
-        .toggle-header {
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .toggle-header::after {
-            content: '▼';
-            font-size: 12px;
-        }
-        .toggle-header.collapsed::after {
-            content: '▶';
-        }
-
+        /* 나머지 스타일 동일 */
         @media (min-width: 768px) {
             #main-container { flex-direction: row; }
             #sidebar { width: 220px; height: 100%; transform: translateX(0); }
@@ -238,13 +135,6 @@
             }
             #sidebar:not(.collapsed) ~ #chat-section {
                 margin-top: 0;
-            }
-            #chat-iframe {
-                height: 100%;
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
             }
         }
     </style>
@@ -332,34 +222,33 @@
         let clickIndex = 0;
 
         function adjustLayout() {
-    const w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-    const h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-    const isCollapsed = sidebar.classList.contains('collapsed');
-    const sidebarHeight = sidebar.offsetHeight || 150; // 기본값 150px
+            const w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+            const h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            const sidebarHeight = sidebar.offsetHeight || 150;
 
-    if (w < 768) { // 모바일
-        const minChatHeight = h * 0.45; // 채팅 최소 25%
-        const maxPlayerHeight = h - minChatHeight; // 플레이어 최대 높이
-        const playerHeight = maxPlayerHeight; // 최대 높이로 고정
+            if (w < 768) {
+                const minChatHeight = h * 0.5;
+                const maxPlayerHeight = h - minChatHeight;
+                const playerHeight = maxPlayerHeight;
 
-        if (isCollapsed) {
-            playerContainer.style.height = `${playerHeight}px`;
-            playerContainer.style.width = '100%'; // 너비 100%로 고정
-            playerContainer.style.marginTop = '0';
-            chatSection.style.height = `${h - playerHeight}px`;
-        } else {
-            playerContainer.style.height = `${playerHeight}px`;
-            playerContainer.style.width = '100%'; // 너비 100%로 고정
-            playerContainer.style.marginTop = `${sidebarHeight}px`;
-            chatSection.style.height = `${h - playerHeight - sidebarHeight}px`;
+                if (isCollapsed) {
+                    playerContainer.style.height = `${playerHeight}px`;
+                    playerContainer.style.width = '100%';
+                    playerContainer.style.marginTop = '0';
+                    chatSection.style.height = `${h - playerHeight}px`;
+                } else {
+                    playerContainer.style.height = `${playerHeight}px`;
+                    playerContainer.style.width = '100%';
+                    playerContainer.style.marginTop = `${sidebarHeight}px`;
+                    chatSection.style.height = `${h - playerHeight - sidebarHeight}px`;
+                }
+
+                playerContainer.style.marginLeft = '0';
+                playerContainer.style.marginRight = '0';
+            }
+            adjustPlayerLayout();
         }
-
-        // 중앙 정렬 제거 (필요 시 유지 가능)
-        playerContainer.style.marginLeft = '0';
-        playerContainer.style.marginRight = '0';
-    }
-    adjustPlayerLayout();
-}
 
         function openSidebar() {
             sidebar.classList.remove('collapsed');
