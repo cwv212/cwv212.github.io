@@ -229,9 +229,6 @@
 
             container.innerHTML = '';
             container.appendChild(sidebar);
-            container.appendChild(menuSection);
-            container.appendChild(videoSection);
-            container.appendChild(chatSection);
 
             if (hg > wg) {
                 // 모바일: 상하 레이아웃, 슬라이드 상단
@@ -254,6 +251,10 @@
                 chatSection.style.width = "100%";
                 chatSection.style.height = `calc(100% - ${hgh + menuSection.offsetHeight}px - ${sidebar.classList.contains('open') ? 150 : 0}px)`;
                 chatSection.style.position = "relative";
+
+                container.appendChild(menuSection);
+                container.appendChild(videoSection);
+                container.appendChild(chatSection);
             } else {
                 // PC: 좌우 레이아웃, 슬라이드 좌측
                 container.style.display = 'flex';
@@ -261,40 +262,40 @@
                 container.style.height = '100%';
                 container.style.marginLeft = sidebar.classList.contains('open') ? '220px' : '0';
 
-                const contentWrapper = document.createElement('div');
-                contentWrapper.className = 'content-wrapper';
-                contentWrapper.style.display = 'flex';
-                contentWrapper.style.flexDirection = 'column';
-                contentWrapper.style.width = '100%';
-                contentWrapper.style.height = '100%';
+                const pcContainer = document.createElement('div');
+                pcContainer.style.display = 'flex';
+                pcContainer.style.height = '100%';
+                pcContainer.style.width = '100%';
+
+                const rightContainer = document.createElement('div');
+                rightContainer.style.width = '17.5%';
+                rightContainer.style.minWidth = '320px';
+                rightContainer.style.height = '100%';
 
                 menuSection.style.position = "relative";
                 menuSection.style.width = "100%";
                 menuSection.style.height = "auto";
                 menuSection.style.display = "flex";
+                menuSection.style.flexDirection = "row";
                 menuSection.style.justifyContent = "space-around";
-                menuSection.style.padding = "10px 0";
+                menuSection.style.padding = "10px";
 
-                const videoChatWrapper = document.createElement('div');
-                videoChatWrapper.style.display = 'flex';
-                videoChatWrapper.style.flexDirection = 'row';
-                videoChatWrapper.style.width = '100%';
-                videoChatWrapper.style.height = `calc(100% - ${menuSection.offsetHeight}px)`;
+                chatSection.style.width = "100%";
+                chatSection.style.height = `calc(100% - ${menuSection.offsetHeight}px)`;
+                chatSection.style.position = "relative";
+                chatSection.style.top = "0";
+
+                rightContainer.appendChild(menuSection);
+                rightContainer.appendChild(chatSection);
 
                 videoSection.style.width = "82.5%";
                 videoSection.style.height = "100%";
                 videoSection.style.position = "relative";
 
-                chatSection.style.width = "17.5%";
-                chatSection.style.minWidth = "320px";
-                chatSection.style.height = "100%";
-                chatSection.style.position = "relative";
+                pcContainer.appendChild(videoSection);
+                pcContainer.appendChild(rightContainer);
 
-                videoChatWrapper.appendChild(videoSection);
-                videoChatWrapper.appendChild(chatSection);
-                contentWrapper.appendChild(menuSection);
-                contentWrapper.appendChild(videoChatWrapper);
-                container.appendChild(contentWrapper);
+                container.appendChild(pcContainer);
             }
         }
 
