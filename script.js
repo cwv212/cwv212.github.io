@@ -239,7 +239,6 @@ function renderFavorites() {
         });
         favoriteList.appendChild(li);
     });
-    favoriteModal.style.display = 'block';
 }
 
 const favoriteBtn = document.getElementById('favorite-btn');
