@@ -221,14 +221,19 @@
                 width: calc(100% - 540px); /* 220px sidebar + 320px chat */
                 height: 100vh;
                 margin-top: 0;
+                margin-left: 220px; /* 슬라이드바가 열린 상태에서 왼쪽 여백 */
             }
             #sidebar.collapsed ~ #player-container {
                 width: calc(100% - 320px);
+                margin-left: 0; /* 슬라이드바가 닫히면 여백 제거 */
             }
             #chat-section {
                 width: 320px;
                 height: 100vh;
                 margin-top: 0;
+                position: fixed; /* 오른쪽 끝에 고정 */
+                right: 0; /* 오른쪽 끝에 붙임 */
+                top: 0;
             }
         }
 
