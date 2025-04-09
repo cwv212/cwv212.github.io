@@ -51,7 +51,23 @@ body {
     left: 0;
 }
 
-#sidebar.open {
+#sidebar.sidebar-mobile {
+    width: 100%;
+    height: auto;
+    transform: translateY(-100%);
+}
+
+#sidebar.sidebar-mobile.open {
+    transform: translateY(0);
+}
+
+#sidebar.sidebar-pc {
+    width: 220px;
+    height: 100%;
+    transform: translateX(-100%);
+}
+
+#sidebar.sidebar-pc.open {
     transform: translateX(0);
 }
 
@@ -147,45 +163,4 @@ body {
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 14px;
-}
-
-/* 미디어 쿼리 */
-@media (max-width: 767px) {
-    #sidebar {
-        width: 100%;
-        height: auto;
-        transform: translateY(-100%);
-    }
-
-    #sidebar.open {
-        transform: translateY(0);
-    }
-
-    .container {
-        margin-top: 0;
-    }
-
-    #sidebar.open ~ .container {
-        margin-top: 150px;
-    }
-}
-
-@media (min-width: 768px) {
-    #sidebar {
-        width: 220px;
-        height: 100%;
-        transform: translateX(-100%);
-    }
-
-    #sidebar.open {
-        transform: translateX(0);
-    }
-
-    .container {
-        margin-left: 0;
-    }
-
-    #sidebar.open ~ .container {
-        margin-left: 220px;
-    }
 }
