@@ -266,111 +266,88 @@
         }
 
         // 레이아웃 조정 함수
-        function design() {
-            var win = window;
-            var doc = document;
-            var docElem = doc.documentElement;
-            var body = doc.getElementsByTagName('body')[0];
-            var w = win.innerWidth || docElem.clientWidth || body.clientWidth;
-            var h = win.innerHeight || docElem.clientHeight || body.clientHeight;
+function design() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const isCollapsed = sidebar.classList.contains('collapsed');
 
-            var minChatHeight = h * 0.4;
-            var maxVideoHeight = h - minChatHeight - 50;
-            var standardHeight = w * 9 / 16 + 25;
-            var hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
+    const minChatHeight = h * 0.5; // 모바일에서 최소 채팅창 높이
+    const maxVideoHeight = h - minChatHeight - 50; // 모바일에서 최대 비디오 높이
+    const standardHeight = w * 9 / 16 + 25; // 16:9 비율 기준 높이
+    const hgh = standardHeight > maxVideoHeight ? maxVideoHeight : standardHeight;
 
-            var wg = getUtility(getVideoarea(w - 320, h, 16, 9), 192 * 108 * 10) + getUtility(240 * h, 24 * 20 * 10);
-            var hg = getUtility(getVideoarea(w, hgh, 16, 9), 192 * 108 * 10) + getUtility((w > 240 ? 240 : w) * (h - hgh), 24 * 20 * 10);
+    const wg = getUtility(getVideoarea(w - 320, h, 16, 9), 192 * 108 * 10) + getUtility(240 * h, 24 * 20 * 10);
+    const hg = getUtility(getVideoarea(w, hgh, 16, 9), 192 * 108 * 10) + getUtility((w > 240 ? 240 : w) * (h - hgh), 24 * 20 * 10);
 
-            const menuSection = document.getElementById('menu-section');
-            const videoSection = document.getElementById('video-section');
-            const chatSection = document.querySelector('.chat-section');
-            const sidebar = document.getElementById('sidebar');
-            const container = document.querySelector('.container');
+    const mainContainer = document.getElementById('main-container');
+    mainContainer.innerHTML = '';
+    mainContainer.appendChild(sidebar);
+    mainContainer.appendChild(playerContainer);
+    mainContainer.appendChild(chatSection);
+    playerContainer.appendChild(toggleBtn);
 
-            // 슬라이드바 스타일 동적 적용
-            if (hg > wg) {
-                // 모바일: 슬라이드 상단
-                sidebar.classList.remove('sidebar-pc');
-                sidebar.classList.add('sidebar-mobile');
-            } else {
-                // PC: 슬라이드 좌측
-                sidebar.classList.remove('sidebar-mobile');
-                sidebar.classList.add('sidebar-pc');
-            }
+    if (hg > wg) { // 모바일 레이아웃
+        sidebar.style.position = "fixed";
+        sidebar.style.width = "100%";
+        sidebar.style.height = "auto";
+        sidebar.style.top = isCollapsed ? "-100%" : "0";
+        sidebar.style.left = "0";
+        sidebar.style.transform = "none";
 
-            container.innerHTML = '';
-            container.appendChild(sidebar);
+        toggleBtn.style.left = "10px";
 
-            if (hg > wg) {
-                // 모바일: 상하 레이아웃, 슬라이드 상단
-                container.style.display = 'flex';
-                container.style.flexDirection = 'column';
-                container.style.height = '100%';
-                container.style.marginTop = sidebar.classList.contains('open') ? '150px' : '0';
+        playerContainer.style.width = "100%";
+        playerContainer.style.height = isCollapsed ? `${h * 0.4}px` : `${hgh}px`;
+        playerContainer.style.position = "relative";
+        playerContainer.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
 
-                menuSection.style.position = "relative";
-                menuSection.style.width = "100%";
-                menuSection.style.height = "auto";
-                menuSection.style.display = "flex";
-                menuSection.style.justifyContent = "space-around";
-                menuSection.style.padding = "10px 0";
+        chatSection.style.width = "100%";
+        chatSection.style.height = isCollapsed ? `${h * 0.6}px` : `${h - hgh - sidebar.offsetHeight}px`;
+        chatSection.style.position = "relative";
+        chatSection.style.top = isCollapsed ? "0" : `${sidebar.offsetHeight}px`;
+    } else { // PC 레이아웃
+        const pcContainer = document.createElement('div');
+        pcContainer.style.display = 'flex';
+        pcContainer.style.height = '100vh'; // 전체 화면 높이 사용
+        pcContainer.style.width = isCollapsed ? '100%' : 'calc(100% - 220px)';
+        pcContainer.style.marginLeft = isCollapsed ? '0' : '220px';
 
-                videoSection.style.width = "100%";
-                videoSection.style.height = `${hgh}px`;
-                videoSection.style.position = "relative";
+        const rightContainer = document.createElement('div');
+        rightContainer.style.width = '320px';
+        rightContainer.style.height = '100%'; // 채팅창 높이 100%로 보장
+        rightContainer.style.overflow = 'hidden'; // 오버플로우 방지
 
-                chatSection.style.width = "100%";
-                chatSection.style.height = `calc(100% - ${hgh + menuSection.offsetHeight}px - ${sidebar.classList.contains('open') ? 150 : 0}px)`;
-                chatSection.style.position = "relative";
+        sidebar.style.position = "absolute";
+        sidebar.style.width = "220px";
+        sidebar.style.height = "100%";
+        sidebar.style.left = isCollapsed ? "-220px" : "0";
+        sidebar.style.top = "0";
+        sidebar.style.transform = "none";
 
-                container.appendChild(menuSection);
-                container.appendChild(videoSection);
-                container.appendChild(chatSection);
-            } else {
-                // PC: 좌우 레이아웃, 슬라이드 좌측
-                container.style.display = 'flex';
-                container.style.flexDirection = 'row';
-                container.style.height = '100%';
-                container.style.marginLeft = sidebar.classList.contains('open') ? '220px' : '0';
+        toggleBtn.style.left = isCollapsed ? "10px" : "205px";
 
-                const pcContainer = document.createElement('div');
-                pcContainer.className = 'pc-container'; // 클래스 추가
-                pcContainer.style.display = 'flex';
-                pcContainer.style.height = '100%';
-                pcContainer.style.width = '100%';
+        chatSection.style.width = "100%";
+        chatSection.style.height = "100%"; // PC에서 채팅창 높이 전체 사용
+        chatSection.style.position = "relative";
 
-                const rightContainer = document.createElement('div');
-                rightContainer.className = 'right-container'; // 클래스 추가
-                rightContainer.style.width = '17.5%';
-                rightContainer.style.minWidth = '320px';
-                rightContainer.style.height = '100%';
-                rightContainer.style.display = 'flex';
-                rightContainer.style.flexDirection = 'column';
+        rightContainer.appendChild(chatSection);
+        pcContainer.appendChild(playerContainer);
+        pcContainer.appendChild(rightContainer);
 
-                menuSection.style.width = "100%";
-                menuSection.style.height = "auto";
-                menuSection.style.display = "flex";
-                menuSection.style.flexDirection = "row";
-                menuSection.style.justifyContent = "space-around";
-                menuSection.style.padding = "10px";
+        mainContainer.appendChild(pcContainer);
 
-                chatSection.style.width = "100%";
-                chatSection.style.flexGrow = "1"; // 남은 공간을 채우도록
+        playerContainer.style.width = "calc(100% - 320px)";
+        playerContainer.style.height = "100%"; // 플레이어 높이도 전체 사용
+        playerContainer.style.position = "relative";
+    }
 
-                rightContainer.appendChild(menuSection);
-                rightContainer.appendChild(chatSection);
+    adjustPlayerLayout();
 
-                videoSection.style.width = "82.5%";
-                videoSection.style.height = "100%";
-                videoSection.style.position = "relative";
-
-                pcContainer.appendChild(videoSection);
-                pcContainer.appendChild(rightContainer);
-
-                container.appendChild(pcContainer);
-            }
-        }
+    // 디버깅: 실제 높이 확인
+    console.log('Chat Section Height:', chatSection.offsetHeight, 'px');
+    console.log('Player Container Height:', playerContainer.offsetHeight, 'px');
+    console.log('Sidebar Height:', sidebar.offsetHeight, 'px');
+}
 
         // 초기 로드 시 실행
         window.onload = function() {
