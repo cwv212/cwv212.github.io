@@ -770,7 +770,7 @@
         
         // 초기화 함수
         async function initialize() {
-            // 확장 프로그램 설치 여부 확인 (Firefox 환경)
+            // 확장 프로그램 설치 여부 확인 (크롬환경)
             try {
                 const testUrl = `chrome-extension://${extensionId}/player.html#test`;
                 const response = await fetch(testUrl, { method: 'HEAD' });
