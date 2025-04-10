@@ -416,35 +416,55 @@
             }
         }
 
+        // 공통 채널 렌더링 함수
+        function renderChannelList(container, channels, className, options = {}) {
+            const { type = 'm3u8', tooltipKey = 'tooltip', urlKey = 'url', idKey = 'id', nameKey = 'name' } = options;
+            container.innerHTML = '';
+            channels.forEach(channel => {
+                const btn = document.createElement('div');
+                btn.className = className;
+                btn.draggable = true;
+                btn.textContent = channel[nameKey];
+                
+                // URL 설정
+                let url = channel[urlKey];
+                if (idKey && channel[idKey]) {
+                    url = `${chzzkProxyBaseUrl}${channel[idKey]}`; // Chzzk 채널용
+                }
+                btn.dataset.url = url;
+                btn.dataset.type = channel.type || type;
+                if (channel[tooltipKey]) btn.title = channel[tooltipKey];
+
+                // 드래그 시작 이벤트
+                btn.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', btn.dataset.url);
+                    e.dataTransfer.setData('text/type', btn.dataset.type);
+                });
+
+                // 클릭 이벤트
+                btn.addEventListener('click', () => {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
+                        clickIndex++;
+                    }
+                });
+
+                container.appendChild(btn);
+            });
+        }
+
         // LCK 채널 렌더링
         async function renderLckChannels() {
             try {
                 const youtubeUrl = await getYouTubeLiveOrUpcoming();
                 console.log('YouTube URL to load:', youtubeUrl);
                 lckChannels[2].url = youtubeUrl; // YouTube URL 동적 설정
-
-                lckChannelList.innerHTML = '';
-                lckChannels.forEach(channel => {
-                    const btn = document.createElement('div');
-                    btn.className = 'lck-btn';
-                    btn.draggable = true;
-                    btn.textContent = channel.name;
-                    btn.dataset.url = channel.url;
-                    btn.dataset.type = channel.type;
-                    btn.title = channel.tooltip;
-                    btn.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.setData('text/plain', channel.url);
-                        e.dataTransfer.setData('text/type', channel.type);
-                    });
-                    btn.addEventListener('click', () => {
-                        const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                        if (playerBoxes.length > 0) {
-                            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                            loadPlayer(targetBox, channel.url, channel.type);
-                            clickIndex++;
-                        }
-                    });
-                    lckChannelList.appendChild(btn);
+                renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
+                    tooltipKey: 'tooltip',
+                    nameKey: 'name',
+                    urlKey: 'url'
                 });
             } catch (error) {
                 console.error('LCK channel render error:', error);
@@ -453,80 +473,25 @@
 
         // 치지직 채널 렌더링
         function renderChzzkChannels() {
-            chzzkChannelList.innerHTML = '';
-            chzzkChannels.forEach(channel => {
-                const btn = document.createElement('div');
-                btn.className = 'chzzk-btn';
-                btn.draggable = true;
-                btn.textContent = channel.name;
-                btn.dataset.url = `${chzzkProxyBaseUrl}${channel.id}`;
-                btn.dataset.type = 'm3u8';
-                btn.addEventListener('dragstart', (e) => {
-                    const url = `${chzzkProxyBaseUrl}${channel.id}`;
-                    e.dataTransfer.setData('text/plain', url);
-                    e.dataTransfer.setData('text/type', 'm3u8');
-                });
-                btn.addEventListener('click', () => {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, `${chzzkProxyBaseUrl}${channel.id}`, 'm3u8');
-                        clickIndex++;
-                    }
-                });
-                chzzkChannelList.appendChild(btn);
+            renderChannelList(chzzkChannelList, chzzkChannels, 'chzzk-btn', {
+                nameKey: 'name',
+                idKey: 'id'
             });
         }
 
         // SPOTV 채널 렌더링
         function renderSpotvChannels() {
-            spotvChannelList.innerHTML = '';
-            spotvChannels.forEach(channel => {
-                const btn = document.createElement('div');
-                btn.className = 'small-channel-btn';
-                btn.draggable = true;
-                btn.textContent = channel.name;
-                btn.dataset.url = channel.url;
-                btn.dataset.type = 'm3u8';
-                btn.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', channel.url);
-                    e.dataTransfer.setData('text/type', 'm3u8');
-                });
-                btn.addEventListener('click', () => {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, channel.url, 'm3u8');
-                        clickIndex++;
-                    }
-                });
-                spotvChannelList.appendChild(btn);
+            renderChannelList(spotvChannelList, spotvChannels, 'small-channel-btn', {
+                nameKey: 'name',
+                urlKey: 'url'
             });
         }
 
         // 야구 채널 렌더링
         function renderBaseballChannels() {
-            baseballChannelList.innerHTML = '';
-            baseballChannels.forEach(channel => {
-                const btn = document.createElement('div');
-                btn.className = 'baseball-btn';
-                btn.draggable = true;
-                btn.textContent = channel.name;
-                btn.dataset.url = channel.url;
-                btn.dataset.type = 'm3u8';
-                btn.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', channel.url);
-                    e.dataTransfer.setData('text/type', 'm3u8');
-                });
-                btn.addEventListener('click', () => {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, channel.url, 'm3u8');
-                        clickIndex++;
-                    }
-                });
-                baseballChannelList.appendChild(btn);
+            renderChannelList(baseballChannelList, baseballChannels, 'baseball-btn', {
+                nameKey: 'name',
+                urlKey: 'url'
             });
         }
 
@@ -827,6 +792,16 @@
 
         // 초기화 함수
         async function initialize() {
+            // 확장 프로그램 설치 여부 확인 (Firefox 환경)
+            try {
+                const testUrl = `moz-extension://${extensionId}/player.html#test`;
+                const response = await fetch(testUrl, { method: 'HEAD' });
+                if (!response.ok) throw new Error('확장 프로그램 응답 없음');
+            } catch (e) {
+                console.warn('HLS 플레이어 확장 프로그램이 설치되지 않았거나 응답하지 않습니다:', e);
+                alert('HLS 플레이어 확장 프로그램이 설치되지 않았습니다. 설치를 확인해주세요.');
+            }
+
             favorites = JSON.parse(localStorage.getItem('favorites')) || [];
             setSplitScreen(1);
             renderSidebarFavorites();
