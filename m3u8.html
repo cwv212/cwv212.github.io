@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>m3u8 플레이어</title>
+    <title>m3u8 플레이어 (Chrome)</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
@@ -318,8 +318,6 @@
         <div id="spotv-channels"></div>
         <h4>야구 채널</h4>
         <div id="baseball-channels"></div>
-        <!-- <h4>TV 채널</h4> -->
-        <!-- <div id="tv-channels"></div> -->
         <h3>분할 화면 설정</h3>
         <div id="split-screen-buttons">
             <button onclick="setSplitScreen(1)">1분할</button>
@@ -339,7 +337,6 @@
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
     </div>
 
-    <!-- 즐겨찾기 모달 -->
     <div id="favorite-modal">
         <h3>즐겨찾기 관리</h3>
         <div class="input-row">
@@ -354,16 +351,25 @@
     </div>
 
     <script>
-        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
+        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka'; // Chrome용 HLS 플레이어 확장 ID
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
-        const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
-        
+        const workersUrl = 'https://mobile.hlsp.workers.dev'; // Worker URL 고정
+
+        const CHANNELS = {
+            youtube: {
+                id: 'UCw1DsweY9b2AKGjV4kGJP1A',
+                name: 'K',
+                type: 'iframe',
+                tooltip: 'youtube'
+            }
+        };
+
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
             name: `야${i + 1}`,
             url: `${baseballBaseUrl}${i + 1}/master.m3u8`
         }));
-        
+
         const spotvChannels = Array.from({ length: 40 }, (_, i) => {
             const channelNum = String(i + 1).padStart(2, '0');
             return {
@@ -375,7 +381,7 @@
         const lckChannels = [
             { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
             { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
-            { name: 'K', url: 'https://www.youtube.com/embed/X_m8I_2LARA', type: 'iframe', tooltip: 'youtube' }
+            { name: CHANNELS.youtube.name, url: '', type: CHANNELS.youtube.type, tooltip: CHANNELS.youtube.tooltip } // URL은 동적으로 설정
         ];
 
         const chzzkChannels = [
@@ -386,20 +392,10 @@
             { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181' }
         ];
 
-/*
-const tvChannels = [
-    { name: 'K1', url: 'https://stream.ogtv3.com/live/live1004.m3u8' },
-    { name: 'K2', url: 'https://stream.ogtv3.com/live/live1005.m3u8' },
-    { name: 'M', url: 'https://stream.ogtv3.com/live/live1003.m3u8' },
-    { name: 'S', url: 'https://stream.ogtv3.com/live/live1006.m3u8' }
-];
-*/
-
         const baseballChannelList = document.getElementById('baseball-channels');
         const lckChannelList = document.getElementById('lck-channels');
         const chzzkChannelList = document.getElementById('chzzk-channels');
         const spotvChannelList = document.getElementById('spotv-channels');
-        const tvChannelList = document.getElementById('tv-channels');
         const favoriteChannelList = document.getElementById('favorite-channels');
         const playerContainer = document.getElementById('player-container');
         const sidebar = document.getElementById('sidebar');
@@ -409,331 +405,211 @@ const tvChannels = [
         let clickIndex = 0;
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
-        // URL 변환 함수
-        function transformUrl(url) {
-            if (!url) return null;
-            const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
-            if (chzzkChannelIdPattern.test(url)) {
-                return `${chzzkProxyBaseUrl}${url}`;
+        // YouTube 라이브 URL 가져오기
+        async function getYouTubeLiveOrUpcoming() {
+            try {
+                const response = await fetch(`${workersUrl}/youtube-live/${CHANNELS.youtube.id}`);
+                const data = await response.json();
+                console.log('Worker response:', data);
+                return data.url || `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
+            } catch (error) {
+                console.error('YouTube live fetch error:', error);
+                return `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
             }
-            if (url.includes('.m3u8')) {
-                return url;
-            }
-            const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
-            if (isShortForm) {
-                const [platform, channelId] = url.split('/');
-                switch (platform) {
-                    case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
-                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
-                    case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
-                    case 'kick': return `https://player.kick.com/${channelId}`;
-                    case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
-                    default: return null;
-                }
-            }
-             if (url.startsWith('https://twitch.tv/') || url.startsWith('https://www.twitch.tv/')) {
-                return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
-            }
-            if (!url.startsWith('http')) { return null; }
-            if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
-            if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/').pop()}/embed`;
-            if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
-                const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
-                if (match) return `https://www.youtube.com/embed/${match[1]}`;
-            }
-            if (url.startsWith('https://chzzk.naver.com/live/') || url.startsWith('https://chzzk.naver.com/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
-            if (url.startsWith('https://kick.com/')) return `https://player.kick.com/${url.split('/').pop()}`;
-            if (url.startsWith('https://play.sooplive.co.kr/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
-            if (url.startsWith('https://')) return url;
-            return null;
         }
 
-        // 드롭 이벤트 핸들러 함수
-        function createDropHandler(box) {
-            return (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const textPlain = e.dataTransfer.getData('text/plain');
-                const textHtml = e.dataTransfer.getData('text/html');
-                const textUri = e.dataTransfer.getData('text/uri-list');
-
-                let url = textUri;
-                if (!url && textHtml) {
-                    url = extractM3u8Url(textHtml) || transformUrl(textHtml);
+        // 공통 채널 렌더링 함수
+        function renderChannelList(container, channels, className, options = {}) {
+            const { type = 'm3u8', tooltipKey = 'tooltip', urlKey = 'url', idKey = 'id', nameKey = 'name' } = options;
+            container.innerHTML = '';
+            channels.forEach(channel => {
+                const btn = document.createElement('div');
+                btn.className = className;
+                btn.draggable = true;
+                btn.textContent = channel[nameKey];
+                
+                let url = channel[urlKey];
+                if (idKey && channel[idKey]) {
+                    url = `${chzzkProxyBaseUrl}${channel[idKey]}`;
                 }
-                if (!url && textPlain) {
-                    url = extractM3u8Url(textPlain) || transformUrl(textPlain);
-                }
+                btn.dataset.url = url;
+                btn.dataset.type = channel.type || type;
+                if (channel[tooltipKey]) btn.title = channel[tooltipKey];
 
-                if (url) {
-                    const finalUrl = transformUrl(url);
-                    if (finalUrl) {
-                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
-                        loadPlayer(box, finalUrl, type);
+                btn.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', btn.dataset.url);
+                    e.dataTransfer.setData('text/type', btn.dataset.type);
+                });
+
+                btn.addEventListener('click', () => {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
+                        clickIndex++;
                     }
-                }
-            };
+                });
+
+                container.appendChild(btn);
+            });
         }
 
-        // LCK 채널 추가
-        lckChannels.forEach(channel => {
-            const btn = document.createElement('div');
-            btn.className = 'lck-btn';
-            btn.draggable = true;
-            btn.textContent = channel.name;
-            btn.dataset.url = channel.url;
-            btn.dataset.type = channel.type;
-            btn.title = channel.tooltip;
-            btn.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', channel.url);
-                e.dataTransfer.setData('text/type', channel.type);
-            });
-            btn.addEventListener('click', () => {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, channel.url, channel.type);
-                    clickIndex++;
-                }
-            });
-            lckChannelList.appendChild(btn);
-        });
-
-        // 치지직 채널 목록 생성
-        chzzkChannels.forEach(channel => {
-            const btn = document.createElement('div');
-            btn.className = 'chzzk-btn';
-            btn.draggable = true;
-            btn.textContent = channel.name;
-            btn.dataset.url = `${chzzkProxyBaseUrl}${channel.id}`;
-            btn.dataset.type = 'm3u8';
-            btn.addEventListener('dragstart', (e) => {
-                const url = `${chzzkProxyBaseUrl}${channel.id}`;
-                e.dataTransfer.setData('text/plain', url);
-                e.dataTransfer.setData('text/type', 'm3u8');
-            });
-            btn.addEventListener('click', () => {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, `${chzzkProxyBaseUrl}${channel.id}`, 'm3u8');
-                    clickIndex++;
-                }
-            });
-            chzzkChannelList.appendChild(btn);
-        });
-
-        // SPOTV 채널 목록 생성
-        spotvChannels.forEach(channel => {
-            const btn = document.createElement('div');
-            btn.className = 'small-channel-btn';
-            btn.draggable = true;
-            btn.textContent = channel.name;
-            btn.dataset.url = channel.url;
-            btn.dataset.type = 'm3u8';
-            btn.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', channel.url);
-                e.dataTransfer.setData('text/type', 'm3u8');
-            });
-            btn.addEventListener('click', () => {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, channel.url, 'm3u8');
-                    clickIndex++;
-                }
-            });
-            spotvChannelList.appendChild(btn);
-        });
-
-        // 야구 채널 목록 생성
-        baseballChannels.forEach(channel => {
-            const btn = document.createElement('div');
-            btn.className = 'baseball-btn';
-            btn.draggable = true;
-            btn.textContent = channel.name;
-            btn.dataset.url = channel.url;
-            btn.dataset.type = 'm3u8';
-            btn.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', channel.url);
-                e.dataTransfer.setData('text/type', 'm3u8');
-            });
-            btn.addEventListener('click', () => {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, channel.url, 'm3u8');
-                    clickIndex++;
-                }
-            });
-            baseballChannelList.appendChild(btn);
-        });
-
-/*
-// TV 채널 목록 생성
-tvChannels.forEach(channel => {
-    const btn = document.createElement('div');
-    btn.className = 'tv-btn';
-    btn.draggable = true;
-    btn.textContent = channel.name;
-    btn.dataset.url = channel.url;
-    btn.dataset.type = 'm3u8';
-    btn.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', channel.url);
-        e.dataTransfer.setData('text/type', 'm3u8');
-    });
-    btn.addEventListener('click', () => {
-        const playerBoxes = playerContainer.querySelectorAll('.player-box');
-        if (playerBoxes.length > 0) {
-            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-            loadPlayer(targetBox, channel.url, 'm3u8');
-            clickIndex++;
-        }
-    });
-    tvChannelList.appendChild(btn);
-});
-*/
-
-// 즐겨찾기 채널 렌더링
-function renderSidebarFavorites() {
-    favoriteChannelList.innerHTML = '';
-    favorites.forEach(favorite => {
-        const btn = document.createElement('div');
-        btn.className = 'favorite-btn-channel';
-        btn.draggable = true;
-        btn.textContent = favorite.name;
-        const transformedUrl = transformUrl(favorite.url);
-        btn.dataset.url = transformedUrl;
-        btn.dataset.type = (transformedUrl && (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8'))) ? 'm3u8' : 'iframe';
-        btn.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', transformedUrl);
-            e.dataTransfer.setData('text/type', btn.dataset.type);
-        });
-        btn.addEventListener('click', () => {
-            const playerBoxes = playerContainer.querySelectorAll('.player-box');
-            if (playerBoxes.length > 0 && transformedUrl) {
-                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
-                loadPlayer(targetBox, transformedUrl, type);
-                clickIndex++;
+        // LCK 채널 렌더링
+        async function renderLckChannels() {
+            try {
+                const youtubeUrl = await getYouTubeLiveOrUpcoming();
+                console.log('YouTube URL to load:', youtubeUrl);
+                lckChannels[2].url = youtubeUrl;
+                renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
+                    tooltipKey: 'tooltip',
+                    nameKey: 'name',
+                    urlKey: 'url'
+                });
+            } catch (error) {
+                console.error('LCK channel render error:', error);
             }
-        });
-        favoriteChannelList.appendChild(btn);
-    });
-}
+        }
 
-// 모달 내 즐겨찾기 목록 렌더링
-function renderFavorites() {
-    favoriteList.innerHTML = '';
-    favorites.forEach((favorite, index) => {
-        const li = document.createElement('li');
-        li.style.display = 'flex';
-        li.style.justifyContent = 'space-between';
-        li.style.alignItems = 'center';
-        li.style.padding = '5px 0';
-        li.style.borderBottom = '1px solid #eee';
+        // 치지직 채널 렌더링
+        function renderChzzkChannels() {
+            renderChannelList(chzzkChannelList, chzzkChannels, 'chzzk-btn', {
+                nameKey: 'name',
+                idKey: 'id'
+            });
+        }
 
-        const contentContainer = document.createElement('div');
-        contentContainer.style.flexGrow = '1';
-        contentContainer.style.marginRight = '10px';
-        contentContainer.style.cursor = 'pointer';
+        // SPOTV 채널 렌더링
+        function renderSpotvChannels() {
+            renderChannelList(spotvChannelList, spotvChannels, 'small-channel-btn', {
+                nameKey: 'name',
+                urlKey: 'url'
+            });
+        }
 
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = favorite.name;
-        nameSpan.style.fontWeight = '500';
-        nameSpan.style.display = 'block';
+        // 야구 채널 렌더링
+        function renderBaseballChannels() {
+            renderChannelList(baseballChannelList, baseballChannels, 'baseball-btn', {
+                nameKey: 'name',
+                urlKey: 'url'
+            });
+        }
 
-        const urlSpan = document.createElement('span');
-        urlSpan.textContent = favorite.url; // 원본 URL 표시
-        urlSpan.style.fontSize = '0.8em';
-        urlSpan.style.color = '#555';
-        urlSpan.style.wordBreak = 'break-all';
+        // 즐겨찾기 채널 렌더링
+        function renderSidebarFavorites() {
+            favoriteChannelList.innerHTML = '';
+            favorites.forEach(favorite => {
+                const btn = document.createElement('div');
+                btn.className = 'favorite-btn-channel';
+                btn.draggable = true;
+                btn.textContent = favorite.name;
+                const transformedUrl = transformUrl(favorite.url);
+                btn.dataset.url = transformedUrl;
+                btn.dataset.type = (transformedUrl && (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8'))) ? 'm3u8' : 'iframe';
+                btn.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', transformedUrl);
+                    e.dataTransfer.setData('text/type', btn.dataset.type);
+                });
+                btn.addEventListener('click', () => {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0 && transformedUrl) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
+                        loadPlayer(targetBox, transformedUrl, type);
+                        clickIndex++;
+                    }
+                });
+                favoriteChannelList.appendChild(btn);
+            });
+        }
 
-        contentContainer.appendChild(nameSpan);
-        contentContainer.appendChild(urlSpan);
+        // 모달 내 즐겨찾기 목록 렌더링
+        function renderFavorites() {
+            favoriteList.innerHTML = '';
+            favorites.forEach((favorite, index) => {
+                const li = document.createElement('li');
+                const contentContainer = document.createElement('div');
+                contentContainer.style.cursor = 'pointer';
 
-        contentContainer.addEventListener('click', () => {
-            const transformedUrl = transformUrl(favorite.url); // 변환된 URL 사용
-            const playerBoxes = playerContainer.querySelectorAll('.player-box');
-            if (playerBoxes.length > 0 && transformedUrl) {
-                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe'; // 강제로 m3u8 처리
-                loadPlayer(targetBox, transformedUrl, type);
-                clickIndex++;
-                favoriteModal.style.display = 'none';
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = favorite.name;
+
+                const urlSpan = document.createElement('span');
+                urlSpan.textContent = favorite.url;
+
+                contentContainer.appendChild(nameSpan);
+                contentContainer.appendChild(urlSpan);
+
+                contentContainer.addEventListener('click', () => {
+                    const transformedUrl = transformUrl(favorite.url);
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0 && transformedUrl) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
+                        loadPlayer(targetBox, transformedUrl, type);
+                        clickIndex++;
+                        favoriteModal.style.display = 'none';
+                    }
+                });
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '삭제';
+                deleteBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    deleteFavorite(index);
+                });
+
+                li.appendChild(contentContainer);
+                li.appendChild(deleteBtn);
+                favoriteList.appendChild(li);
+            });
+        }
+
+        // 즐겨찾기 추가
+        function addFavorite() {
+            const nameInput = document.getElementById('favorite-name-input');
+            const urlInput = document.getElementById('favorite-url-input');
+            const name = nameInput.value.trim();
+            const url = urlInput.value.trim();
+
+            if (name && url) {
+                if (!url.startsWith('http') && !url.includes('/') && !/^[0-9a-fA-F]{32}$/.test(url) && !url.includes('.m3u8')) {
+                    alert('유효한 URL 형식이나 채널 ID를 입력해주세요.');
+                    return;
+                }
+
+                if (favorites.some(fav => fav.url === url && fav.name === name)) {
+                    alert('동일한 이름과 주소의 즐겨찾기가 이미 존재합니다.');
+                    return;
+                }
+
+                favorites.push({ name, url });
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+                renderFavorites();
+                renderSidebarFavorites();
+                nameInput.value = '';
+                urlInput.value = '';
+                favoriteModal.style.display = 'block';
+            } else {
+                alert('이름과 주소를 모두 입력해주세요.');
             }
-        });
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = '삭제';
-        deleteBtn.style.backgroundColor = '#dc3545';
-        deleteBtn.style.color = 'white';
-        deleteBtn.style.border = 'none';
-        deleteBtn.style.borderRadius = '4px';
-        deleteBtn.style.padding = '3px 8px';
-        deleteBtn.style.fontSize = '12px';
-        deleteBtn.style.cursor = 'pointer';
-        deleteBtn.style.flexShrink = '0';
-        deleteBtn.addEventListener('click', (event) => {
-            event.stopPropagation();
-            deleteFavorite(index);
-        });
-
-        li.appendChild(contentContainer);
-        li.appendChild(deleteBtn);
-        favoriteList.appendChild(li);
-    });
-}
-
-// 즐겨찾기 추가
-function addFavorite() {
-    const nameInput = document.getElementById('favorite-name-input');
-    const urlInput = document.getElementById('favorite-url-input');
-    const name = nameInput.value.trim();
-    const url = urlInput.value.trim();
-
-    if (name && url) {
-        if (!url.startsWith('http') && !url.includes('/') && !/^[0-9a-fA-F]{32}$/.test(url) && !url.includes('.m3u8')) {
-            alert('유효한 URL 형식이나 채널 ID를 입력해주세요.');
-            return;
         }
 
-        if (favorites.some(fav => fav.url === url && fav.name === name)) {
-            alert('동일한 이름과 주소의 즐겨찾기가 이미 존재합니다.');
-            return;
+        // 즐겨찾기 삭제
+        function deleteFavorite(index) {
+            if (confirm(`'${favorites[index].name}' 즐겨찾기를 삭제하시겠습니까?`)) {
+                favorites.splice(index, 1);
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+                renderFavorites();
+                renderSidebarFavorites();
+                favoriteModal.style.display = 'block';
+            }
         }
 
-        favorites.push({ name, url });
-        localStorage.setItem('favorites', JSON.stringify(favorites));
-        renderFavorites();
-        renderSidebarFavorites();
-        nameInput.value = '';
-        urlInput.value = '';
-        favoriteModal.style.display = 'block';
-    } else {
-        alert('이름과 주소를 모두 입력해주세요.');
-    }
-}
-
-// 즐겨찾기 삭제
-function deleteFavorite(index) {
-    if (confirm(`'${favorites[index].name}' 즐겨찾기를 삭제하시겠습니까?`)) {
-        favorites.splice(index, 1);
-        localStorage.setItem('favorites', JSON.stringify(favorites));
-        renderFavorites();
-        renderSidebarFavorites();
-        favoriteModal.style.display = 'block';
-    }
-}
-
-// 즐겨찾기 모달 표시
-function showFavoriteModal() {
-    renderFavorites();
-    favoriteModal.style.display = 'block';
-}
+        // 즐겨찾기 모달 표시
+        function showFavoriteModal() {
+            renderFavorites();
+            favoriteModal.style.display = 'block';
+        }
 
         function toggleSidebar() {
             sidebar.classList.toggle('collapsed');
@@ -763,13 +639,11 @@ function showFavoriteModal() {
             for (let i = 0; i < count; i++) {
                 const box = document.createElement('div');
                 box.className = 'player-box';
-                
                 box.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
                 });
                 box.addEventListener('drop', createDropHandler(box));
-                
                 playerContainer.appendChild(box);
             }
         }
@@ -788,60 +662,139 @@ function showFavoriteModal() {
                 box.removeChild(box.firstChild);
             }
             const iframe = document.createElement('iframe');
+            console.log('Loading iframe with URL:', url);
             if (type === 'm3u8' || url.includes('.m3u8')) {
                 iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
             } else {
                 iframe.src = url;
             }
             box.appendChild(iframe);
-            
             box.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
             });
             box.addEventListener('drop', createDropHandler(box));
-            
             box.className = 'player-box active';
         }
 
-function playCustomUrl() {
-    const customUrl = document.getElementById('custom-url-input').value.trim();
-    if (customUrl) {
-        const finalUrl = transformUrl(customUrl);
-        if (finalUrl) {
-            const playerBoxes = playerContainer.querySelectorAll('.player-box');
-            if (playerBoxes.length > 0) {
-                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                const type = finalUrl.includes('chzzk-api-proxy') || finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe'; // 치지직 프록시 URL도 m3u8로 강제 처리
-                loadPlayer(targetBox, finalUrl, type);
-                clickIndex++;
+        function transformUrl(url) {
+            if (!url) return null;
+            const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
+            if (chzzkChannelIdPattern.test(url)) {
+                return `${chzzkProxyBaseUrl}${url}`;
             }
-        } else {
-            alert('유효한 URL 또는 채널 ID를 입력해주세요.');
+            if (url.includes('.m3u8')) {
+                return url;
+            }
+            const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
+            if (isShortForm) {
+                const [platform, channelId] = url.split('/');
+                switch (platform) {
+                    case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
+                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
+                    case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
+                    case 'kick': return `https://player.kick.com/${channelId}`;
+                    case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
+                    default: return null;
+                }
+            }
+            if (url.startsWith('https://twitch.tv/') || url.startsWith('https://www.twitch.tv/')) {
+                const channelId = url.split('/').pop();
+                return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
+            }
+            if (!url.startsWith('http')) { return null; }
+            if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
+            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
+            if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
+            if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
+            if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
+            if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
+                const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            }
+            if (url.match(/youtube\.com\/channel\/[^\/]+\/live/)) {
+                return url;
+            }
+            if (url.startsWith('https://chzzk.naver.com/live/') || url.startsWith('https://chzzk.naver.com/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
+            if (url.startsWith('https://kick.com/')) return `https://player.kick.com/${url.split('/').pop()}`;
+            if (url.startsWith('https://play.sooplive.co.kr/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
+            if (url.startsWith('https://')) return url;
+            return null;
         }
-    } else {
-        alert('URL 또는 채널 ID를 입력해주세요.');
-    }
-}
 
-// 페이지 로드 시 favorites 초기화
-window.onload = () => {
-    favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    setSplitScreen(1);
-    renderSidebarFavorites();
-    const urlParams = new URLSearchParams(window.location.search);
-    const m3u8Url = urlParams.get('url');
-    if (m3u8Url) {
-        const finalUrl = transformUrl(decodeURIComponent(m3u8Url));
-        if (finalUrl) {
-            const playerBoxes = playerContainer.querySelectorAll('.player-box');
-            if (playerBoxes.length > 0) {
-                const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
-                loadPlayer(playerBoxes[0], finalUrl, type);
+        function createDropHandler(box) {
+            return (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const textPlain = e.dataTransfer.getData('text/plain');
+                const textHtml = e.dataTransfer.getData('text/html');
+                const textUri = e.dataTransfer.getData('text/uri-list');
+
+                let url = textUri;
+                if (!url && textHtml) {
+                    url = extractM3u8Url(textHtml) || transformUrl(textHtml);
+                }
+                if (!url && textPlain) {
+                    url = extractM3u8Url(textPlain) || transformUrl(textPlain);
+                }
+
+                if (url) {
+                    const finalUrl = transformUrl(url);
+                    if (finalUrl) {
+                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(box, finalUrl, type);
+                    }
+                }
+            };
+        }
+
+        function playCustomUrl() {
+            const customUrl = document.getElementById('custom-url-input').value.trim();
+            if (customUrl) {
+                const finalUrl = transformUrl(customUrl);
+                if (finalUrl) {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        const type = finalUrl.includes('chzzk-api-proxy') || finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(targetBox, finalUrl, type);
+                        clickIndex++;
+                    }
+                } else {
+                    alert('유효한 URL 또는 채널 ID를 입력해주세요.');
+                }
+            } else {
+                alert('URL 또는 채널 ID를 입력해주세요.');
             }
         }
-    }
-};
+
+        // 초기화 함수
+        async function initialize() {
+            favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            setSplitScreen(1);
+            renderSidebarFavorites();
+            renderChzzkChannels();
+            renderSpotvChannels();
+            renderBaseballChannels();
+            await renderLckChannels();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const m3u8Url = urlParams.get('url');
+            if (m3u8Url) {
+                const finalUrl = transformUrl(decodeURIComponent(m3u8Url));
+                if (finalUrl) {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(playerBoxes[0], finalUrl, type);
+                    }
+                }
+            }
+        }
+
+        window.onload = () => {
+            initialize();
+        };
     </script>
 </body>
 </html>
