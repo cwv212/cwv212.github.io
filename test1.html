@@ -158,24 +158,29 @@
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
         // YouTube 라이브 URL 가져오기
-        async function getYouTubeLiveOrUpcoming() {
-            try {
-                const response = await fetch(`${workersUrl}/youtube-live/${CHANNELS.youtube.id}`);
-                const data = await response.json();
-                console.log('Worker response:', data); // Worker에서 받은 응답 확인
-                return data.url || 'https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}';
-            } catch (error) {
-                console.error('YouTube live fetch error:', error);
-                return 'https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}';
-            }
+async function getYouTubeLiveOrUpcoming() {
+    try {
+        const response = await fetch(`${workersUrl}/youtube-live/${CHANNELS.youtube.id}`);
+        const data = await response.json();
+        console.log('Worker response:', data); // Worker 응답 확인
+        if (data.url) {
+            return data.url; // 정상적인 URL 반환
+        } else {
+            console.warn('No live URL found, falling back to channel live stream');
+            return `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`; // 템플릿 리터럴 사용
         }
+    } catch (error) {
+        console.error('YouTube live fetch error:', error);
+        return `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`; // 템플릿 리터럴 사용
+    }
+}
 
         // LCK 채널 렌더링
 async function renderLckChannels() {
     try {
         const youtubeUrl = await getYouTubeLiveOrUpcoming();
-        console.log('YouTube URL to load:', youtubeUrl);
-        lckChannels[2].url = youtubeUrl || 'https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}'; // 기본값 설정
+        console.log('YouTube URL to load:', youtubeUrl); // 로드할 URL 확인
+        lckChannels[2].url = youtubeUrl || `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`; // 템플릿 리터럴 사용
 
         lckChannelList.innerHTML = '';
         lckChannels.forEach(channel => {
