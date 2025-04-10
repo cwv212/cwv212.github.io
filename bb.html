@@ -375,7 +375,7 @@
         const lckChannels = [
             { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
             { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
-            { name: 'K', url: 'https://www.youtube.com/embed/live_stream?channel=UCw1DsweY9b2AKGjV4kGJP1A', type: 'iframe', tooltip: 'youtube' }
+            { name: 'K', url: 'UCw1DsweY9b2AKGjV4kGJP1A', type: 'youtube-live', tooltip: 'youtube' } // type을 youtube-live로 변경
         ];
 
         const chzzkChannels = [
@@ -479,29 +479,47 @@ const tvChannels = [
             };
         }
 
-        // LCK 채널 추가
-        lckChannels.forEach(channel => {
-            const btn = document.createElement('div');
-            btn.className = 'lck-btn';
-            btn.draggable = true;
-            btn.textContent = channel.name;
-            btn.dataset.url = channel.url;
-            btn.dataset.type = channel.type;
-            btn.title = channel.tooltip;
-            btn.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', channel.url);
-                e.dataTransfer.setData('text/type', channel.type);
-            });
-            btn.addEventListener('click', () => {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, channel.url, channel.type);
-                    clickIndex++;
+// LCK 채널 추가
+lckChannels.forEach(channel => {
+    const btn = document.createElement('div');
+    btn.className = 'lck-btn';
+    btn.draggable = true;
+    btn.textContent = channel.name;
+    btn.dataset.url = channel.url;
+    btn.dataset.type = channel.type;
+    btn.title = channel.tooltip;
+    btn.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', channel.url);
+        e.dataTransfer.setData('text/type', channel.type);
+    });
+    btn.addEventListener('click', async () => {
+        const playerBoxes = playerContainer.querySelectorAll('.player-box');
+        if (playerBoxes.length > 0) {
+            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+            if (channel.type === 'youtube-live') {
+                // Cloudflare Worker 호출
+                try {
+                    const workerUrl = `https://your-worker.workers.dev/youtube-live/${channel.url}`; // Worker URL로 변경
+                    const response = await fetch(workerUrl);
+                    if (response.ok) {
+                        const data = await response.json();
+                        loadPlayer(targetBox, data.url, 'iframe');
+                    } else {
+                        alert('현재 라이브 스트림을 찾을 수 없습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error fetching YouTube live:', error);
+                    alert('YouTube 라이브 스트림을 가져오는 데 실패했습니다.');
                 }
-            });
-            lckChannelList.appendChild(btn);
-        });
+            } else {
+                // 기존 로직 유지
+                loadPlayer(targetBox, channel.url, channel.type);
+            }
+            clickIndex++;
+        }
+    });
+    lckChannelList.appendChild(btn);
+});
 
         // 치지직 채널 목록 생성
         chzzkChannels.forEach(channel => {
