@@ -171,39 +171,39 @@
         }
 
         // LCK 채널 렌더링
-        async function renderLckChannels() {
-            try {
-                const youtubeUrl = await getYouTubeLiveOrUpcoming();
-                console.log('YouTube URL to load:', youtubeUrl); // 로드할 URL 확인
-                lckChannels[2].url = youtubeUrl;
+async function renderLckChannels() {
+    try {
+        const youtubeUrl = await getYouTubeLiveOrUpcoming();
+        console.log('YouTube URL to load:', youtubeUrl);
+        lckChannels[2].url = youtubeUrl || 'https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}'; // 기본값 설정
 
-                lckChannelList.innerHTML = '';
-                lckChannels.forEach(channel => {
-                    const btn = document.createElement('div');
-                    btn.className = 'lck-btn';
-                    btn.draggable = true;
-                    btn.textContent = channel.name;
-                    btn.dataset.url = channel.url;
-                    btn.dataset.type = channel.type;
-                    btn.title = channel.tooltip;
-                    btn.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.setData('text/plain', channel.url);
-                        e.dataTransfer.setData('text/type', channel.type);
-                    });
-                    btn.addEventListener('click', () => {
-                        const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                        if (playerBoxes.length > 0) {
-                            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                            loadPlayer(targetBox, channel.url, channel.type);
-                            clickIndex++;
-                        }
-                    });
-                    lckChannelList.appendChild(btn);
-                });
-            } catch (error) {
-                console.error('LCK channel render error:', error);
-            }
-        }
+        lckChannelList.innerHTML = '';
+        lckChannels.forEach(channel => {
+            const btn = document.createElement('div');
+            btn.className = 'lck-btn';
+            btn.draggable = true;
+            btn.textContent = channel.name;
+            btn.dataset.url = channel.url;
+            btn.dataset.type = channel.type;
+            btn.title = channel.tooltip;
+            btn.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', channel.url);
+                e.dataTransfer.setData('text/type', channel.type);
+            });
+            btn.addEventListener('click', () => {
+                const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                if (playerBoxes.length > 0) {
+                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                    loadPlayer(targetBox, channel.url, channel.type);
+                    clickIndex++;
+                }
+            });
+            lckChannelList.appendChild(btn);
+        });
+    } catch (error) {
+        console.error('LCK channel render error:', error);
+    }
+}
 
         // 치지직 채널 렌더링
         function renderChzzkChannels() {
