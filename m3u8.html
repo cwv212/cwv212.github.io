@@ -1,844 +1,516 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>m3u8 플레이어 (Firefox)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <script src="config.js"></script> <!-- Actions에서 생성된 config.js 로드 --> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M3U8 Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        * {
-            box-sizing: border-box;
-        }
         body {
-            font-family: 'Roboto', sans-serif;
             margin: 0;
-            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
             display: flex;
+            flex-direction: column;
             height: 100vh;
+        }
+        #container {
+            display: flex;
+            flex: 1;
             overflow: hidden;
-            background: #f4f7fa;
-            color: #333;
         }
         #sidebar {
-            width: 220px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            transition: transform 0.3s ease;
-            position: absolute;
-            top: 0;
-            left: 0;
+            width: 200px;
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        #playerContainer {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #ddd;
+        }
+        .player-box {
+            position: relative;
+            width: 100%;
             height: 100%;
-            z-index: 10;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);a
+            margin: 5px;
+            background-color: #000;
+            overflow: hidden;
+            border-radius: 5px;
         }
-        #sidebar.collapsed {
-            transform: translateX(-100%);
+        .player-box video, .player-box iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
-        #toggle-btn {
-            position: fixed;
-            top: 10px;
-            left: 205px;
-            width: 20px;
-            height: 20px;
-            background: #007bff;
+        .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: red;
+            color: white;
             border: none;
             border-radius: 50%;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
-            font-size: 14px;
-            color: white;
-            transition: left 0.3s ease, background 0.3s;
-            padding: 0;
-            z-index: 11;
+            font-size: 12px;
             line-height: 20px;
             text-align: center;
         }
-        #sidebar.collapsed + #player-container #toggle-btn {
-            left: 10px;
-        }
-        #toggle-btn:hover {
-            background: #0056b3;
-        }
-        #baseball-channels, #chzzk-channels, #spotv-channels, #tv-channels, #favorite-channels {
+        #splitScreenControls {
             display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        .baseball-btn, .chzzk-btn, .tv-btn, .favorite-btn-channel {
-            flex: 1;
-            padding: 6px 0;
-            background: #e9ecef;
-            border-radius: 4px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            font-size: 12px;
-            text-align: center;
-            min-width: 33px;
-            max-width: 33px;
-        }
-        .baseball-btn:hover, .chzzk-btn:hover, .tv-btn:hover, .favorite-btn-channel:hover {
-            background: #dee2e6;
-        }
-        #lck-channels {
-            display: flex;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        .lck-btn {
-            flex: 1;
-            padding: 10px;
-            background: #e9ecef;
-            border-radius: 8px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            text-align: center;
-            position: relative;
-        }
-        .lck-btn:hover {
-            background: #dee2e6;
-        }
-        .lck-btn[title]:hover::after {
-            content: attr(title);
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 20;
-        }
-        .small-channel-btn {
-            display: inline-block;
-            padding: 6px 10px;
-            background: #e9ecef;
-            border-radius: 4px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            font-size: 12px;
-            text-align: center;
-            min-width: 33px;
-        }
-        .small-channel-btn:hover {
-            background: #dee2e6;
-        }
-        #player-container {
-            flex-grow: 1;
-            display: grid;
-            gap: 0;
-            padding: 0;
-            height: 100vh;
-            width: 100%;
-            transition: all 0.3s ease;
-            position: relative;
-            background: #ffffff;
-            border: none;
-        }
-        .player-box {
-            background: #f0f2f5;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            overflow: hidden;
-            border: none;
-            position: relative;
+            padding: 10px;
+            background-color: #333;
+            color: white;
         }
-        .player-box.active {
-            border: none;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            z-index: 1;
-        }
-        button {
-            padding: 8px 15px;
-            margin: 5px 5px 5px 0;
-            background: #007bff;
+        #splitScreenControls button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            background-color: #555;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 3px;
             cursor: pointer;
-            transition: background 0.3s, transform 0.2s;
-            width: 90px;
         }
-        button:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
+        #splitScreenControls button:hover {
+            background-color: #777;
         }
-        h3, h4 {
-            font-size: 16px;
-            margin: 10px 0 5px;
-            color: #495057;
+        .channel-list {
+            margin-top: 10px;
         }
-        a {
+        .channel-btn, .lck-btn {
             display: block;
-            margin: 15px 0;
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        a:hover {
-            text-decoration: underline;
-            color: #0056b3;
-        }
-        #custom-url-container {
-            margin: 10px 0;
-        }
-        #custom-url-input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        #split-screen-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px;
-        }
-        .toggle-header {
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .toggle-header::after {
-            content: '▼';
-            font-size: 12px;
-        }
-        .toggle-header.collapsed::after {
-            content: '▶';
-        }
-        #spotv-channels {
-            display: none;
-        }
-        #spotv-channels.active {
-            display: flex;
-        }
-        /* 즐겨찾기 모달 스타일 */
-        #favorite-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1100;
-            width: 90%;
-            max-width: 450px;
-            display: none;
-            box-sizing: border-box;
-        }
-        #favorite-modal h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
+            padding: 5px;
+            margin: 2px 0;
+            background-color: #555;
+            color: white;
             text-align: center;
-            color: #333;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            user-select: none;
         }
-        #favorite-modal .input-row {
-            margin-bottom: 10px;
+        .channel-btn:hover, .lck-btn:hover {
+            background-color: #777;
         }
-        #favorite-modal .favorite-input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
+        #favoritesList {
+            margin-top: 10px;
         }
-        #favorite-modal #add-favorite-btn {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            background-color: #007bff;
-        }
-        #favorite-modal #add-favorite-btn:hover {
-            background-color: #0056b3;
-        }
-        #favorite-modal ul {
-            margin-top: 20px;
-            margin-bottom: 15px;
-            padding: 0;
-            max-height: 250px;
-            overflow-y: auto;
-            border-top: 1px solid #eee;
-        }
-        #favorite-modal li {
+        .favorite-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 5px;
-            border-bottom: 1px solid #eee;
+            padding: 5px;
+            margin: 2px 0;
+            background-color: #444;
+            border-radius: 3px;
         }
-        #favorite-modal li:last-child {
-            border-bottom: none;
+        .favorite-item span {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        #favorite-modal .button-container {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 15px;
-        }
-        #favorite-modal #close-favorite-modal {
-            padding: 8px 20px;
-        }
-        /* 즐겨찾기 버튼 스타일 */
-        .favorite-btn {
-            background: #007bff;
-        }
-        .favorite-btn:hover {
-            background: #0056b3;
+        .favorite-item button {
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            margin-left: 5px;
         }
     </style>
 </head>
 <body>
-    <div id="sidebar">
-        <h3>숙제 채널</h3>
-        <div id="lck-channels"></div>
-        <h4>스트리머 채널</h4>
-        <div id="chzzk-channels"></div>
-        <h4>즐겨찾기 채널</h4>
-        <div id="favorite-channels"></div>
-        <h4 class="toggle-header" onclick="toggleSpotv()">스포티비 채널</h4>
-        <div id="spotv-channels"></div>
-        <h4>야구 채널</h4>
-        <div id="baseball-channels"></div>
-        <!-- <h4>TV 채널</h4> -->
-        <!-- <div id="tv-channels"></div> -->
-        <h3>분할 화면 설정</h3>
-        <div id="split-screen-buttons">
-            <button onclick="setSplitScreen(1)">1분할</button>
-            <button onclick="setSplitScreen(2)">2분할</button>
-            <button onclick="setSplitScreen(3)">3분할</button>
-            <button onclick="setSplitScreen(4)">4분할</button>
-        </div>
-        <div id="custom-url-container">
-            <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
-            <button onclick="playCustomUrl()">실행</button>
-            <button class="favorite-btn" onclick="showFavoriteModal()">즐겨찾기</button>
-        </div>
-        <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
-        <a href="https://baseball-hls-player-mook.hlsp.workers.dev/" target="_self">파폭용 페이지로 가기</a>
+    <div id="splitScreenControls">
+        <button onclick="setSplitScreen(1)">1화면</button>
+        <button onclick="setSplitScreen(2)">2화면</button>
+        <button onclick="setSplitScreen(4)">4화면</button>
     </div>
-    <div id="player-container">
-        <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
+    <div id="container">
+        <div id="sidebar">
+            <div id="lckChannelList" class="channel-list"></div>
+            <div id="baseballChannelList" class="channel-list"></div>
+            <div id="spotvChannelList" class="channel-list"></div>
+            <div id="chzzkChannelList" class="channel-list"></div>
+            <div id="favoritesList"></div>
+        </div>
+        <div id="playerContainer"></div>
     </div>
 
-    <!-- 즐겨찾기 모달 -->
-    <div id="favorite-modal">
-        <h3>즐겨찾기 관리</h3>
-        <div class="input-row">
-            <input type="text" id="favorite-name-input" class="favorite-input" placeholder="이름">
-            <input type="text" id="favorite-url-input" class="favorite-input" placeholder="URL 또는 채널 ID">
-            <button id="add-favorite-btn" onclick="addFavorite()">추가</button>
-        </div>
-        <ul id="favorite-list"></ul>
-        <div class="button-container">
-            <button id="close-favorite-modal" onclick="favoriteModal.style.display='none'">닫기</button>
-        </div>
-    </div>
+    <script src="config.js"></script>
+    <script>
+        const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
+        const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
+        const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
+        const channelId = 'UCw1DsweY9b2AKGjV4kGJP1A';
 
-<script>
-    const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
-    const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
-    const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
-    const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
+        const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
+            name: `야${i + 1}`,
+            url: `${baseballBaseUrl}${i + 1}/master.m3u8`,
+            type: 'm3u8',
+            tooltip: 'soop baseball'
+        }));
 
-    const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
-        name: `야${i + 1}`,
-        url: `${baseballBaseUrl}${i + 1}/master.m3u8`
-    }));
+        const spotvChannels = Array.from({ length: 40 }, (_, i) => {
+            const channelNum = String(i + 1).padStart(2, '0');
+            return {
+                name: `${i + 1}`,
+                url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8`,
+                type: 'm3u8',
+                tooltip: 'spotv'
+            };
+        });
 
-    const spotvChannels = Array.from({ length: 40 }, (_, i) => {
-        const channelNum = String(i + 1).padStart(2, '0');
-        return {
-            name: `${i + 1}`,
-            url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8`
-        };
-    });
+        const chzzkChannels = [
+            { name: '치지직', url: `${chzzkProxyBaseUrl}9381e7d6816e6d915a44a13c0195b202`, type: 'm3u8', tooltip: 'chzzk' }
+        ];
 
-    const lckChannels = [
-        { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
-        { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
-        { name: 'K', url: '', type: 'iframe', tooltip: 'youtube' }
-    ];
+        const lckChannels = [
+            { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
+            { name: 'C', url: `${chzzkProxyBaseUrl}9381e7d6816e6d915a44a13c0195b202`, type: 'm3u8', tooltip: 'chzzk' },
+            { name: 'K', url: '', type: 'iframe', tooltip: 'youtube' }
+        ];
 
-    const channelId = 'UCw1DsweY9b2AKGjV4kGJP1A';
+        let favorites = [];
+        let clickIndex = 0;
 
-async function getLiveStreamUrl() {
-        const youtubeApiKey = window.YOUTUBE_API_KEY || '';
-        if (!youtubeApiKey) {
-            console.warn('YouTube API 키가 설정되지 않았습니다.');
-            return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
-        }
-        try {
-            let response = await fetch(
-                `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=live&key=${youtubeApiKey}`
-            );
-            let data = await response.json();
-            if (data.items && data.items.length > 0) {
-                const videoId = data.items[0].id.videoId;
-                return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+        const playerContainer = document.getElementById('playerContainer');
+        const lckChannelList = document.getElementById('lckChannelList');
+        const baseballChannelList = document.getElementById('baseballChannelList');
+        const spotvChannelList = document.getElementById('spotvChannelList');
+        const chzzkChannelList = document.getElementById('chzzkChannelList');
+        const favoritesList = document.getElementById('favoritesList');
+
+        async function fetchYouTubeLive(channelId) {
+            try {
+                const response = await fetch(`https://0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev/youtube-live?channelId=${channelId}`);
+                const data = await response.json();
+                return data; // { url, id } 또는 null
+            } catch (error) {
+                console.error('Error fetching YouTube live:', error);
+                return null;
             }
-
-            const today = new Date().toISOString().split('T')[0];
-            response = await fetch(
-                `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=upcoming&order=date&publishedAfter=${today}T00:00:00Z&maxResults=1&key=${youtubeApiKey}`
-            );
-            data = await response.json();
-            console.log('API 응답:', data);
-            if (data.items && data.items.length > 0) {
-                const videoId = data.items[0].id.videoId;
-                return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            }
-
-            return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
-        } catch (error) {
-            console.error('YouTube API 오류:', error);
-            return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
         }
-    }
 
-    async function renderLckChannels() {
-        const liveUrl = await getLiveStreamUrl();
-        lckChannels[2].url = liveUrl;
+        async function renderLckChannels() {
+            lckChannelList.innerHTML = '';
 
-        lckChannelList.innerHTML = '';
-        lckChannels.forEach(channel => {
+            const staticChannels = lckChannels.slice(0, 2); // L, C
+            staticChannels.forEach(channel => {
+                const btn = document.createElement('div');
+                btn.className = 'lck-btn';
+                btn.draggable = true;
+                btn.textContent = channel.name;
+                btn.dataset.url = channel.url;
+                btn.dataset.type = channel.type;
+                btn.title = channel.tooltip;
+                btn.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', channel.url);
+                    e.dataTransfer.setData('text/type', channel.type);
+                });
+                btn.addEventListener('click', () => {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        loadPlayer(targetBox, channel.url, channel.type);
+                        clickIndex++;
+                    }
+                });
+                lckChannelList.appendChild(btn);
+            });
+
+            const youtubeData = await fetchYouTubeLive(channelId);
+            const kChannel = {
+                name: 'K',
+                url: youtubeData ? youtubeData.url : `https://www.youtube.com/embed/live_stream?channel=${channelId}`,
+                type: 'iframe',
+                tooltip: 'youtube'
+            };
             const btn = document.createElement('div');
             btn.className = 'lck-btn';
             btn.draggable = true;
-            btn.textContent = channel.name;
-            btn.dataset.url = channel.url;
-            btn.dataset.type = channel.type;
-            btn.title = channel.tooltip;
+            btn.textContent = kChannel.name;
+            btn.dataset.url = kChannel.url;
+            btn.dataset.type = kChannel.type;
+            btn.title = kChannel.tooltip;
             btn.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', channel.url);
-                e.dataTransfer.setData('text/type', channel.type);
+                e.dataTransfer.setData('text/plain', kChannel.url);
+                e.dataTransfer.setData('text/type', kChannel.type);
             });
             btn.addEventListener('click', () => {
                 const playerBoxes = playerContainer.querySelectorAll('.player-box');
                 if (playerBoxes.length > 0) {
                     const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, channel.url, channel.type);
+                    loadPlayer(targetBox, kChannel.url, kChannel.type);
                     clickIndex++;
                 }
             });
             lckChannelList.appendChild(btn);
-        });
-    }
-
-    const chzzkChannels = [
-        { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced' },
-        { name: '침', id: 'bb382c2c0cc9fa7c86ab3b037fb5799c' },
-        { name: '추', id: '181a3baebe508d3b5fa5d9fe4d6b5241' },
-        { name: '솝', id: '34a2bd4f5988e37693e94306f0bfe57f' },
-        { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181' }
-    ];
-
-    const baseballChannelList = document.getElementById('baseball-channels');
-    const lckChannelList = document.getElementById('lck-channels');
-    const chzzkChannelList = document.getElementById('chzzk-channels');
-    const spotvChannelList = document.getElementById('spotv-channels');
-    const favoriteChannelList = document.getElementById('favorite-channels');
-    const playerContainer = document.getElementById('player-container');
-    const sidebar = document.getElementById('sidebar');
-    const favoriteModal = document.getElementById('favorite-modal');
-    const favoriteList = document.getElementById('favorite-list');
-    let playerCount = 1;
-    let clickIndex = 0;
-    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-
-    function transformUrl(url) {
-        if (!url) return null;
-        const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
-        if (chzzkChannelIdPattern.test(url)) {
-            return `${chzzkProxyBaseUrl}${url}`;
         }
-        if (url.includes('.m3u8')) {
+
+        function renderBaseballChannels() {
+            baseballChannelList.innerHTML = '';
+            baseballChannels.forEach(channel => {
+                const btn = document.createElement('div');
+                btn.className = 'channel-btn';
+                btn.draggable = true;
+                btn.textContent = channel.name;
+                btn.dataset.url = channel.url;
+                btn.dataset.type = channel.type;
+                btn.title = channel.tooltip;
+                btn.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', channel.url);
+                    e.dataTransfer.setData('text/type', channel.type);
+                });
+                btn.addEventListener('click', () => {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        loadPlayer(targetBox, channel.url, channel.type);
+                        clickIndex++;
+                    }
+                });
+                baseballChannelList.appendChild(btn);
+            });
+        }
+
+        function renderSpotvChannels() {
+            spotvChannelList.innerHTML = '';
+            spotvChannels.forEach(channel => {
+                const btn = document.createElement('div');
+                btn.className = 'channel-btn';
+                btn.draggable = true;
+                btn.textContent = channel.name;
+                btn.dataset.url = channel.url;
+                btn.dataset.type = channel.type;
+                btn.title = channel.tooltip;
+                btn.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', channel.url);
+                    e.dataTransfer.setData('text/type', channel.type);
+                });
+                btn.addEventListener('click', () => {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        loadPlayer(targetBox, channel.url, channel.type);
+                        clickIndex++;
+                    }
+                });
+                spotvChannelList.appendChild(btn);
+            });
+        }
+
+        function renderChzzkChannels() {
+            chzzkChannelList.innerHTML = '';
+            chzzkChannels.forEach(channel => {
+                const btn = document.createElement('div');
+                btn.className = 'channel-btn';
+                btn.draggable = true;
+                btn.textContent = channel.name;
+                btn.dataset.url = channel.url;
+                btn.dataset.type = channel.type;
+                btn.title = channel.tooltip;
+                btn.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', channel.url);
+                    e.dataTransfer.setData('text/type', channel.type);
+                });
+                btn.addEventListener('click', () => {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        loadPlayer(targetBox, channel.url, channel.type);
+                        clickIndex++;
+                    }
+                });
+                chzzkChannelList.appendChild(btn);
+            });
+        }
+
+        function renderSidebarFavorites() {
+            favoritesList.innerHTML = '<h3>Favorites</h3>';
+            favorites.forEach((fav, index) => {
+                const item = document.createElement('div');
+                item.className = 'favorite-item';
+                item.draggable = true;
+
+                const span = document.createElement('span');
+                span.textContent = fav.name;
+                span.title = fav.url;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = 'X';
+                removeBtn.onclick = () => {
+                    favorites.splice(index, 1);
+                    localStorage.setItem('favorites', JSON.stringify(favorites));
+                    renderSidebarFavorites();
+                };
+
+                item.appendChild(span);
+                item.appendChild(removeBtn);
+                item.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', fav.url);
+                    e.dataTransfer.setData('text/type', fav.type);
+                });
+                item.addEventListener('click', () => {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        loadPlayer(targetBox, fav.url, fav.type);
+                        clickIndex++;
+                    }
+                });
+                favoritesList.appendChild(item);
+            });
+        }
+
+        function setSplitScreen(count) {
+            playerContainer.innerHTML = '';
+            const width = count === 1 ? '100%' : count === 2 ? '50%' : '25%';
+            const height = count === 1 ? '100%' : count === 2 ? '100%' : '50%';
+            for (let i = 0; i < count; i++) {
+                const box = document.createElement('div');
+                box.className = 'player-box';
+                box.style.width = `calc(${width} - 10px)`;
+                box.style.height = `calc(${height} - 10px)`;
+                box.addEventListener('dragover', (e) => e.preventDefault());
+                box.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const url = e.dataTransfer.getData('text/plain');
+                    const type = e.dataTransfer.getData('text/type');
+                    loadPlayer(box, url, type);
+                });
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'close-btn';
+                closeBtn.textContent = 'X';
+                closeBtn.onclick = () => {
+                    box.innerHTML = '';
+                    const video = box.querySelector('video');
+                    if (video && video.hls) {
+                        video.hls.destroy();
+                    }
+                };
+                box.appendChild(closeBtn);
+                playerContainer.appendChild(box);
+            }
+        }
+
+        function transformUrl(url) {
+            const proxyUrl = 'https://0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev/stream/';
+            if (url.startsWith(baseballBaseUrl)) {
+                const match = url.match(/soopbaseball(\d+)/);
+                return match ? `${proxyUrl}${match[1]}` : url;
+            }
             return url;
         }
-        const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
-        if (isShortForm) {
-            const [platform, channelId] = url.split('/');
-            switch (platform) {
-                case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
-                case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
-                case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
-                case 'kick': return `https://player.kick.com/${channelId}`;
-                case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
-                default: return null;
+
+        function loadPlayer(box, url, type) {
+            box.innerHTML = '';
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'close-btn';
+            closeBtn.textContent = 'X';
+            closeBtn.onclick = () => {
+                box.innerHTML = '';
+                const video = box.querySelector('video');
+                if (video && video.hls) {
+                    video.hls.destroy();
+                }
+            };
+            box.appendChild(closeBtn);
+
+            const finalUrl = transformUrl(url);
+            if (type === 'm3u8' && Hls.isSupported()) {
+                const video = document.createElement('video');
+                video.controls = true;
+                video.autoplay = true;
+                box.appendChild(video);
+                const hls = new Hls();
+                hls.loadSource(finalUrl);
+                hls.attachMedia(video);
+                video.hls = hls;
+
+                const favoriteBtn = document.createElement('button');
+                favoriteBtn.textContent = '☆';
+                favoriteBtn.style.position = 'absolute';
+                favoriteBtn.style.top = '5px';
+                favoriteBtn.style.right = '30(px)';
+                favoriteBtn.style.background = 'yellow';
+                favoriteBtn.style.color = 'black';
+                favoriteBtn.style.border = 'none';
+                favoriteBtn.style.borderRadius = '50%';
+                favoriteBtn.style.width = '20px';
+                favoriteBtn.style.height = '20px';
+                favoriteBtn.style.cursor = 'pointer';
+                favoriteBtn.onclick = () => {
+                    const name = prompt('즐겨찾기 이름을 입력하세요:', url.split('/').pop());
+                    if (name) {
+                        favorites.push({ name, url: finalUrl, type });
+                        localStorage.setItem('favorites', JSON.stringify(favorites));
+                        renderSidebarFavorites();
+                    }
+                };
+                box.appendChild(favoriteBtn);
+            } else {
+                const iframe = document.createElement('iframe');
+                iframe.src = finalUrl;
+                iframe.allow = 'autoplay; fullscreen';
+                box.appendChild(iframe);
+
+                const favoriteBtn = document.createElement('button');
+                favoriteBtn.textContent = '☆';
+                favoriteBtn.style.position = 'absolute';
+                favoriteBtn.style.top = '5px';
+                favoriteBtn.style.right = '30px';
+                favoriteBtn.style.background = 'yellow';
+                favoriteBtn.style.color = 'black';
+                favoriteBtn.style.border = 'none';
+                favoriteBtn.style.borderRadius = '50%';
+                favoriteBtn.style.width = '20px';
+                favoriteBtn.style.height = '20px';
+                favoriteBtn.style.cursor = 'pointer';
+                favoriteBtn.onclick = () => {
+                    const name = prompt('즐겨찾기 이름을 입력하세요:', url.split('/').pop());
+                    if (name) {
+                        favorites.push({ name, url: finalUrl, type });
+                        localStorage.setItem('favorites', JSON.stringify(favorites));
+                        renderSidebarFavorites();
+                    }
+                };
+                box.appendChild(favoriteBtn);
             }
         }
-        if (url.startsWith('https://twitch.tv/')) {
-            return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
-        }
-        if (!url.startsWith('http')) { return null; }
-        if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
-        if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
-        if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
-        if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
-        if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/').pop()}/embed`;
-        if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
-            const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
-            if (match) return `https://www.youtube.com/embed/${match[1]}`;
-        }
-        if (url.startsWith('https://chzzk.naver.com/live/') || url.startsWith('https://chzzk.naver.com/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
-        if (url.startsWith('https://kick.com/')) return `https://player.kick.com/${url.split('/').pop()}`;
-        if (url.startsWith('https://play.sooplive.co.kr/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
-        if (url.startsWith('https://')) return url;
-        return null;
-    }
 
-    function createDropHandler(box) {
-        return (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const textPlain = e.dataTransfer.getData('text/plain');
-            const textHtml = e.dataTransfer.getData('text/html');
-            const textUri = e.dataTransfer.getData('text/uri-list');
-
-            let url = textUri;
-            if (!url && textHtml) {
-                url = extractM3u8Url(textHtml) || transformUrl(textHtml);
-            }
-            if (!url && textPlain) {
-                url = extractM3u8Url(textPlain) || transformUrl(textPlain);
-            }
-
-            if (url) {
-                const finalUrl = transformUrl(url);
+        window.onload = () => {
+            favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            setSplitScreen(1);
+            renderSidebarFavorites();
+            renderLckChannels();
+            renderBaseballChannels();
+            renderSpotvChannels();
+            renderChzzkChannels();
+            const urlParams = new URLSearchParams(window.location.search);
+            const m3u8Url = urlParams.get('url');
+            if (m3u8Url) {
+                const finalUrl = transformUrl(decodeURIComponent(m3u8Url));
                 if (finalUrl) {
-                    const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
-                    loadPlayer(box, finalUrl, type);
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(playerBoxes[0], finalUrl, type);
+                    }
                 }
             }
         };
-    }
-
-    chzzkChannels.forEach(channel => {
-        const btn = document.createElement('div');
-        btn.className = 'chzzk-btn';
-        btn.draggable = true;
-        btn.textContent = channel.name;
-        btn.dataset.url = `${chzzkProxyBaseUrl}${channel.id}`;
-        btn.dataset.type = 'm3u8';
-        btn.addEventListener('dragstart', (e) => {
-            const url = `${chzzkProxyBaseUrl}${channel.id}`;
-            e.dataTransfer.setData('text/plain', url);
-            e.dataTransfer.setData('text/type', 'm3u8');
-        });
-        btn.addEventListener('click', () => {
-            const playerBoxes = playerContainer.querySelectorAll('.player-box');
-            if (playerBoxes.length > 0) {
-                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                loadPlayer(targetBox, `${chzzkProxyBaseUrl}${channel.id}`, 'm3u8');
-                clickIndex++;
-            }
-        });
-        chzzkChannelList.appendChild(btn);
-    });
-
-    spotvChannels.forEach(channel => {
-        const btn = document.createElement('div');
-        btn.className = 'small-channel-btn';
-        btn.draggable = true;
-        btn.textContent = channel.name;
-        btn.dataset.url = channel.url;
-        btn.dataset.type = 'm3u8';
-        btn.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', channel.url);
-            e.dataTransfer.setData('text/type', 'm3u8');
-        });
-        btn.addEventListener('click', () => {
-            const playerBoxes = playerContainer.querySelectorAll('.player-box');
-            if (playerBoxes.length > 0) {
-                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                loadPlayer(targetBox, channel.url, 'm3u8');
-                clickIndex++;
-            }
-        });
-        spotvChannelList.appendChild(btn);
-    });
-
-    baseballChannels.forEach(channel => {
-        const btn = document.createElement('div');
-        btn.className = 'baseball-btn';
-        btn.draggable = true;
-        btn.textContent = channel.name;
-        btn.dataset.url = channel.url;
-        btn.dataset.type = 'm3u8';
-        btn.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', channel.url);
-            e.dataTransfer.setData('text/type', 'm3u8');
-        });
-        btn.addEventListener('click', () => {
-            const playerBoxes = playerContainer.querySelectorAll('.player-box');
-            if (playerBoxes.length > 0) {
-                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                loadPlayer(targetBox, channel.url, 'm3u8');
-                clickIndex++;
-            }
-        });
-        baseballChannelList.appendChild(btn);
-    });
-
-    function renderSidebarFavorites() {
-        favoriteChannelList.innerHTML = '';
-        favorites.forEach(favorite => {
-            const btn = document.createElement('div');
-            btn.className = 'favorite-btn-channel';
-            btn.draggable = true;
-            btn.textContent = favorite.name;
-            const transformedUrl = transformUrl(favorite.url);
-            btn.dataset.url = transformedUrl;
-            btn.dataset.type = (transformedUrl && (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8'))) ? 'm3u8' : 'iframe';
-            btn.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', transformedUrl);
-                e.dataTransfer.setData('text/type', btn.dataset.type);
-            });
-            btn.addEventListener('click', () => {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0 && transformedUrl) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
-                    loadPlayer(targetBox, transformedUrl, type);
-                    clickIndex++;
-                }
-            });
-            favoriteChannelList.appendChild(btn);
-        });
-    }
-
-    function renderFavorites() {
-        favoriteList.innerHTML = '';
-        favorites.forEach((favorite, index) => {
-            const li = document.createElement('li');
-            li.style.display = 'flex';
-            li.style.justifyContent = 'space-between';
-            li.style.alignItems = 'center';
-            li.style.padding = '5px 0';
-            li.style.borderBottom = '1px solid #eee';
-
-            const contentContainer = document.createElement('div');
-            contentContainer.style.flexGrow = '1';
-            contentContainer.style.marginRight = '10px';
-            contentContainer.style.cursor = 'pointer';
-
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = favorite.name;
-            nameSpan.style.fontWeight = '500';
-            nameSpan.style.display = 'block';
-
-            const urlSpan = document.createElement('span');
-            urlSpan.textContent = favorite.url;
-            urlSpan.style.fontSize = '0.8em';
-            urlSpan.style.color = '#555';
-            urlSpan.style.wordBreak = 'break-all';
-
-            contentContainer.appendChild(nameSpan);
-            contentContainer.appendChild(urlSpan);
-
-            contentContainer.addEventListener('click', () => {
-                const transformedUrl = transformUrl(favorite.url);
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0 && transformedUrl) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
-                    loadPlayer(targetBox, transformedUrl, type);
-                    clickIndex++;
-                    favoriteModal.style.display = 'none';
-                }
-            });
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '삭제';
-            deleteBtn.style.backgroundColor = '#dc3545';
-            deleteBtn.style.color = 'white';
-            deleteBtn.style.border = 'none';
-            deleteBtn.style.borderRadius = '4px';
-            deleteBtn.style.padding = '3px 8px';
-            deleteBtn.style.fontSize = '12px';
-            deleteBtn.style.cursor = 'pointer';
-            deleteBtn.style.flexShrink = '0';
-            deleteBtn.addEventListener('click', (event) => {
-                event.stopPropagation();
-                deleteFavorite(index);
-            });
-
-            li.appendChild(contentContainer);
-            li.appendChild(deleteBtn);
-            favoriteList.appendChild(li);
-        });
-    }
-
-    function addFavorite() {
-        const nameInput = document.getElementById('favorite-name-input');
-        const urlInput = document.getElementById('favorite-url-input');
-        const name = nameInput.value.trim();
-        const url = urlInput.value.trim();
-
-        if (name && url) {
-            if (!url.startsWith('http') && !url.includes('/') && !/^[0-9a-fA-F]{32}$/.test(url) && !url.includes('.m3u8')) {
-                alert('유효한 URL 형식이나 채널 ID를 입력해주세요.');
-                return;
-            }
-
-            if (favorites.some(fav => fav.url === url && fav.name === name)) {
-                alert('동일한 이름과 주소의 즐겨찾기가 이미 존재합니다.');
-                return;
-            }
-
-            favorites.push({ name, url });
-            localStorage.setItem('favorites', JSON.stringify(favorites));
-            renderFavorites();
-            renderSidebarFavorites();
-            nameInput.value = '';
-            urlInput.value = '';
-            favoriteModal.style.display = 'block';
-        } else {
-            alert('이름과 주소를 모두 입력해주세요.');
-        }
-    }
-
-    function deleteFavorite(index) {
-        if (confirm(`'${favorites[index].name}' 즐겨찾기를 삭제하시겠습니까?`)) {
-            favorites.splice(index, 1);
-            localStorage.setItem('favorites', JSON.stringify(favorites));
-            renderFavorites();
-            renderSidebarFavorites();
-            favoriteModal.style.display = 'block';
-        }
-    }
-
-    function showFavoriteModal() {
-        renderFavorites();
-        favoriteModal.style.display = 'block';
-    }
-
-    function toggleSidebar() {
-        sidebar.classList.toggle('collapsed');
-        adjustPlayerLayout();
-    }
-
-    function toggleSpotv() {
-        const spotvChannels = document.getElementById('spotv-channels');
-        const toggleHeader = document.querySelector('.toggle-header');
-        spotvChannels.classList.toggle('active');
-        toggleHeader.classList.toggle('collapsed');
-    }
-
-    function extractM3u8Url(data) {
-        const urlPattern = /(https?:\/\/[^\s]+\.m3u8[^\s]*)/i;
-        const match = data.match(urlPattern);
-        return match ? match[0] : null;
-    }
-
-    function setSplitScreen(count) {
-        playerCount = count;
-        clickIndex = 0;
-        adjustPlayerLayout();
-        const existingToggleBtn = document.getElementById('toggle-btn');
-        playerContainer.innerHTML = '';
-        playerContainer.appendChild(existingToggleBtn);
-        for (let i = 0; i < count; i++) {
-            const box = document.createElement('div');
-            box.className = 'player-box';
-            
-            box.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-            });
-            box.addEventListener('drop', createDropHandler(box));
-            
-            playerContainer.appendChild(box);
-        }
-    }
-
-    function adjustPlayerLayout() {
-        const isCollapsed = sidebar.classList.contains('collapsed');
-        playerContainer.style.padding = isCollapsed ? '0' : '10px';
-        playerContainer.style.gap = isCollapsed ? '0' : '0';
-        playerContainer.style.gridTemplateColumns = `repeat(${Math.min(playerCount, 2)}, 1fr)`;
-        playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(playerCount / 2)}, 1fr)`;
-        playerContainer.style.marginLeft = isCollapsed ? '0' : '250px';
-    }
-
-    function loadPlayer(box, url, type) {
-        while (box.firstChild) {
-            box.removeChild(box.firstChild);
-        }
-        const iframe = document.createElement('iframe');
-        if (type === 'm3u8' || url.includes('.m3u8')) {
-            iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
-        } else {
-            iframe.src = url;
-        }
-        box.appendChild(iframe);
-        
-        box.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-        });
-        box.addEventListener('drop', createDropHandler(box));
-        
-        box.className = 'player-box active';
-    }
-
-    function playCustomUrl() {
-        const customUrl = document.getElementById('custom-url-input').value.trim();
-        if (customUrl) {
-            const finalUrl = transformUrl(customUrl);
-            if (finalUrl) {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    const type = finalUrl.includes('chzzk-api-proxy') || finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
-                    loadPlayer(targetBox, finalUrl, type);
-                    clickIndex++;
-                }
-            } else {
-                alert('유효한 URL 또는 채널 ID를 입력해주세요.');
-            }
-        } else {
-            alert('URL 또는 채널 ID를 입력해주세요.');
-        }
-    }
-
-    window.onload = () => {
-        favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-        setSplitScreen(1);
-        renderSidebarFavorites();
-        renderLckChannels();
-        const urlParams = new URLSearchParams(window.location.search);
-        const m3u8Url = urlParams.get('url');
-        if (m3u8Url) {
-            const finalUrl = transformUrl(decodeURIComponent(m3u8Url));
-            if (finalUrl) {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
-                    loadPlayer(playerBoxes[0], finalUrl, type);
-                }
-            }
-        }
-    };
-</script>
+    </script>
 </body>
 </html>
