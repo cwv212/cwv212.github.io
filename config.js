@@ -1,0 +1,1 @@
+window.YOUTUBE_API_KEY = 'AIzaSyBZHDXpy3RJoubI58quqUnYuJi1ejCe72A';

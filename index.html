@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>롤캐 모바일용</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="main-container">
+        <div id="sidebar" class="collapsed"> <h3>LCK 채널</h3>
+            <div id="lck-channels"></div>
+            <h3>야구 채널</h3>
+            <div id="baseball-channels"></div>
+            <h3 class="toggle-header" id="spotv-toggle">스포티비 채널 <span id="spotv-arrow">▼</span></h3>
+            <div id="spotv-channels"></div>
+            <h3>TV 채널</h3>
+            <div id="tv-channels"></div>
+            <h3>즐찾 채널</h3>
+            <div id="sidebar-favorite-list"></div>
+            <h3>분할 화면 설정</h3>
+            <div id="split-screen-buttons">
+                <button class="channel-btn" data-split="1">1분할</button>
+                <button class="channel-btn" data-split="2">2분할</button>
+                <button class="channel-btn" data-split="3">3분할</button>
+                <button class="channel-btn" data-split="4">4분할</button>
+            </div>
+            <div id="custom-url-container">
+                <input type="text" id="custom-url-input" placeholder="URL 입력">
+                <button class="channel-btn" id="play-custom-url-btn">실행</button>
+            </div>
+            <button id="close-sidebar-btn">닫기</button>
+        </div>
+
+        <div id="player-container">
+            <div class="video-section" id="video-section">
+                </div>
+        </div>
+
+        <div class="right-container" id="right-container">
+            <div class="menu-section" id="menu-section">
+                <button id="hrm-btn" class="menu-button">흐름</button>
+                <button id="toggle-sidebar-btn" class="menu-button">슬라이드</button>
+                <button id="flow-btn" class="menu-button">flow</button>
+                <button id="favorite-btn" class="menu-button">즐찾</button>
+                <button id="refresh-btn" class="menu-button">F5</button>
+            </div>
+            <div class="chat-section" id="chat-section">
+                <iframe id="chat-iframe" src="" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div id="favorite-modal" class="modal">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <h3>즐겨찾기 목록</h3>
+            <input type="text" id="favorite-name-input" placeholder="이름 입력" class="favorite-input" style="flex: 1;" />
+            <div class="input-row">
+                <input type="text" id="favorite-url-input" placeholder="주소 입력" class="favorite-input" />
+            </div>
+            <button id="add-favorite-btn" class="menu-button">추가</button>
+        </div>
+        <ul id="favorite-list" style="list-style-type: none; padding: 0; width: 100%;"></ul>
+        <div class="button-container">
+            <button id="close-favorite-modal" class="menu-button" style="background-color: #dc3545; color: white;">닫기</button>
+        </div>
+    </div>
+
+    <script src="script.js" defer></script>
+</body>
+
+</html>

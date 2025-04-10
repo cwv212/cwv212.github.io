@@ -1,0 +1,389 @@
+/* 기본 스타일 */
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent scrollbars on body */
+    font-family: 'Roboto', sans-serif; /* Apply Roboto font */
+    font-size: 14px; /* Base font size */
+    background-color: #f4f4f4; /* Light background */
+}
+
+#main-container {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    /* Mobile first: Default is column layout managed by child element sizing */
+    flex-direction: column;
+}
+
+/* Sidebar Styles */
+#sidebar {
+    background: rgba(255, 255, 255, 0.98); /* Slightly more opaque */
+    z-index: 1000; /* Ensure sidebar is on top */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    transition: transform 0.3s ease-in-out;
+    position: fixed; /* Fixed position for mobile */
+    top: 0;
+    left: 0;
+    width: 100%; /* Full width on mobile */
+    max-height: 50vh; /* Limit height on mobile */
+    overflow-y: auto; /* Allow scrolling within sidebar */
+    transform: translateY(0); /* Default visible state (adjust JS if needed) */
+    box-sizing: border-box; /* Include padding in width/height */
+}
+
+#sidebar.collapsed {
+    transform: translateY(-100%); /* Slide up when collapsed */
+}
+
+#sidebar h3 {
+    margin-top: 15px;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+#sidebar h3:first-child {
+    margin-top: 0;
+}
+
+#close-sidebar-btn {
+    padding: 8px 15px;
+    margin-top: 15px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 100%;
+    text-align: center;
+    font-weight: 500;
+}
+#close-sidebar-btn:hover {
+    background: #c82333;
+}
+
+/* Channel Button Styles */
+#lck-channels, #baseball-channels, #spotv-channels, #tv-channels, #sidebar-favorite-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px; /* Slightly more gap */
+    margin-bottom: 10px; /* Spacing below channel groups */
+}
+
+.channel-btn {
+    padding: 6px 10px;
+    background: #e9ecef;
+    border-radius: 4px;
+    border: 1px solid #ced4da; /* Subtle border */
+    cursor: pointer;
+    font-size: 12px;
+    text-align: center;
+    transition: background 0.2s, border-color 0.2s;
+    color: #495057;
+    font-weight: 500;
+}
+
+.channel-btn:hover {
+    background: #dee2e6;
+    border-color: #adb5bd;
+}
+
+/* Spotv Toggle Styles */
+#spotv-channels {
+    display: none; /* Hidden by default */
+}
+#spotv-channels.active {
+    display: flex; /* Shown when active class is added */
+}
+.toggle-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.toggle-header span {
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+
+/* Split Button Styles */
+#split-screen-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+/* Custom URL Input Styles */
+#custom-url-container {
+    margin-top: 15px;
+    display: flex;
+    gap: 6px;
+}
+#custom-url-input {
+    flex-grow: 1; /* Take available space */
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+}
+#custom-url-container .channel-btn { /* Style the button next to input */
+    flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+/* Player and Right Container (Mobile Layout) */
+#player-container {
+    /* This container's height will be determined by video-section */
+    width: 100%;
+    padding-top: 50vh; /* Push content below the sidebar space */
+    /* Add transition if sidebar toggle should be smooth */
+    transition: padding-top 0.3s ease-in-out;
+}
+
+#sidebar.collapsed ~ #player-container {
+    padding-top: 0; /* No padding when sidebar is hidden */
+}
+
+
+#right-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 50vh; /* Occupy bottom half on mobile */
+    background-color: #fff; /* Background for chat/menu area */
+    border-top: 1px solid #ddd; /* Separator */
+}
+
+/* Menu Section */
+#menu-section {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center; /* Vertically center buttons */
+    padding: 5px 0; /* Reduced padding */
+    border-bottom: 1px solid #eee;
+    background-color: #f8f9fa; /* Light background for menu */
+    height: 40px; /* Fixed height */
+    box-sizing: border-box;
+}
+
+.menu-button {
+    padding: 5px 10px; /* Adjusted padding */
+    font-size: 13px; /* Consistent font size */
+    margin: 0 2px; /* Reduced margin */
+    background: #6c757d; /* Bootstrap secondary color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-weight: 500;
+}
+.menu-button:hover {
+    background: #5a6268;
+}
+
+/* Video and Chat Sections */
+#video-section {
+    width: 100%;
+    height: 50vh; /* Default height for mobile, matches player-container padding */
+    background-color: #000; /* Black background for video area */
+    position: fixed; /* Fix video to top below sidebar space */
+    top: 0;
+    left: 0;
+    padding-top: 50vh; /* Offset matches sidebar space */
+    box-sizing: border-box;
+    transition: padding-top 0.3s ease-in-out; /* Match player-container transition */
+}
+
+#sidebar.collapsed ~ #player-container #video-section {
+     padding-top: 0; /* No offset when sidebar hidden */
+}
+
+
+#chat-section {
+    width: 100%;
+    flex-grow: 1; /* Take remaining height in right-container */
+    overflow: hidden; /* Prevent iframe overflow */
+}
+
+#video-section iframe,
+#chat-section iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block; /* Remove potential bottom space */
+}
+
+/* Multiview Container Styles */
+.multiview-container {
+    display: grid;
+    gap: 1px; /* Thin gap between videos */
+    width: 100%;
+    height: 100%;
+    background-color: #333; /* Background for gaps */
+}
+
+.multiview-item {
+    position: relative; /* For potential overlays later */
+    width: 100%;
+    height: 100%;
+    background-color: #000; /* Background for each item */
+     border: 1px solid #444; /* Optional border for each item */
+     box-sizing: border-box;
+}
+/* Drag hover effect */
+.multiview-item[style*="border: 2px dashed"] {
+     border-color: #007bff !important; /* Use important to override other borders if needed */
+}
+
+
+/* Favorite Modal Styles */
+#favorite-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 25px; /* More padding */
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1100; /* Higher than sidebar */
+    width: 90%; /* Wider on mobile */
+    max-width: 450px; /* Max width */
+    display: none; /* Hidden by default - controlled by JS */
+    box-sizing: border-box;
+}
+
+#favorite-modal h3 {
+     margin-top: 0;
+     margin-bottom: 15px;
+     text-align: center;
+     color: #333;
+     border-bottom: 1px solid #eee;
+     padding-bottom: 10px;
+}
+
+#favorite-modal .input-row {
+     margin-bottom: 10px; /* Space below URL input */
+}
+
+#favorite-modal .favorite-input {
+    width: 100%;
+    padding: 10px; /* Larger padding */
+    margin-bottom: 10px; /* Space between inputs */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+#favorite-modal #add-favorite-btn {
+     width: 100%;
+     padding: 10px;
+     margin-top: 5px; /* Space above button */
+     background-color: #007bff; /* Blue add button */
+}
+#favorite-modal #add-favorite-btn:hover {
+     background-color: #0056b3;
+}
+
+
+#favorite-modal ul {
+    margin-top: 20px; /* Space above list */
+    margin-bottom: 15px;
+    padding: 0;
+    max-height: 250px; /* Increased max height */
+    overflow-y: auto; /* Scroll if list is long */
+    border-top: 1px solid #eee; /* Separator line */
+}
+
+#favorite-modal li {
+     border-bottom: 1px solid #eee; /* Separator for items */
+     padding: 10px 5px; /* Padding for items */
+}
+#favorite-modal li:last-child {
+     border-bottom: none; /* No border for last item */
+}
+
+#favorite-modal .button-container {
+    display: flex;
+    justify-content: flex-end; /* Align close button to the right */
+    margin-top: 15px;
+}
+
+#favorite-modal #close-favorite-modal {
+    padding: 8px 20px; /* Adjust padding */
+}
+
+
+/* PC Layout (e.g., min-width: 768px or 1080px) */
+@media (min-width: 1080px) {
+    #main-container {
+        flex-direction: row; /* Side-by-side layout on PC */
+    }
+
+    #sidebar {
+        position: fixed; /* Fixed sidebar */
+        width: 240px; /* Fixed width */
+        height: 100%;
+        max-height: 100%; /* Full height */
+        transform: translateX(0); /* Default visible */
+        padding-bottom: 30px; /* Ensure scroll space */
+    }
+
+    #sidebar.collapsed {
+        transform: translateX(-100%); /* Slide left when collapsed */
+    }
+
+    /* Adjust main content area based on sidebar state */
+    #player-container {
+        width: calc(100% - 240px - 320px); /* Player takes space between sidebar and chat */
+        height: 100vh;
+        margin-left: 240px; /* Space for the sidebar */
+        margin-top: 0;
+        padding-top: 0; /* Remove mobile padding */
+        position: relative; /* Needed for child positioning? */
+        transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out; /* Smooth transition */
+    }
+
+    #sidebar.collapsed ~ #player-container {
+        width: calc(100% - 320px); /* Wider player when sidebar collapsed */
+        margin-left: 0;
+    }
+
+     /* Adjust video section for PC */
+     #video-section {
+        position: absolute; /* Position within player-container */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%; /* Full height of player-container */
+        padding-top: 0; /* Remove mobile padding */
+    }
+
+    #right-container {
+        position: fixed; /* Fixed chat/menu */
+        right: 0;
+        top: 0;
+        width: 320px; /* Fixed width chat */
+        height: 100vh;
+        border-top: none; /* Remove mobile top border */
+        border-left: 1px solid #ddd; /* Add left border separator */
+    }
+
+    #menu-section {
+         height: 45px; /* Slightly taller menu on PC */
+    }
+
+    #chat-section {
+        height: calc(100% - 45px); /* Full remaining height */
+    }
+}
