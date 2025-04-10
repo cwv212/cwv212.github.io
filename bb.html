@@ -798,8 +798,8 @@
                 const response = await fetch(testUrl, { method: 'HEAD' });
                 if (!response.ok) throw new Error('확장 프로그램 응답 없음');
             } catch (e) {
-                console.warn('HLS 플레이어 확장 프로그램이 설치되지 않았거나 응답하지 않습니다:', e);
-                alert('HLS 플레이어 확장 프로그램이 설치되지 않았습니다. 설치를 확인해주세요.');
+                console.warn('파폭용 HLS 플레이어가 설치되지 않았거나 응답하지 않습니다:', e);
+                alert('파폭용 HLS 플레이어가 설치되지 않았습니다. 설치를 확인해주세요.');
             }
 
             favorites = JSON.parse(localStorage.getItem('favorites')) || [];
