@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>m3u8 플레이어 (Firefox)</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <script src="config.js"></script> <!-- Actions에서 생성된 config.js 로드 -->
     <style>
         * {
             box-sizing: border-box;
@@ -355,6 +354,7 @@
         const spotvBaseUrl = 'https://ch${channel}-nlivecdn.spotvnow.co.kr/ch${channel}/decr/medialist_14173921312004482655_hls.m3u8';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
         const channelId = 'UCw1DsweY9b2AKGjV4kGJP1A';
+        const workersUrl = 'https://playground-worker-empty-bread-9ff1.hlsp.workers.dev'; // 실제 Workers URL로 교체
 
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
             name: `야${i + 1}`,
@@ -397,40 +397,13 @@
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
         async function getYouTubeLiveOrUpcoming() {
-            const youtubeApiKey = window.YOUTUBE_API_KEY || '';
-            if (!youtubeApiKey) {
-                console.warn('YouTube API 키가 설정되지 않았습니다.');
-                return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
-            }
-
             try {
-                // 1. 현재 라이브 스트리밍 확인
-                let response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=live&key=${youtubeApiKey}`
-                );
-                let data = await response.json();
-                console.log('현재 라이브 데이터:', data);
-                if (data.items && data.items.length > 0) {
-                    const videoId = data.items[0].id.videoId;
-                    return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-                }
-
-                // 2. 현재 라이브가 없으면 오늘 예정된 라이브 확인
-                const today = new Date().toISOString().split('T')[0];
-                response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=upcoming&order=date&publishedAfter=${today}T00:00:00Z&maxResults=1&key=${youtubeApiKey}`
-                );
-                data = await response.json();
-                console.log('오늘 예정된 라이브 데이터:', data);
-                if (data.items && data.items.length > 0) {
-                    const videoId = data.items[0].id.videoId;
-                    return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-                }
-
-                // 3. 둘 다 없으면 기본 채널 URL 반환
-                return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
+                const response = await fetch(`${workersUrl}/youtube-live?channelId=${channelId}`);
+                const data = await response.json();
+                console.log('Workers 응답:', data);
+                return data && data.url ? data.url : `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
             } catch (error) {
-                console.error('YouTube API 오류:', error);
+                console.error('Workers 호출 오류:', error);
                 return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
             }
         }
@@ -757,7 +730,7 @@
                 const [platform, channelId] = url.split('/');
                 switch (platform) {
                     case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
-                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr`;
+                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
                     case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
                     case 'kick': return `https://player.kick.com/${channelId}`;
                     case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
@@ -765,11 +738,11 @@
                 }
             }
             if (url.startsWith('https://twitch.tv/')) {
-                return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr`;
+                return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
             }
             if (!url.startsWith('http')) { return null; }
             if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr`;
+            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
             if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/').pop()}/embed`;
@@ -837,7 +810,7 @@
             renderChzzkChannels();
             renderSpotvChannels();
             renderBaseballChannels();
-            await renderLckChannels(); // 비동기 처리 보장
+            await renderLckChannels();
 
             const urlParams = new URLSearchParams(window.location.search);
             const m3u8Url = urlParams.get('url');
