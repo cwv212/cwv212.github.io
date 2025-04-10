@@ -431,7 +431,7 @@ const tvChannels = [
                     default: return null;
                 }
             }
-            if (url.startsWith('https://twitch.tv/')) {
+             if (url.startsWith('https://twitch.tv/') || url.startsWith('https://www.twitch.tv/')) {
                 return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
             }
             if (!url.startsWith('http')) { return null; }
