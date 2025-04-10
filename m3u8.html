@@ -381,37 +381,40 @@
 
     const channelId = 'UCw1DsweY9b2AKGjV4kGJP1A';
 
-    async function getLiveStreamUrl() {
-        const youtubeApiKey = window.YOUTUBE_API_KEY || '';
-        if (!youtubeApiKey) {
-            console.warn('YouTube API 키가 설정되지 않았습니다.');
-            return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
-        }
-        try {
-            let response = await fetch(
-                `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=live&key=${youtubeApiKey}`
-            );
-            let data = await response.json();
-            if (data.items && data.items.length > 0) {
-                const videoId = data.items[0].id.videoId;
-                return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            }
-
-            response = await fetch(
-                `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=upcoming&order=date&maxResults=1&key=${youtubeApiKey}`
-            );
-            data = await response.json();
-            if (data.items && data.items.length > 0) {
-                const videoId = data.items[0].id.videoId;
-                return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            }
-
-            return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
-        } catch (error) {
-            console.error('YouTube API 오류:', error);
-            return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
-        }
+async function getLiveStreamUrl() {
+    const youtubeApiKey = window.YOUTUBE_API_KEY || '';
+    if (!youtubeApiKey) {
+        console.warn('YouTube API 키가 설정되지 않았습니다.');
+        return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
     }
+    try {
+        // 현재 라이브 확인
+        let response = await fetch(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=live&key=${youtubeApiKey}`
+        );
+        let data = await response.json();
+        if (data.items && data.items.length > 0) {
+            const videoId = data.items[0].id.videoId;
+            return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+        }
+
+        // 현재 날짜에 가까운 예정된 라이브 확인
+        const today = new Date().toISOString().split('T')[0]; // 오늘 날짜 (예: 2025-04-09)
+        response = await fetch(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=upcoming&order=date&publishedAfter=${today}T00:00:00Z&maxResults=1&key=${youtubeApiKey}`
+        );
+        data = await response.json();
+        if (data.items && data.items.length > 0) {
+            const videoId = data.items[0].id.videoId;
+            return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+        }
+
+        return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
+    } catch (error) {
+        console.error('YouTube API 오류:', error);
+        return `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
+    }
+}
 
     async function renderLckChannels() {
         const liveUrl = await getLiveStreamUrl();
