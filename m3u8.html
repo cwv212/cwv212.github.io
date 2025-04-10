@@ -318,6 +318,8 @@
         <div id="spotv-channels"></div>
         <h4>야구 채널</h4>
         <div id="baseball-channels"></div>
+        <!-- <h4>TV 채널</h4> -->
+        <!-- <div id="tv-channels"></div> -->
         <h3>분할 화면 설정</h3>
         <div id="split-screen-buttons">
             <button onclick="setSplitScreen(1)">1분할</button>
@@ -384,12 +386,14 @@
             { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181' }
         ];
 
-        const tvChannels = [
-            { name: 'K1', url: 'https://stream.ogtv3.com/live/live1004.m3u8' },
-            { name: 'K2', url: 'https://stream.ogtv3.com/live/live1005.m3u8' },
-            { name: 'M', url: 'https://stream.ogtv3.com/live/live1003.m3u8' },
-            { name: 'S', url: 'https://stream.ogtv3.com/live/live1006.m3u8' }
-        ];
+/*
+const tvChannels = [
+    { name: 'K1', url: 'https://stream.ogtv3.com/live/live1004.m3u8' },
+    { name: 'K2', url: 'https://stream.ogtv3.com/live/live1005.m3u8' },
+    { name: 'M', url: 'https://stream.ogtv3.com/live/live1003.m3u8' },
+    { name: 'S', url: 'https://stream.ogtv3.com/live/live1006.m3u8' }
+];
+*/
 
         const baseballChannelList = document.getElementById('baseball-channels');
         const lckChannelList = document.getElementById('lck-channels');
@@ -568,28 +572,30 @@
             baseballChannelList.appendChild(btn);
         });
 
-        // TV 채널 목록 생성
-        tvChannels.forEach(channel => {
-            const btn = document.createElement('div');
-            btn.className = 'tv-btn';
-            btn.draggable = true;
-            btn.textContent = channel.name;
-            btn.dataset.url = channel.url;
-            btn.dataset.type = 'm3u8';
-            btn.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', channel.url);
-                e.dataTransfer.setData('text/type', 'm3u8');
-            });
-            btn.addEventListener('click', () => {
-                const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                if (playerBoxes.length > 0) {
-                    const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                    loadPlayer(targetBox, channel.url, 'm3u8');
-                    clickIndex++;
-                }
-            });
-            tvChannelList.appendChild(btn);
-        });
+/*
+// TV 채널 목록 생성
+tvChannels.forEach(channel => {
+    const btn = document.createElement('div');
+    btn.className = 'tv-btn';
+    btn.draggable = true;
+    btn.textContent = channel.name;
+    btn.dataset.url = channel.url;
+    btn.dataset.type = 'm3u8';
+    btn.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', channel.url);
+        e.dataTransfer.setData('text/type', 'm3u8');
+    });
+    btn.addEventListener('click', () => {
+        const playerBoxes = playerContainer.querySelectorAll('.player-box');
+        if (playerBoxes.length > 0) {
+            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+            loadPlayer(targetBox, channel.url, 'm3u8');
+            clickIndex++;
+        }
+    });
+    tvChannelList.appendChild(btn);
+});
+*/
 
 // 즐겨찾기 채널 렌더링
 function renderSidebarFavorites() {
