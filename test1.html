@@ -5,303 +5,53 @@
     <title>m3u8 플레이어 (Firefox)</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-            background: #f4f7fa;
-            color: #333;
-        }
-        #sidebar {
-            width: 220px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            transition: transform 0.3s ease;
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            z-index: 10;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        }
-        #sidebar.collapsed {
-            transform: translateX(-100%);
-        }
-        #toggle-btn {
-            position: fixed;
-            top: 10px;
-            left: 205px;
-            width: 20px;
-            height: 20px;
-            background: #007bff;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 14px;
-            color: white;
-            transition: left 0.3s ease, background 0.3s;
-            padding: 0;
-            z-index: 11;
-            line-height: 20px;
-            text-align: center;
-        }
-        #sidebar.collapsed + #player-container #toggle-btn {
-            left: 10px;
-        }
-        #toggle-btn:hover {
-            background: #0056b3;
-        }
-        #baseball-channels, #chzzk-channels, #spotv-channels, #tv-channels, #favorite-channels {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        .baseball-btn, .chzzk-btn, .tv-btn, .favorite-btn-channel {
-            flex: 1;
-            padding: 6px 0;
-            background: #e9ecef;
-            border-radius: 4px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            font-size: 12px;
-            text-align: center;
-            min-width: 33px;
-            max-width: 33px;
-        }
-        .baseball-btn:hover, .chzzk-btn:hover, .tv-btn:hover, .favorite-btn-channel:hover {
-            background: #dee2e6;
-        }
-        #lck-channels {
-            display: flex;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        .lck-btn {
-            flex: 1;
-            padding: 10px;
-            background: #e9ecef;
-            border-radius: 8px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            text-align: center;
-            position: relative;
-        }
-        .lck-btn:hover {
-            background: #dee2e6;
-        }
-        .lck-btn[title]:hover::after {
-            content: attr(title);
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 20;
-        }
-        .small-channel-btn {
-            display: inline-block;
-            padding: 6px 10px;
-            background: #e9ecef;
-            border-radius: 4px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            font-size: 12px;
-            text-align: center;
-            min-width: 33px;
-        }
-        .small-channel-btn:hover {
-            background: #dee2e6;
-        }
-        #player-container {
-            flex-grow: 1;
-            display: grid;
-            gap: 0;
-            padding: 0;
-            height: 100vh;
-            width: 100%;
-            transition: all 0.3s ease;
-            position: relative;
-            background: #ffffff;
-            border: none;
-        }
-        .player-box {
-            background: #f0f2f5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border: none;
-            position: relative;
-        }
-        .player-box.active {
-            border: none;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            z-index: 1;
-        }
-        button {
-            padding: 8px 15px;
-            margin: 5px 5px 5px 0;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.2s;
-            width: 90px;
-        }
-        button:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
-        }
-        h3, h4 {
-            font-size: 16px;
-            margin: 10px 0 5px;
-            color: #495057;
-        }
-        a {
-            display: block;
-            margin: 15px 0;
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        a:hover {
-            text-decoration: underline;
-            color: #0056b3;
-        }
-        #custom-url-container {
-            margin: 10px 0;
-        }
-        #custom-url-input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        #split-screen-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px;
-        }
-        .toggle-header {
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .toggle-header::after {
-            content: '▼';
-            font-size: 12px;
-        }
-        .toggle-header.collapsed::after {
-            content: '▶';
-        }
-        #spotv-channels {
-            display: none;
-        }
-        #spotv-channels.active {
-            display: flex;
-        }
-        #favorite-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1100;
-            width: 90%;
-            max-width: 450px;
-            display: none;
-            box-sizing: border-box;
-        }
-        #favorite-modal h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            text-align: center;
-            color: #333;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-        #favorite-modal .input-row {
-            margin-bottom: 10px;
-        }
-        #favorite-modal .favorite-input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        #favorite-modal #add-favorite-btn {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            background-color: #007bff;
-        }
-        #favorite-modal #add-favorite-btn:hover {
-            background-color: #0056b3;
-        }
-        #favorite-modal ul {
-            margin-top: 20px;
-            margin-bottom: 15px;
-            padding: 0;
-            max-height: 250px;
-            overflow-y: auto;
-            border-top: 1px solid #eee;
-        }
-        #favorite-modal li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 5px;
-            border-bottom: 1px solid #eee;
-        }
-        #favorite-modal li:last-child {
-            border-bottom: none;
-        }
-        #favorite-modal .button-container {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 15px;
-        }
-        #favorite-modal #close-favorite-modal {
-            padding: 8px 20px;
-        }
-        .favorite-btn {
-            background: #007bff;
-        }
-        .favorite-btn:hover {
-            background: #0056b3;
-        }
+        /* 기존 CSS는 변경 없음, 그대로 유지 */
+        * { box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; background: #f4f7fa; color: #333; }
+        #sidebar { width: 220px; padding: 15px; background: rgba(255, 255, 255, 0.95); transition: transform 0.3s ease; position: absolute; top: 0; left: 0; height: 100%; z-index: 10; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); }
+        #sidebar.collapsed { transform: translateX(-100%); }
+        #toggle-btn { position: fixed; top: 10px; left: 205px; width: 20px; height: 20px; background: #007bff; border: none; border-radius: 50%; cursor: pointer; font-size: 14px; color: white; transition: left 0.3s ease, background 0.3s; padding: 0; z-index: 11; line-height: 20px; text-align: center; }
+        #sidebar.collapsed + #player-container #toggle-btn { left: 10px; }
+        #toggle-btn:hover { background: #0056b3; }
+        #baseball-channels, #chzzk-channels, #spotv-channels, #favorite-channels { display: flex; flex-wrap: wrap; gap: 5px; margin: 5px 0; }
+        .baseball-btn, .chzzk-btn, .favorite-btn-channel { flex: 1; padding: 6px 0; background: #e9ecef; border-radius: 4px; cursor: move; user-select: none; transition: background 0.2s; border: none; font-size: 12px; text-align: center; min-width: 33px; max-width: 33px; }
+        .baseball-btn:hover, .chzzk-btn:hover, .favorite-btn-channel:hover { background: #dee2e6; }
+        #lck-channels { display: flex; gap: 5px; margin: 5px 0; }
+        .lck-btn { flex: 1; padding: 10px; background: #e9ecef; border-radius: 8px; cursor: move; user-select: none; transition: background 0.2s; border: none; text-align: center; position: relative; }
+        .lck-btn:hover { background: #dee2e6; }
+        .lck-btn[title]:hover::after { content: attr(title); position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; white-space: nowrap; z-index: 20; }
+        .small-channel-btn { display: inline-block; padding: 6px 10px; background: #e9ecef; border-radius: 4px; cursor: move; user-select: none; transition: background 0.2s; border: none; font-size: 12px; text-align: center; min-width: 33px; }
+        .small-channel-btn:hover { background: #dee2e6; }
+        #player-container { flex-grow: 1; display: grid; gap: 0; padding: 0; height: 100vh; width: 100%; transition: all 0.3s ease; position: relative; background: #ffffff; border: none; }
+        .player-box { background: #f0f2f5; display: flex; align-items: center; justify-content: center; overflow: hidden; border: none; position: relative; }
+        .player-box.active { border: none; }
+        iframe { width: 100%; height: 100%; border: none; z-index: 1; }
+        button { padding: 8px 15px; margin: 5px 5px 5px 0; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; transition: background 0.3s, transform 0.2s; width: 90px; }
+        button:hover { background: #0056b3; transform: translateY(-2px); }
+        h3, h4 { font-size: 16px; margin: 10px 0 5px; color: #495057; }
+        a { display: block; margin: 15px 0; color: #007bff; text-decoration: none; font-weight: 500; }
+        a:hover { text-decoration: underline; color: #0056b3; }
+        #custom-url-container { margin: 10px 0; }
+        #custom-url-input { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        #split-screen-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .toggle-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .toggle-header::after { content: '▼'; font-size: 12px; }
+        .toggle-header.collapsed::after { content: '▶'; }
+        #spotv-channels { display: none; }
+        #spotv-channels.active { display: flex; }
+        #favorite-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); z-index: 1100; width: 90%; max-width: 450px; display: none; box-sizing: border-box; }
+        #favorite-modal h3 { margin-top: 0; margin-bottom: 15px; text-align: center; color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        #favorite-modal .input-row { margin-bottom: 10px; }
+        #favorite-modal .favorite-input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        #favorite-modal #add-favorite-btn { width: 100%; padding: 10px; margin-top: 5px; background-color: #007bff; }
+        #favorite-modal #add-favorite-btn:hover { background-color: #0056b3; }
+        #favorite-modal ul { margin-top: 20px; margin-bottom: 15px; padding: 0; max-height: 250px; overflow-y: auto; border-top: 1px solid #eee; }
+        #favorite-modal li { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid #eee; }
+        #favorite-modal li:last-child { border-bottom: none; }
+        #favorite-modal .button-container { display: flex; justify-content: flex-end; margin-top: 15px; }
+        #favorite-modal #close-favorite-modal { padding: 8px 20px; }
+        .favorite-btn { background: #007bff; }
+        .favorite-btn:hover { background: #0056b3; }
     </style>
 </head>
 <body>
@@ -349,20 +99,23 @@
     </div>
 
     <script>
+        // 기본 설정
         const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
-        const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.s.dev/m3u8-redirect/';
-        const workersUrl = 'https://mobile.hlsp.workers.dev/'; // Replace with your actual Cloudflare Worker URL
+        const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
+        const workersUrl = 'https://mobile.hlsp.workers.dev'; // Worker URL 고정
 
+        // YouTube 채널 설정
         const CHANNELS = {
             youtube: {
                 id: 'UCw1DsweY9b2AKGjV4kGJP1A',
                 name: 'K',
                 type: 'iframe',
                 tooltip: 'youtube',
-                url: '' // Will be set dynamically
+                url: '' // 동적으로 설정됨
             }
         };
 
+        // 채널 데이터
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
             name: `야${i + 1}`,
             url: `${workersUrl}/stream/${i + 1}`
@@ -390,6 +143,7 @@
             { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181' }
         ];
 
+        // DOM 요소 참조
         const baseballChannelList = document.getElementById('baseball-channels');
         const lckChannelList = document.getElementById('lck-channels');
         const chzzkChannelList = document.getElementById('chzzk-channels');
@@ -403,20 +157,24 @@
         let clickIndex = 0;
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
+        // YouTube 라이브 URL 가져오기
         async function getYouTubeLiveOrUpcoming() {
             try {
                 const response = await fetch(`${workersUrl}/youtube-live/${CHANNELS.youtube.id}`);
                 const data = await response.json();
-                return data && data.url ? data.url : `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
+                console.log('Worker response:', data); // Worker에서 받은 응답 확인
+                return data.url || 'https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}';
             } catch (error) {
                 console.error('YouTube live fetch error:', error);
-                return `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
+                return 'https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}';
             }
         }
 
+        // LCK 채널 렌더링
         async function renderLckChannels() {
             try {
                 const youtubeUrl = await getYouTubeLiveOrUpcoming();
+                console.log('YouTube URL to load:', youtubeUrl); // 로드할 URL 확인
                 lckChannels[2].url = youtubeUrl;
 
                 lckChannelList.innerHTML = '';
@@ -447,6 +205,7 @@
             }
         }
 
+        // 치지직 채널 렌더링
         function renderChzzkChannels() {
             chzzkChannelList.innerHTML = '';
             chzzkChannels.forEach(channel => {
@@ -473,6 +232,7 @@
             });
         }
 
+        // 스포티비 채널 렌더링
         function renderSpotvChannels() {
             spotvChannelList.innerHTML = '';
             spotvChannels.forEach(channel => {
@@ -498,6 +258,7 @@
             });
         }
 
+        // 야구 채널 렌더링
         function renderBaseballChannels() {
             baseballChannelList.innerHTML = '';
             baseballChannels.forEach(channel => {
@@ -523,6 +284,7 @@
             });
         }
 
+        // 즐겨찾기 사이드바 렌더링
         function renderSidebarFavorites() {
             favoriteChannelList.innerHTML = '';
             favorites.forEach(favorite => {
@@ -550,6 +312,7 @@
             });
         }
 
+        // 즐겨찾기 모달 렌더링
         function renderFavorites() {
             favoriteList.innerHTML = '';
             favorites.forEach((favorite, index) => {
@@ -612,6 +375,7 @@
             });
         }
 
+        // 즐겨찾기 추가
         function addFavorite() {
             const nameInput = document.getElementById('favorite-name-input');
             const urlInput = document.getElementById('favorite-url-input');
@@ -641,6 +405,7 @@
             }
         }
 
+        // 즐겨찾기 삭제
         function deleteFavorite(index) {
             if (confirm(`'${favorites[index].name}' 즐겨찾기를 삭제하시겠습니까?`)) {
                 favorites.splice(index, 1);
@@ -651,16 +416,19 @@
             }
         }
 
+        // 즐겨찾기 모달 표시
         function showFavoriteModal() {
             renderFavorites();
             favoriteModal.style.display = 'block';
         }
 
+        // 사이드바 토글
         function toggleSidebar() {
             sidebar.classList.toggle('collapsed');
             adjustPlayerLayout();
         }
 
+        // 스포티비 채널 토글
         function toggleSpotv() {
             const spotvChannels = document.getElementById('spotv-channels');
             const toggleHeader = document.querySelector('.toggle-header');
@@ -668,12 +436,14 @@
             toggleHeader.classList.toggle('collapsed');
         }
 
+        // m3u8 URL 추출
         function extractM3u8Url(data) {
             const urlPattern = /(https?:\/\/[^\s]+\.m3u8[^\s]*)/i;
             const match = data.match(urlPattern);
             return match ? match[0] : null;
         }
 
+        // 분할 화면 설정
         function setSplitScreen(count) {
             playerCount = count;
             clickIndex = 0;
@@ -693,6 +463,7 @@
             }
         }
 
+        // 플레이어 레이아웃 조정
         function adjustPlayerLayout() {
             const isCollapsed = sidebar.classList.contains('collapsed');
             playerContainer.style.padding = isCollapsed ? '0' : '10px';
@@ -702,11 +473,13 @@
             playerContainer.style.marginLeft = isCollapsed ? '0' : '250px';
         }
 
+        // 플레이어 로드
         function loadPlayer(box, url, type) {
             while (box.firstChild) {
                 box.removeChild(box.firstChild);
             }
             const iframe = document.createElement('iframe');
+            console.log('Loading iframe with URL:', url); // iframe에 로드되는 URL 확인
             if (type === 'm3u8' || url.includes('.m3u8')) {
                 iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
             } else {
@@ -721,6 +494,7 @@
             box.className = 'player-box active';
         }
 
+        // URL 변환
         function transformUrl(url) {
             if (!url) return null;
             const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
@@ -744,14 +518,14 @@
             }
             if (url.startsWith('https://twitch.tv/') || url.startsWith('https://www.twitch.tv/')) {
                 const channelId = url.split('/').pop();
-                return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
+                return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
             }
             if (!url.startsWith('http')) { return null; }
             if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
             if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/').pop()}/embed`;
+            if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
             if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
                 const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
                 if (match) return `https://www.youtube.com/embed/${match[1]}`;
@@ -763,6 +537,7 @@
             return null;
         }
 
+        // 드롭 핸들러 생성
         function createDropHandler(box) {
             return (e) => {
                 e.preventDefault();
@@ -789,6 +564,7 @@
             };
         }
 
+        // 커스텀 URL 재생
         function playCustomUrl() {
             const customUrl = document.getElementById('custom-url-input').value.trim();
             if (customUrl) {
@@ -809,6 +585,7 @@
             }
         }
 
+        // 초기화 함수
         async function initialize() {
             favorites = JSON.parse(localStorage.getItem('favorites')) || [];
             setSplitScreen(1);
@@ -832,6 +609,7 @@
             }
         }
 
+        // 페이지 로드 시 초기화
         window.onload = () => {
             initialize();
         };
