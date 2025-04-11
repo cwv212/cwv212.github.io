@@ -356,26 +356,125 @@ function updateModeStyles() {
             return null;
         }
 
-        function transformUrl(url) {
-            if (!url) return null;
-            console.log('Transforming URL:', url);
-            const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
-            if (chzzkChannelIdPattern.test(url)) {
-                return `${chzzkProxyBaseUrl}${url}`;
-            }
-            if (url.includes('.m3u8')) {
-                return url;
-            }
-            if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
-                const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
-                if (match) return `https://www.youtube.com/embed/${match[1]}`;
-            }
-            if (url.startsWith('https://www.youtube.com/embed/')) {
-                return url;
-            }
-            console.warn('Invalid YouTube URL:', url);
-            return null;
+function transformUrl(url) {
+    if (!url) return null;
+    console.log('Transforming URL:', url);
+
+    // 치지직 채널 ID 패턴 (32자리 16진수)
+    const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
+    if (chzzkChannelIdPattern.test(url)) {
+        return `${chzzkProxyBaseUrl}${url}`;
+    }
+
+    // m3u8 URL은 그대로 반환
+    if (url.includes('.m3u8')) {
+        return url;
+    }
+
+    // 짧은 형식 URL 처리 (예: youtube/채널ID, chzzk/채널ID)
+    const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
+    if (isShortForm) {
+        const [platform, channelId] = url.split('/');
+        switch (platform) {
+            case 'youtube':
+                return `https://www.youtube.com/embed/${channelId}`;
+            case 'twitch':
+                return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
+            case 'chzzk':
+                return `https://chzzk.naver.com/live/${channelId}`;
+            case 'kick':
+                return `https://player.kick.com/${channelId}`;
+            case 'afreeca':
+                return `https://play.sooplive.co.kr/${channelId}/embed`;
+            default:
+                return null;
         }
+    }
+
+    // 트위치 풀 URL
+    if (url.startsWith('https://twitch.tv/') || url.startsWith('https://www.twitch.tv/')) {
+        const channelId = url.split('/').pop();
+        return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
+    }
+
+    // 프로토콜 없는 URL은 유효하지 않음
+    if (!url.startsWith('http')) {
+        return null;
+    }
+
+    // lolcast.kr 기반 URL 처리
+    if (url.startsWith('https://lolcast.kr/#/player/youtube/')) {
+        return `https://www.youtube.com/embed/${url.split('/').pop()}`;
+    }
+    if (url.startsWith('https://lolcast.kr/#/player/twitch/')) {
+        return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
+    }
+    if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) {
+        return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
+    }
+    if (url.startsWith('https://lolcast.kr/#/player/kick/')) {
+        return `https://player.kick.com/${url.split('/').pop()}`;
+    }
+    if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) {
+        return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
+    }
+
+    // 유튜브 URL 처리
+    if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
+        const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+        if (match) return `https://www.youtube.com/embed/${match[1]}`;
+    }
+    if (url.match(/youtube\.com\/channel\/[^\/]+\/live/)) {
+        return url; // Worker에서 처리된 URL은 그대로 사용
+    }
+
+    // 치지직 풀 URL
+    if (url.startsWith('https://chzzk.naver.com/live/') || url.startsWith('https://chzzk.naver.com/')) {
+        return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
+    }
+
+    // 킥 풀 URL
+    if (url.startsWith('https://kick.com/')) {
+        return `https://player.kick.com/${url.split('/').pop()}`;
+    }
+
+    // 아프리카TV 풀 URL
+    if (url.startsWith('https://play.sooplive.co.kr/')) {
+        return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
+    }
+
+    // 그 외 HTTPS URL은 그대로 반환
+    if (url.startsWith('https://')) {
+        return url;
+    }
+
+    return null;
+}
+
+function playCustomUrl() {
+    const customUrl = document.getElementById('custom-url-input').value.trim();
+    if (customUrl) {
+        // 치지직 채널 ID인지 확인 (32자리 16진수)
+        const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
+        let finalUrl = customUrl;
+        if (chzzkChannelIdPattern.test(customUrl)) {
+            // 치지직 채널 ID면 프록시 URL로 변환
+            finalUrl = `${chzzkProxyBaseUrl}${customUrl}`;
+        }
+        // URL 변환
+        finalUrl = transformUrl(finalUrl);
+        if (finalUrl) {
+            const playerBoxes = playerContainer.querySelectorAll('.player-box');
+            if (playerBoxes.length > 0) {
+                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                loadPlayer(targetBox, finalUrl, finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe');
+                clickIndex++;
+            }
+        } else {
+            alert('유효한 m3u8 URL, 치지직 채널 ID, 또는 지원되는 플랫폼 URL을 입력해주세요.');
+        }
+    }
+}
 
         function renderChannelList(container, channels, className, options = {}) {
             const { type = 'm3u8', tooltipKey = 'tooltip', urlKey = 'url', idKey = 'id', nameKey = 'name' } = options;
@@ -547,30 +646,6 @@ function updateModeStyles() {
             };
         }
 
-function playCustomUrl() {
-    const customUrl = document.getElementById('custom-url-input').value.trim();
-    if (customUrl) {
-        // 치지직 채널 ID인지 확인 (32자리 16진수)
-        const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
-        let finalUrl = customUrl;
-        if (chzzkChannelIdPattern.test(customUrl)) {
-            // 채널 ID면 프록시 URL 붙이기
-            finalUrl = `${chzzkProxyBaseUrl}${customUrl}`;
-        }
-        // URL 변환
-        finalUrl = transformUrl(finalUrl);
-        if (finalUrl) {
-            const playerBoxes = playerContainer.querySelectorAll('.player-box');
-            if (playerBoxes.length > 0) {
-                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                loadPlayer(targetBox, finalUrl, finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe');
-                clickIndex++;
-            }
-        } else {
-            alert('유효한 m3u8 URL 또는 치지직 채널 ID를 입력해주세요.');
-        }
-    }
-}
 
         function showAuthModal() {
             authModal.style.display = 'block';
