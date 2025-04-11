@@ -415,14 +415,11 @@
         function getYouTubeLiveOrUpcoming() {
             const today = getKstDate();
             const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
-
-            if (savedUrls[today]) {
+            if (savedUrls[today] && savedUrls[today].url) {
                 console.log(`Loading saved YouTube URL for ${today}: ${savedUrls[today].url}`);
                 return savedUrls[today].url;
             }
-
-            // 저장된 URL이 없으면 기본 채널 URL 반환
-            return `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
+            return null; // 저장된 URL 없으면 null 반환
         }
 
         // 공통 채널 렌더링 함수
@@ -444,16 +441,20 @@
                 if (channel[tooltipKey]) btn.title = channel[tooltipKey];
 
                 btn.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', btn.dataset.url);
-                    e.dataTransfer.setData('text/type', btn.dataset.type);
+                    if (btn.dataset.url) {
+                        e.dataTransfer.setData('text/plain', btn.dataset.url);
+                        e.dataTransfer.setData('text/type', btn.dataset.type);
+                    }
                 });
 
                 btn.addEventListener('click', () => {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
-                        clickIndex++;
+                    if (btn.dataset.url) {
+                        const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                        if (playerBoxes.length > 0) {
+                            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                            loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
+                            clickIndex++;
+                        }
                     }
                 });
 
@@ -466,7 +467,7 @@
             try {
                 const youtubeUrl = getYouTubeLiveOrUpcoming();
                 console.log('YouTube URL to load:', youtubeUrl);
-                lckChannels[2].url = youtubeUrl;
+                lckChannels[2].url = youtubeUrl || ''; // URL 없으면 빈 문자열
                 lckChannels[2].name = CHANNELS.youtube.name; // 항상 K
                 renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
                     tooltipKey: 'tooltip',
@@ -514,16 +515,20 @@
                 btn.dataset.url = transformedUrl;
                 btn.dataset.type = (transformedUrl && (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8'))) ? 'm3u8' : 'iframe';
                 btn.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', transformedUrl);
-                    e.dataTransfer.setData('text/type', btn.dataset.type);
+                    if (transformedUrl) {
+                        e.dataTransfer.setData('text/plain', transformedUrl);
+                        e.dataTransfer.setData('text/type', btn.dataset.type);
+                    }
                 });
                 btn.addEventListener('click', () => {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0 && transformedUrl) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
-                        loadPlayer(targetBox, transformedUrl, type);
-                        clickIndex++;
+                    if (transformedUrl) {
+                        const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                        if (playerBoxes.length > 0) {
+                            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                            const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
+                            loadPlayer(targetBox, transformedUrl, type);
+                            clickIndex++;
+                        }
                     }
                 });
                 favoriteChannelList.appendChild(btn);
@@ -549,13 +554,15 @@
 
                 contentContainer.addEventListener('click', () => {
                     const transformedUrl = transformUrl(favorite.url);
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0 && transformedUrl) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
-                        loadPlayer(targetBox, transformedUrl, type);
-                        clickIndex++;
-                        favoriteModal.style.display = 'none';
+                    if (transformedUrl) {
+                        const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                        if (playerBoxes.length > 0) {
+                            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                            const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
+                            loadPlayer(targetBox, transformedUrl, type);
+                            clickIndex++;
+                            favoriteModal.style.display = 'none';
+                        }
                     }
                 });
 
