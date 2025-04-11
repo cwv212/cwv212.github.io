@@ -578,9 +578,11 @@
             });
         }
 
-        function toggleSpotvChannels() {
-            spotvToggle.classList.toggle('collapsed');
-            spotvChannelList.classList.toggle('active');
+        function toggleSpotv() {
+            const spotvChannels = document.getElementById('spotv-channels');
+            const toggleHeader = document.querySelector('.toggle-header');
+            spotvChannels.classList.toggle('active');
+            toggleHeader.classList.toggle('collapsed');
         }
 
         async function initialize() {
