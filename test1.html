@@ -114,6 +114,10 @@
             white-space: nowrap;
             z-index: 20;
         }
+        .lck-btn.disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .small-channel-btn {
             display: inline-block;
             padding: 6px 10px;
@@ -409,6 +413,7 @@
             const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
             const kstDate = new Date(utc + (kstOffset * 60 * 1000));
             return kstDate.toISOString().split('T')[0]; // YYYY-MM-DD
+            // 테스트용: return '2025-04-11';
         }
 
         // YouTube 라이브 URL 가져오기
@@ -416,10 +421,33 @@
             const today = getKstDate();
             const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
             if (savedUrls[today] && savedUrls[today].url) {
-                console.log(`Loading saved YouTube URL for ${today}: ${savedUrls[today].url}`);
-                return savedUrls[today].url;
+                const transformedUrl = transformUrl(savedUrls[today].url);
+                console.log(`Loading transformed YouTube URL for ${today}: ${transformedUrl}`);
+                return transformedUrl;
             }
-            return null; // 저장된 URL 없으면 null 반환
+            return null;
+        }
+
+        // URL 변환 함수
+        function transformUrl(url) {
+            if (!url) return null;
+            console.log('Transforming URL:', url);
+            const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
+            if (chzzkChannelIdPattern.test(url)) {
+                return `${chzzkProxyBaseUrl}${url}`;
+            }
+            if (url.includes('.m3u8')) {
+                return url;
+            }
+            if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
+                const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            }
+            if (url.startsWith('https://www.youtube.com/embed/')) {
+                return url;
+            }
+            console.warn('Invalid YouTube URL:', url);
+            return null;
         }
 
         // 공통 채널 렌더링 함수
@@ -439,6 +467,7 @@
                 btn.dataset.url = url;
                 btn.dataset.type = channel.type || type;
                 if (channel[tooltipKey]) btn.title = channel[tooltipKey];
+                if (!url) btn.classList.add('disabled');
 
                 btn.addEventListener('dragstart', (e) => {
                     if (btn.dataset.url) {
@@ -467,8 +496,9 @@
             try {
                 const youtubeUrl = getYouTubeLiveOrUpcoming();
                 console.log('YouTube URL to load:', youtubeUrl);
-                lckChannels[2].url = youtubeUrl || ''; // URL 없으면 빈 문자열
-                lckChannels[2].name = CHANNELS.youtube.name; // 항상 K
+                lckChannels[2].url = youtubeUrl || '';
+                lckChannels[2].name = CHANNELS.youtube.name;
+                console.log('LCK Channels[2]:', lckChannels[2]);
                 renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
                     tooltipKey: 'tooltip',
                     nameKey: 'name',
@@ -676,12 +706,21 @@
             while (box.firstChild) {
                 box.removeChild(box.firstChild);
             }
+            if (!url) {
+                box.innerHTML = 'URL이 없습니다.';
+                return;
+            }
             const iframe = document.createElement('iframe');
             console.log('Loading iframe with URL:', url);
             if (type === 'm3u8' || url.includes('.m3u8')) {
                 iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
             } else {
                 iframe.src = url;
+                iframe.allow = 'autoplay; fullscreen';
+                iframe.onerror = () => {
+                    console.error('Iframe load failed:', url);
+                    box.innerHTML = '비디오를 로드할 수 없습니다.';
+                };
             }
             box.appendChild(iframe);
             box.addEventListener('dragover', (e) => {
@@ -690,51 +729,6 @@
             });
             box.addEventListener('drop', createDropHandler(box));
             box.className = 'player-box active';
-        }
-
-        function transformUrl(url) {
-            if (!url) return null;
-            const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
-            if (chzzkChannelIdPattern.test(url)) {
-                return `${chzzkProxyBaseUrl}${url}`;
-            }
-            if (url.includes('.m3u8')) {
-                return url;
-            }
-            const isShortForm = /^(youtube|twitch|chzzk|kick|afreeca)\/[^\/]+$/.test(url);
-            if (isShortForm) {
-                const [platform, channelId] = url.split('/');
-                switch (platform) {
-                    case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
-                    case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev&parent=playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
-                    case 'chzzk': return `https://chzzk.naver.com/live/${channelId}`;
-                    case 'kick': return `https://player.kick.com/${channelId}`;
-                    case 'afreeca': return `https://play.sooplive.co.kr/${channelId}/embed`;
-                    default: return null;
-                }
-            }
-            if (url.startsWith('https://twitch.tv/') || url.startsWith('https://www.twitch.tv/')) {
-                const channelId = url.split('/').pop();
-                return `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev&parent=playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
-            }
-            if (!url.startsWith('http')) { return null; }
-            if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev&parent=playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
-            if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
-            if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
-                const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
-                if (match) return `https://www.youtube.com/embed/${match[1]}`;
-            }
-            if (url.match(/youtube\.com\/channel\/[^\/]+\/live/)) {
-                return url;
-            }
-            if (url.startsWith('https://chzzk.naver.com/live/') || url.startsWith('https://chzzk.naver.com/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
-            if (url.startsWith('https://kick.com/')) return `https://player.kick.com/${url.split('/').pop()}`;
-            if (url.startsWith('https://play.sooplive.co.kr/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
-            if (url.startsWith('https://')) return url;
-            return null;
         }
 
         function createDropHandler(box) {
@@ -785,6 +779,14 @@
 
         // 초기화 함수
         async function initialize() {
+            // 2025-04-11 데이터 삭제 (필요 시 주석 해제)
+            /*
+            const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
+            delete savedUrls['2025-04-11'];
+            localStorage.setItem('youtubeUrls', JSON.stringify(savedUrls));
+            console.log('Cleaned youtubeUrls:', savedUrls);
+            */
+
             favorites = JSON.parse(localStorage.getItem('favorites')) || [];
             setSplitScreen(1);
             renderSidebarFavorites();
