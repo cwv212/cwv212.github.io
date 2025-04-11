@@ -50,10 +50,8 @@
         <h2>YouTube 라이브 URL 입력</h2>
         <label for="date-input">날짜 (YYYY-MM-DD):</label>
         <input type="date" id="date-input">
-        <label for="name-input">채널 이름:</label>
-        <input type="text" id="name-input" placeholder="예: K">
         <label for="url-input">YouTube URL:</label>
-        <input type="text" id="url-input" placeholder="예: https://www.youtube.com/embed/video_id">
+        <input type="text" id="url-input" placeholder="예: https://www.youtube.com/watch?v=N2qhTzIqNPE">
         <button onclick="saveUrl()">저장</button>
         <div id="saved-list"></div>
     </div>
@@ -61,21 +59,26 @@
     <script>
         function saveUrl() {
             const dateInput = document.getElementById('date-input').value;
-            const name = document.getElementById('name-input').value.trim();
             const url = document.getElementById('url-input').value.trim();
 
-            if (!dateInput || !name || !url) {
+            if (!dateInput || !url) {
                 alert('모든 필드를 입력해주세요.');
                 return;
             }
 
+            // YouTube URL 검증
+            const youtubePattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/;
+            if (url.includes('youtube.com') && !youtubePattern.test(url)) {
+                alert('유효한 YouTube URL을 입력해주세요.');
+                return;
+            }
+
             const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
-            savedUrls[dateInput] = { name, url };
+            savedUrls[dateInput] = { url }; // 이름은 저장하지 않음
             localStorage.setItem('youtubeUrls', JSON.stringify(savedUrls));
             alert('저장되었습니다.');
             renderSavedUrls();
             document.getElementById('date-input').value = '';
-            document.getElementById('name-input').value = '';
             document.getElementById('url-input').value = '';
         }
 
@@ -85,7 +88,7 @@
             list.innerHTML = '<h3>저장된 URL</h3>';
             for (const [date, data] of Object.entries(savedUrls)) {
                 const div = document.createElement('div');
-                div.innerHTML = `<p><strong>${date}</strong>: ${data.name} - ${data.url} 
+                div.innerHTML = `<p><strong>${date}</strong>: ${data.url} 
                     <button onclick="deleteUrl('${date}')">삭제</button></p>`;
                 list.appendChild(div);
             }
