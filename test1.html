@@ -195,6 +195,7 @@
             margin-top: 10px;
         }
         #firefox-notice { display: none; margin: 10px 0; }
+        #chrome-notice { display: none; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -216,15 +217,18 @@
             <button onclick="setSplitScreen(3)">3분할</button>
             <button onclick="setSplitScreen(4)">4분할</button>
         </div>
-        <div id="custom-url-container">
-            <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
-            <button onclick="playCustomUrl()">실행</button>
-            <button onclick="showFavoriteModal()">즐겨찾기</button>
-        </div>
-        <div id="firefox-notice">
-            <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어(설치 필수)</a>
-        </div>
-        <button id="settings-btn" onclick="showAuthModal()">⚙️</button>
+<div id="custom-url-container">
+    <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
+    <button onclick="playCustomUrl()">실행</button>
+    <button onclick="showFavoriteModal()">즐겨찾기</button>
+</div>
+<div id="firefox-notice">
+    <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어(설치 필수)</a>
+</div>
+<div id="chrome-notice">
+    <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
+</div>
+<button id="settings-btn" onclick="showAuthModal()">⚙️</button>
         <button id="mode-toggle-btn" onclick="toggleMode()">파이어폭스 모드로 전환</button>
     </div>
     <div id="player-container">
@@ -310,23 +314,25 @@
         let clickIndex = 0;
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
-        function updateModeStyles() {
-            const root = document.documentElement;
-            if (isFirefoxMode) {
-                root.style.setProperty('--button-color', '#008040');
-                root.style.setProperty('--hover-color', '#006633');
-                modeToggleBtn.textContent = '크롬 모드로 전환';
-                firefoxNotice.style.display = 'block';
-                extensionId = FIREFOX_EXTENSION_ID;
-            } else {
-                root.style.setProperty('--button-color', '#007bff');
-                root.style.setProperty('--hover-color', '#0056b3');
-                modeToggleBtn.textContent = '파이어폭스 모드로 전환';
-                firefoxNotice.style.display = 'none';
-                extensionId = CHROME_EXTENSION_ID;
-            }
-            document.getElementById('toggle-btn').style.background = isFirefoxMode ? '#008040' : '#007bff';
-        }
+function updateModeStyles() {
+    const root = document.documentElement;
+    if (isFirefoxMode) {
+        root.style.setProperty('--button-color', '#008040');
+        root.style.setProperty('--hover-color', '#006633');
+        modeToggleBtn.textContent = '크롬 모드로 전환';
+        firefoxNotice.style.display = 'block';
+        document.getElementById('chrome-notice').style.display = 'none';
+        extensionId = FIREFOX_EXTENSION_ID;
+    } else {
+        root.style.setProperty('--button-color', '#007bff');
+        root.style.setProperty('--hover-color', '#0056b3');
+        modeToggleBtn.textContent = '파이어폭스 모드로 전환';
+        firefoxNotice.style.display = 'none';
+        document.getElementById('chrome-notice').style.display = 'block';
+        extensionId = CHROME_EXTENSION_ID;
+    }
+    document.getElementById('toggle-btn').style.background = isFirefoxMode ? '#008040' : '#007bff';
+}
 
         function toggleMode() {
             isFirefoxMode = !isFirefoxMode;
