@@ -544,11 +544,10 @@ function getPageTitle(date) {
     return null;
 }
 
-// 대진표 가져오기
 async function fetchLckSchedule() {
     try {
         const today = new Date();
-        const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+        const todayStr = today.toISOString().split('T')[0];
         const cacheKey = `lckSchedule_${todayStr}`;
         const cached = localStorage.getItem(cacheKey);
         if (cached) return JSON.parse(cached);
@@ -563,7 +562,6 @@ async function fetchLckSchedule() {
             schedule = await response.json();
         }
 
-        // 당일 경기가 없으면 미래 경기 찾기
         if (schedule.length === 0) {
             schedule = await fetchUpcomingSchedule(today);
         }
@@ -576,7 +574,6 @@ async function fetchLckSchedule() {
     }
 }
 
-// 미래 경기 찾기
 async function fetchUpcomingSchedule(today) {
     try {
         const pages = [
@@ -586,13 +583,13 @@ async function fetchUpcomingSchedule(today) {
         ];
         let schedule = [];
         const futureDate = new Date(today);
-        futureDate.setDate(today.getDate() + 7); // 7일 내
+        futureDate.setDate(today.getDate() + 7);
 
         for (const page of pages) {
             const pageStart = new Date(page.start).getTime();
             const pageEnd = new Date(page.end).getTime();
             const todayMs = today.getTime();
-            if (todayMs > pageEnd) continue; // 과거 페이지는 스킵
+            if (todayMs > pageEnd) continue;
 
             const response = await fetch(
                 `${workersUrl}/lck-schedule?date=${today.toISOString().split('T')[0]}&page=${encodeURIComponent(page.title)}&range=true`
@@ -604,17 +601,16 @@ async function fetchUpcomingSchedule(today) {
                     return matchDate >= today && matchDate <= futureDate;
                 })
             );
-            if (schedule.length > 0) break; // 경기 찾으면 중단
+            if (schedule.length > 0) break;
         }
 
-        return schedule.sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3); // 최대 3개
+        return schedule.sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
     } catch (error) {
         console.error('Upcoming schedule fetch error:', error);
         return [];
     }
 }
 
-// 대진표 렌더링
 function renderLckSchedule() {
     const scheduleContainer = document.getElementById('lck-schedule');
     scheduleContainer.innerHTML = '<div>Loading...</div>';
@@ -640,6 +636,25 @@ function renderLckSchedule() {
             scheduleContainer.appendChild(item);
         });
     });
+}
+
+async function initialize() {
+    favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    setSplitScreen(1);
+    renderSidebarFavorites();
+    renderChzzkChannels();
+    renderSpotvChannels();
+    renderBaseballChannels();
+    await renderLckChannels();
+    renderLckSchedule();
+
+    setInterval(() => {
+        const now = new Date();
+        if (now.getHours() === 0 && now.getMinutes() === 0) {
+            localStorage.removeItem(`lckSchedule_${now.toISOString().split('T')[0]}`);
+            renderLckSchedule();
+        }
+    }, 60000);
 }
         
         // 즐겨찾기 채널 렌더링
