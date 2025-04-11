@@ -345,16 +345,23 @@ function updateModeStyles() {
             // 테스트용: return '2025-04-11';
         }
 
-        function getYouTubeLiveOrUpcoming() {
-            const today = getKstDate();
-            const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
-            if (savedUrls[today] && savedUrls[today].url) {
-                const transformedUrl = transformUrl(savedUrls[today].url);
+function getYouTubeLiveOrUpcoming() {
+    const today = getKstDate();
+    return fetch('https://playground-worker-empty-bread-9ff1.hlsp.workers.dev/data')
+        .then(response => response.json())
+        .then(data => {
+            if (data[today] && data[today].url) {
+                const transformedUrl = transformUrl(data[today].url);
                 console.log(`Loading transformed YouTube URL for ${today}: ${transformedUrl}`);
                 return transformedUrl;
             }
             return null;
-        }
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            return null;
+        });
+}
 
         function transformUrl(url) {
             if (!url) return null;
@@ -582,29 +589,43 @@ function updateModeStyles() {
             renderSavedUrls();
         }
 
-        function saveUrl() {
-            const dateInput = document.getElementById('date-input').value;
-            const url = document.getElementById('url-input').value.trim();
-            if (!dateInput || !url) {
-                alert('모든 필드를 입력해주세요.');
-                return;
-            }
-            const youtubePattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/;
-            if (!youtubePattern.test(url)) {
-                alert('유효한 YouTube URL을 입력해주세요.');
-                return;
-            }
-            const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
-            savedUrls[dateInput] = { url };
-            localStorage.setItem('youtubeUrls', JSON.stringify(savedUrls));
+function saveUrl() {
+    const dateInput = document.getElementById('date-input').value;
+    const url = document.getElementById('url-input').value.trim();
+    if (!dateInput || !url) {
+        alert('모든 필드를 입력해주세요.');
+        return;
+    }
+    const youtubePattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+    if (!youtubePattern.test(url)) {
+        alert('유효한 YouTube URL을 입력해주세요.');
+        return;
+    }
+
+    // GitHub에 저장 요청 (Workers 프록시 사용 예시)
+    fetch('https://playground-worker-empty-bread-9ff1.hlsp.workers.dev/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: dateInput, url: url })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
             renderSavedUrls();
+            renderLckChannels();
             document.getElementById('date-input').value = '';
             document.getElementById('url-input').value = '';
-            renderLckChannels();
+        } else {
+            alert('저장에 실패했습니다.');
         }
+    })
+    .catch(error => console.error('Error:', error));
+}
 
-        function renderSavedUrls() {
-            const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
+function renderSavedUrls() {
+    fetch('https://playground-worker-empty-bread-9ff1.hlsp.workers.dev/data')
+        .then(response => response.json())
+        .then(savedUrls => {
             const savedUrlsDiv = document.getElementById('saved-urls');
             savedUrlsDiv.innerHTML = '';
             Object.entries(savedUrls).forEach(([date, data]) => {
@@ -613,15 +634,21 @@ function updateModeStyles() {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = '삭제';
                 deleteBtn.onclick = () => {
-                    delete savedUrls[date];
-                    localStorage.setItem('youtubeUrls', JSON.stringify(savedUrls));
-                    renderSavedUrls();
-                    renderLckChannels();
+                    fetch('https://playground-worker-empty-bread-9ff1.hlsp.workers.dev/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ date })
+                    })
+                    .then(() => {
+                        renderSavedUrls();
+                        renderLckChannels();
+                    });
                 };
                 div.appendChild(deleteBtn);
                 savedUrlsDiv.appendChild(div);
             });
-        }
+        });
+}
 
         function toggleSpotv() {
             const spotvChannels = document.getElementById('spotv-channels');
