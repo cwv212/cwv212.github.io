@@ -2,107 +2,637 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>YouTube 라이브 URL 입력</title>
+    <title>m3u8 플레이어</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: 'Roboto', sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
             background: #f4f7fa;
+            color: #333;
+            transition: all 0.3s ease;
         }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
+        #sidebar {
+            width: 220px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            transition: transform 0.3s ease;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 10;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        #sidebar.collapsed { transform: translateX(-100%); }
+        #toggle-btn {
+            position: fixed;
+            top: 10px;
+            left: 205px;
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            transition: left 0.3s ease, background 0.3s;
+            padding: 0;
+            z-index: 11;
+            line-height: 20px;
+            text-align: center;
+        }
+        #sidebar.collapsed + #player-container #toggle-btn { left: 10px; }
+        #toggle-btn:hover { background: var(--hover-color); }
+        #baseball-channels, #chzzk-channels, #spotv-channels, #lck-channels, #favorite-channels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .baseball-btn, .chzzk-btn, .lck-btn, .favorite-btn-channel {
+            flex: 1;
+            padding: 6px 0;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px;
+        }
+        .baseball-btn:hover, .chzzk-btn:hover, .lck-btn:hover, .favorite-btn-channel:hover {
+            background: #dee2e6;
+        }
+        .small-channel-btn {
+            padding: 6px 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px;
+        }
+        .small-channel-btn:hover { background: #dee2e6; }
+        #player-container {
+            flex-grow: 1;
+            display: grid;
+            gap: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #ffffff;
+            border: none;
+        }
+        .player-box {
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: none;
+        }
+        .player-box.active { border: none; }
+        iframe { width: 100%; height: 100%; border: none; z-index: 1; }
+        button {
+            padding: 8px 15px;
+            margin: 5px 5px 5px 0;
+            background: var(--button-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            width: 90px;
+        }
+        button:hover { background: var(--hover-color); transform: translateY(-2px); }
+        h3, h4 { font-size: 16px; margin: 10px 0 5px; color: #495057; }
+        #custom-url-container { margin: 10px 0; }
+        #custom-url-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #split-screen-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+        #input-modal, #auth-modal, #favorite-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
         }
-        label {
-            display: block;
-            margin: 10px 0 5px;
-        }
-        input {
+        #input-modal input, #auth-modal input, #favorite-modal input {
             width: 100%;
             padding: 8px;
-            margin-bottom: 10px;
+            margin: 5px 0;
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        button {
-            padding: 10px 20px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
+        #saved-urls { max-height: 200px; overflow-y: auto; margin-top: 10px; }
+        #saved-urls div { padding: 5px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        #settings-btn {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            font-size: 18px;
+            margin-top: auto;
+            background: #e9ecef;
+            color: #333;
+        }
+        #settings-btn:hover { background: #dee2e6; }
+        #favorite-modal ul { max-height: 200px; overflow-y: auto; margin-top: 10px; }
+        #favorite-modal li { padding: 5px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; }
+        .toggle-header {
             cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        button:hover {
-            background: #0056b3;
+        .toggle-header::after {
+            content: '▼';
+            font-size: 12px;
         }
-        #saved-list {
-            margin-top: 20px;
+        .toggle-header.collapsed::after {
+            content: '▶';
         }
+        #spotv-channels {
+            display: none;
+        }
+        #spotv-channels.active {
+            display: flex;
+        }
+        #mode-toggle-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+        #firefox-notice { display: none; margin: 10px 0; }
+        #chrome-notice { display: none; margin: 10px 0; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>YouTube 라이브 URL 입력</h2>
-        <label for="date-input">날짜 (YYYY-MM-DD):</label>
+    <div id="sidebar">
+        <h3>숙제 채널</h3>
+        <div id="lck-channels"></div>
+        <h4>스트리머 채널</h4>
+        <div id="chzzk-channels"></div>
+        <h4>즐겨찾기 채널</h4>
+        <div id="favorite-channels"></div>
+        <h4 class="toggle-header" onclick="toggleSpotv()">스포티비 채널</h4>
+        <div id="spotv-channels"></div>
+        <h4>야구 채널</h4>
+        <div id="baseball-channels"></div>
+        <h3>분할 화면 설정</h3>
+        <div id="split-screen-buttons">
+            <button onclick="setSplitScreen(1)">1분할</button>
+            <button onclick="setSplitScreen(2)">2분할</button>
+            <button onclick="setSplitScreen(3)">3분할</button>
+            <button onclick="setSplitScreen(4)">4분할</button>
+        </div>
+        <div id="custom-url-container">
+            <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
+            <button onclick="playCustomUrl()">실행</button>
+            <button onclick="showFavoriteModal()">즐겨찾기</button>
+        </div>
+        <div id="firefox-notice">
+            <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어(설치 필수)</a>
+        </div>
+        <div id="chrome-notice">
+            <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
+        </div>
+        <button id="settings-btn" onclick="showAuthModal()">⚙️</button>
+        <button id="mode-toggle-btn" onclick="toggleMode()">파이어폭스 모드로 전환</button>
+    </div>
+    <div id="player-container">
+        <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
+    </div>
+
+    <div id="auth-modal">
+        <h3>인증</h3>
+        <input type="password" id="auth-password" placeholder="비밀번호 입력">
+        <button onclick="verifyPassword()">확인</button>
+    </div>
+
+    <div id="input-modal">
+        <h3>YouTube URL 입력</h3>
         <input type="date" id="date-input">
-        <label for="url-input">YouTube URL:</label>
-        <input type="text" id="url-input" placeholder="예: https://www.youtube.com/watch?v=N2qhTzIqNPE">
+        <input type="text" id="url-input" placeholder="YouTube URL 입력">
         <button onclick="saveUrl()">저장</button>
-        <div id="saved-list"></div>
+        <button onclick="inputModal.style.display='none'">닫기</button>
+        <div id="saved-urls"></div>
+    </div>
+
+    <div id="favorite-modal">
+        <h3>즐겨찾기 관리</h3>
+        <input type="text" id="favorite-name-input" placeholder="이름">
+        <input type="text" id="favorite-url-input" placeholder="URL 또는 채널 ID">
+        <button onclick="addFavorite()">추가</button>
+        <button onclick="favoriteModal.style.display='none'">닫기</button>
+        <ul id="favorite-list"></ul>
     </div>
 
     <script>
-        function saveUrl() {
+        // const GITHUB_TOKEN = 'your-personal-access-token'; // Workers 환경 변수 또는 사용자 입력으로 대체
+        const REPO_OWNER = 'cwv212';
+        const REPO_NAME = 'cwv212.github.io'; // 또는 새 저장소면 'shared-urls'
+        const FILE_PATH = 'urls.json';
+
+        const CHROME_EXTENSION_ID = 'eakdijdofmnclopcffkkgmndadhbjgka';
+        const FIREFOX_EXTENSION_ID = 'ace413ec-8009-4e7c-841a-d0b581794b61';
+        const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
+        const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
+        const PASSWORD = 'yourpassword'; // 비밀번호 설정
+
+        let isFirefoxMode = false;
+        let extensionId = CHROME_EXTENSION_ID;
+
+        const CHANNELS = {
+            youtube: { id: 'UCw1DsweY9b2AKGjV4kGJP1A', name: 'K', type: 'iframe', tooltip: 'youtube' }
+        };
+
+        const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
+            name: `야${i + 1}`,
+            url: `${baseballBaseUrl}${i + 1}/master.m3u8`
+        }));
+
+        const spotvChannels = Array.from({ length: 40 }, (_, i) => {
+            const channelNum = String(i + 1).padStart(2, '0');
+            return { name: `${i + 1}`, url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8` };
+        });
+
+        const lckChannels = [
+            { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
+            { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
+            { name: CHANNELS.youtube.name, url: '', type: CHANNELS.youtube.type, tooltip: CHANNELS.youtube.tooltip }
+        ];
+
+        const chzzkChannels = [
+            { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced' },
+            { name: '침', id: 'bb382c2c0cc9fa7c86ab3b037fb5799c' },
+            { name: '추', id: '181a3baebe508d3b5fa5d9fe4d6b5241' },
+            { name: '솝', id: '34a2bd4f5988e37693e94306f0bfe57f' },
+            { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181' }
+        ];
+
+        const baseballChannelList = document.getElementById('baseball-channels');
+        const lckChannelList = document.getElementById('lck-channels');
+        const chzzkChannelList = document.getElementById('chzzk-channels');
+        const spotvChannelList = document.getElementById('spotv-channels');
+        const favoriteChannelList = document.getElementById('favorite-channels');
+        const playerContainer = document.getElementById('player-container');
+        const sidebar = document.getElementById('sidebar');
+        const inputModal = document.getElementById('input-modal');
+        const authModal = document.getElementById('auth-modal');
+        const favoriteModal = document.getElementById('favorite-modal');
+        const favoriteList = document.getElementById('favorite-list');
+        const modeToggleBtn = document.getElementById('mode-toggle-btn');
+        const firefoxNotice = document.getElementById('firefox-notice');
+        let playerCount = 1;
+        let clickIndex = 0;
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
+        function updateModeStyles() {
+            const root = document.documentElement;
+            if (isFirefoxMode) {
+                root.style.setProperty('--button-color', '#008040');
+                root.style.setProperty('--hover-color', '#006633');
+                modeToggleBtn.textContent = '크롬 모드로 전환';
+                firefoxNotice.style.display = 'block';
+                document.getElementById('chrome-notice').style.display = 'none';
+                extensionId = FIREFOX_EXTENSION_ID;
+            } else {
+                root.style.setProperty('--button-color', '#007bff');
+                root.style.setProperty('--hover-color', '#0056b3');
+                modeToggleBtn.textContent = '파이어폭스 모드로 전환';
+                firefoxNotice.style.display = 'none';
+                document.getElementById('chrome-notice').style.display = 'block';
+                extensionId = CHROME_EXTENSION_ID;
+            }
+            document.getElementById('toggle-btn').style.background = isFirefoxMode ? '#008040' : '#007bff';
+        }
+
+        function toggleMode() {
+            isFirefoxMode = !isFirefoxMode;
+            updateModeStyles();
+        }
+
+        function getKstDate() {
+            const date = new Date();
+            const kstOffset = 9 * 60;
+            const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+            const kstDate = new Date(utc + (kstOffset * 60 * 1000));
+            return kstDate.toISOString().split('T')[0];
+        }
+
+        async function getYouTubeLiveOrUpcoming() {
+            const today = getKstDate();
+            try {
+                const response = await fetch(
+                    `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `token ${GITHUB_TOKEN}`,
+                            Accept: 'application/vnd.github.v3+json',
+                        },
+                    }
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const savedUrls = JSON.parse(at boutons(data.content));
+                    if (savedUrls[today] && savedUrls[today].url) {
+                        return transformUrl(savedUrls[today].url);
+                    }
+                }
+                return null;
+            } catch (error) {
+                console.error('Error fetching YouTube URL:', error);
+                return null;
+            }
+        }
+
+        function transformUrl(url) {
+            if (!url) return null;
+            console.log('Transforming URL:', url);
+            const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
+            if (chzzkChannelIdPattern.test(url)) {
+                return `${chzzkProxyBaseUrl}${url}`;
+            }
+            if (url.includes('.m3u8')) {
+                return url;
+            }
+            if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
+                const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            }
+            if (url.startsWith('https://www.youtube.com/embed/')) {
+                return url;
+            }
+            console.warn('Invalid YouTube URL:', url);
+            return null;
+        }
+
+        function renderChannelList(container, channels, className, options = {}) {
+            const { type = 'm3u8', tooltipKey = 'tooltip', urlKey = 'url', idKey = 'id', nameKey = 'name' } = options;
+            container.innerHTML = '';
+            channels.forEach(channel => {
+                const btn = document.createElement('div');
+                btn.className = className;
+                btn.draggable = true;
+                btn.textContent = channel[nameKey];
+                let url = channel[urlKey];
+                if (idKey && channel[idKey]) url = `${chzzkProxyBaseUrl}${channel[idKey]}`;
+                btn.dataset.url = url;
+                btn.dataset.type = channel.type || type;
+                if (channel[tooltipKey]) btn.title = channel[tooltipKey];
+                if (!url) btn.classList.add('disabled');
+
+                btn.addEventListener('dragstart', (e) => {
+                    if (btn.dataset.url) {
+                        e.dataTransfer.setData('text/plain', btn.dataset.url);
+                        e.dataTransfer.setData('text/type', btn.dataset.type);
+                    }
+                });
+
+                btn.addEventListener('click', () => {
+                    if (btn.dataset.url) {
+                        const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                        if (playerBoxes.length > 0) {
+                            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                            loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
+                            clickIndex++;
+                        }
+                    }
+                });
+
+                container.appendChild(btn);
+            });
+        }
+
+        async function renderLckChannels() {
+            try {
+                const youtubeUrl = await getYouTubeLiveOrUpcoming();
+                console.log('YouTube URL to load:', youtubeUrl);
+                lckChannels[2].url = youtubeUrl || '';
+                lckChannels[2].name = CHANNELS.youtube.name;
+                renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
+                    tooltipKey: 'tooltip',
+                    nameKey: 'name',
+                    urlKey: 'url'
+                });
+            } catch (error) {
+                console.error('LCK channel render error:', error);
+            }
+        }
+
+        function renderChzzkChannels() {
+            renderChannelList(chzzkChannelList, chzzkChannels, 'chzzk-btn', { nameKey: 'name', idKey: 'id' });
+        }
+
+        function renderSpotvChannels() {
+            renderChannelList(spotvChannelList, spotvChannels, 'small-channel-btn', { nameKey: 'name', urlKey: 'url' });
+        }
+
+        function renderBaseballChannels() {
+            renderChannelList(baseballChannelList, baseballChannels, 'baseball-btn', { nameKey: 'name', urlKey: 'url' });
+        }
+
+        function renderSidebarFavorites() {
+            renderChannelList(favoriteChannelList, favorites, 'favorite-btn-channel', { nameKey: 'name', urlKey: 'url' });
+        }
+
+        function renderFavorites() {
+            favoriteList.innerHTML = '';
+            favorites.forEach((favorite, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${favorite.name}: ${         const GITHUB_TOKEN = 'your-personal-access-token';
+        const REPO_OWNER = 'cwv212';
+        const REPO_NAME = 'cwv212.github.io';
+        const FILE_PATH = 'urls.json';
+        async function saveUrl() {
             const dateInput = document.getElementById('date-input').value;
             const url = document.getElementById('url-input').value.trim();
-
             if (!dateInput || !url) {
                 alert('모든 필드를 입력해주세요.');
                 return;
             }
-
             const youtubePattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/;
-            if (url.includes('youtube.com') && !youtubePattern.test(url)) {
+            if (!youtubePattern.test(url)) {
                 alert('유효한 YouTube URL을 입력해주세요.');
                 return;
             }
-
-            const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
-            savedUrls[dateInput] = { url };
-            localStorage.setItem('youtubeUrls', JSON.stringify(savedUrls));
-            alert('저장되었습니다.');
-            renderSavedUrls();
-            document.getElementById('date-input').value = '';
-            document.getElementById('url-input').value = '';
-        }
-
-        function renderSavedUrls() {
-            const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
-            const list = document.getElementById('saved-list');
-            list.innerHTML = '<h3>저장된 URL</h3>';
-            for (const [date, data] of Object.entries(savedUrls)) {
-                const div = document.createElement('div');
-                div.innerHTML = `<p><strong>${date}</strong>: ${data.url} 
-                    <button onclick="deleteUrl('${date}')">삭제</button></p>`;
-                list.appendChild(div);
+            try {
+                const response = await fetch(
+                    `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `token ${GITHUB_TOKEN}`,
+                            Accept: 'application/vnd.github.v3+json',
+                        },
+                    }
+                );
+                let savedUrls = {};
+                if (response.ok) {
+                    const data = await response.json();
+                    savedUrls = JSON.parse(atob(data.content));
+                }
+                // 새 URL 추가
+                savedUrls[dateInput] = { url };
+                // GitHub에 업데이트
+                const content = btoa(JSON.stringify(savedUrls, null, 2));
+                const updateResponse = await fetch(
+                    `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            Authorization: `token ${GITHUB_TOKEN}`,
+                            Accept: 'application/vnd.github.v3+json',
+                        },
+                        body: JSON.stringify({
+                            message: `Update urls.json with new URL for ${dateInput}`,
+                            content: content,
+                            sha: response.ok ? (await response.json()).sha : undefined,
+                        }),
+                    }
+                );
+                if (updateResponse.ok) {
+                    alert('URL이 저장되었습니다.');
+                    renderSavedUrls();
+                    renderLckChannels();
+                    document.getElementById('date-input').value = '';
+                    document.getElementById('url-input').value = '';
+                } else {
+                    alert('URL 저장에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error saving URL:', error);
+                alert('오류가 발생했습니다.');
             }
         }
-
-        function deleteUrl(date) {
-            if (confirm(`${date}의 URL을 삭제하시겠습니까?`)) {
-                const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
-                delete savedUrls[date];
-                localStorage.setItem('youtubeUrls', JSON.stringify(savedUrls));
-                renderSavedUrls();
+        async function renderSavedUrls() {
+            const savedUrlsDiv = document.getElementById('saved-urls');
+            savedUrlsDiv.innerHTML = '';
+            try {
+                const response = await fetch(
+                    `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `token ${GITHUB_TOKEN}`,
+                            Accept: 'application/vnd.github.v3+json',
+                        },
+                    }
+                );
+                let savedUrls = {};
+                if (response.ok) {
+                    const data = await response.json();
+                    savedUrls = JSON.parse(atob(data.content));
+                }
+                Object.entries(savedUrls).forEach(([date, data]) => {
+                    const div = document.createElement('div');
+                    div.textContent = `${date}: ${data.url}`;
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = '삭제';
+                    deleteBtn.onclick = async () => {
+                        delete savedUrls[date];
+                        const content = btoa(JSON.stringify(savedUrls, null, 2));
+                        const updateResponse = await fetch(
+                            `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`,
+                            {
+                                method: 'PUT',
+                                headers: {
+                                    Authorization: `token ${GITHUB_TOKEN}`,
+                                    Accept: 'application/vnd.github.v3+json',
+                                },
+                                body: JSON.stringify({
+                                    message: `Delete URL for ${date}`,
+                                    content: content,
+                                    sha: (await response.json()).sha,
+                                }),
+                            }
+                        );
+                        if (updateResponse.ok) {
+                            renderSavedUrls();
+                            renderLckChannels();
+                        }
+                    };
+                    div.appendChild(deleteBtn);
+                    savedUrlsDiv.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Error rendering URLs:', error);
+                savedUrlsDiv.innerHTML = 'URL을 불러오는 데 실패했습니다.';
             }
         }
-
-        window.onload = renderSavedUrls;
+        async function getYouTubeLiveOrUpcoming() {
+            const today = getKstDate();
+            try {
+                const response = await fetch(
+                    `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `token ${GITHUB_TOKEN}`,
+                            Accept: 'application/vnd.github.v3+json',
+                        },
+                    }
+                );
+                if (response.ok) {
+                    const data = await response.json();
+                    const savedUrls = JSON.parse(atob(data.content));
+                    if (savedUrls[today] && savedUrls[today].url) {
+                        return transformUrl(savedUrls[today].url);
+                    }
+                }
+                return null;
+            } catch (error) {
+                console.error('Error fetching YouTube URL:', error);
+                return null;
+            }
+        }
+        async function initialize() {
+            if (navigator.userAgent.includes('Firefox')) {
+                isFirefoxMode = true;
+                updateModeStyles();
+            } else {
+                isFirefoxMode = false;
+                updateModeStyles();
+            }
+            setSplitScreen(1);
+            renderSidebarFavorites();
+            renderChzzkChannels();
+            renderSpotvChannels();
+            renderBaseballChannels();
+            await renderLckChannels();
+        }
+        window.onload = initialize;
     </script>
 </body>
 </html>
