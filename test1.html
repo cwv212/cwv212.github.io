@@ -263,7 +263,7 @@
         const FIREFOX_EXTENSION_ID = 'ace413ec-8009-4e7c-841a-d0b581794b61';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
-        const PASSWORD = 'yourpassword'; // 비밀번호 설정
+        const PASSWORD = 'yourpassword';
         const WORKERS_URL = 'https://playground-worker-empty-bread-9ff1.hlsp.workers.dev';
 
         let isFirefoxMode = false;
@@ -345,13 +345,13 @@
             const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
             const kstDate = new Date(utc + (kstOffset * 60 * 1000));
             return kstDate.toISOString().split('T')[0];
-            // 테스트용: return '2025-04-11';
         }
 
         async function getYouTubeLiveOrUpcoming() {
             const today = getKstDate();
             try {
                 const response = await fetch(`${WORKERS_URL}/data`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 if (data[today] && data[today].url) {
                     const transformedUrl = transformUrl(data[today].url);
@@ -387,6 +387,10 @@
         }
 
         function renderChannelList(container, channels, className, options = {}) {
+            if (!container) {
+                console.error('Container not found for rendering channels');
+                return;
+            }
             const { type = 'm3u8', tooltipKey = 'tooltip', urlKey = 'url', idKey = 'id', nameKey = 'name' } = options;
             container.innerHTML = '';
             channels.forEach(channel => {
@@ -425,8 +429,8 @@
 
         async function renderLckChannels() {
             try {
-                const youtubeUrl = await getYouTubeLiveOrUpcoming(); // 비동기 처리
-                console.log('YouTube URL to load:', youtubeUrl);
+                const youtubeUrl = await getYouTubeLiveOrUpcoming();
+                console.log('YouTube URL loaded:', youtubeUrl);
                 lckChannels[2].url = youtubeUrl || '';
                 lckChannels[2].name = CHANNELS.youtube.name;
                 renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
@@ -435,7 +439,8 @@
                     urlKey: 'url'
                 });
             } catch (error) {
-                console.error('LCK channel render error:', error);
+                console.error('Failed to render LCK channels:', error);
+                lckChannelList.innerHTML = '채널 로드 실패';
             }
         }
 
@@ -610,6 +615,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ date: dateInput, url: url })
                 });
+                if (!response.ok) throw new Error(`Save failed: ${response.status}`);
                 const data = await response.json();
                 if (data.success) {
                     await renderSavedUrls();
@@ -628,6 +634,7 @@
         async function renderSavedUrls() {
             try {
                 const response = await fetch(`${WORKERS_URL}/data`);
+                if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
                 const savedUrls = await response.json();
                 const savedUrlsDiv = document.getElementById('saved-urls');
                 savedUrlsDiv.innerHTML = '';
@@ -638,11 +645,12 @@
                     deleteBtn.textContent = '삭제';
                     deleteBtn.onclick = async () => {
                         try {
-                            await fetch(`${WORKERS_URL}/delete`, {
+                            const deleteResponse = await fetch(`${WORKERS_URL}/delete`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ date })
                             });
+                            if (!deleteResponse.ok) throw new Error(`Delete failed: ${deleteResponse.status}`);
                             await renderSavedUrls();
                             await renderLckChannels();
                         } catch (error) {
@@ -654,6 +662,7 @@
                 });
             } catch (error) {
                 console.error('Error rendering saved URLs:', error);
+                document.getElementById('saved-urls').innerHTML = 'URL 로드 실패';
             }
         }
 
@@ -665,7 +674,11 @@
         }
 
         async function initialize() {
-            // 브라우저 감지 후 모드 설정
+            if (!lckChannelList || !chzzkChannelList || !spotvChannelList || !baseballChannelList || !favoriteChannelList) {
+                console.error('One or more channel containers not found in DOM');
+                return;
+            }
+
             if (navigator.userAgent.includes('Firefox')) {
                 isFirefoxMode = true;
                 updateModeStyles();
@@ -679,10 +692,10 @@
             renderChzzkChannels();
             renderSpotvChannels();
             renderBaseballChannels();
-            await renderLckChannels(); // 비동기 호출 대기
+            await renderLckChannels();
         }
 
-        window.onload = initialize;
+        window.onload = async () => await initialize();
     </script>
 </body>
 </html>
