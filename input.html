@@ -60,17 +60,17 @@
 
     <script>
         function saveUrl() {
-            const date = document.getElementById('date-input').value;
+            const dateInput = document.getElementById('date-input').value;
             const name = document.getElementById('name-input').value.trim();
             const url = document.getElementById('url-input').value.trim();
 
-            if (!date || !name || !url) {
+            if (!dateInput || !name || !url) {
                 alert('모든 필드를 입력해주세요.');
                 return;
             }
 
             const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
-            savedUrls[date] = { name, url };
+            savedUrls[dateInput] = { name, url };
             localStorage.setItem('youtubeUrls', JSON.stringify(savedUrls));
             alert('저장되었습니다.');
             renderSavedUrls();
