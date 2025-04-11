@@ -168,6 +168,8 @@
         #settings-btn:hover { background: #dee2e6; }
         #favorite-modal ul { max-height: 200px; overflow-y: auto; margin-top: 10px; }
         #favorite-modal li { padding: 5px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; }
+        details summary { cursor: pointer; font-weight: 500; }
+        details[open] summary { color: #007bff; }
     </style>
 </head>
 <body>
@@ -179,7 +181,10 @@
         <h4>즐겨찾기 채널</h4>
         <div id="favorite-channels"></div>
         <h4>스포티비 채널</h4>
-        <div id="spotv-channels"></div>
+        <details>
+            <summary>스포티비 채널 목록</summary>
+            <div id="spotv-channels"></div>
+        </details>
         <h4>야구 채널</h4>
         <div id="baseball-channels"></div>
         <h3>분할 화면 설정</h3>
@@ -228,7 +233,7 @@
         const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
-        const PASSWORD = 'zksxkxk!'; // 비밀번호 설정
+        const PASSWORD = 'yourpassword'; // 비밀번호 설정
 
         const CHANNELS = {
             youtube: { id: 'UCw1DsweY9b2AKGjV4kGJP1A', name: 'K', type: 'iframe', tooltip: 'youtube' }
@@ -305,11 +310,10 @@
             }
             if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
                 const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
-                if (match) return `https://playground-worker-empty-bread-9ff1.hlsp.workers.dev/youtube/${match[1]}`;
+                if (match) return `https://www.youtube.com/embed/${match[1]}`; // Workers 프록시 제거
             }
             if (url.startsWith('https://www.youtube.com/embed/')) {
-                const videoId = url.split('/embed/')[1];
-                return `https://playground-worker-empty-bread-9ff1.hlsp.workers.dev/youtube/${videoId}`;
+                return url;
             }
             console.warn('Invalid YouTube URL:', url);
             return null;
