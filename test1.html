@@ -630,15 +630,23 @@ function updateModeStyles() {
             toggleHeader.classList.toggle('collapsed');
         }
 
-        async function initialize() {
-            setSplitScreen(1);
-            renderSidebarFavorites();
-            renderChzzkChannels();
-            renderSpotvChannels();
-            renderBaseballChannels();
-            await renderLckChannels();
-            updateModeStyles();
-        }
+async function initialize() {
+    // 브라우저 감지 후 모드 설정
+    if (navigator.userAgent.includes('Firefox')) {
+        isFirefoxMode = true;
+        updateModeStyles();
+    } else {
+        isFirefoxMode = false; // 명시적 초기화 (선택 사항)
+        updateModeStyles();
+    }
+
+    setSplitScreen(1);
+    renderSidebarFavorites();
+    renderChzzkChannels();
+    renderSpotvChannels();
+    renderBaseballChannels();
+    await renderLckChannels();
+}
 
         window.onload = initialize;
     </script>
