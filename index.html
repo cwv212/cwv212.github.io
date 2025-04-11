@@ -1,75 +1,817 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>롤캐 모바일용</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>m3u8 플레이어 (Chrome)</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background: #f4f7fa;
+            color: #333;
+        }
+        #sidebar {
+            width: 220px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            transition: transform 0.3s ease;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 10;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        #toggle-btn {
+            position: fixed;
+            top: 10px;
+            left: 205px;
+            width: 20px;
+            height: 20px;
+            background: #007bff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            transition: left 0.3s ease, background 0.3s;
+            padding: 0;
+            z-index: 11;
+            line-height: 20px;
+            text-align: center;
+        }
+        #sidebar.collapsed + #player-container #toggle-btn {
+            left: 10px;
+        }
+        #toggle-btn:hover {
+            background: #0056b3;
+        }
+        #baseball-channels, #chzzk-channels, #spotv-channels, #tv-channels, #favorite-channels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .baseball-btn, .chzzk-btn, .tv-btn, .favorite-btn-channel {
+            flex: 1;
+            padding: 6px 0;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px;
+            max-width: 33px;
+        }
+        .baseball-btn:hover, .chzzk-btn:hover, .tv-btn:hover, .favorite-btn-channel:hover {
+            background: #dee2e6;
+        }
+        #lck-channels {
+            display: flex;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .lck-btn {
+            flex: 1;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            text-align: center;
+            position: relative;
+        }
+        .lck-btn:hover {
+            background: #dee2e6;
+        }
+        .lck-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 20;
+        }
+        .lck-btn.disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .small-channel-btn {
+            display: inline-block;
+            padding: 6px 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px;
+        }
+        .small-channel-btn:hover {
+            background: #dee2e6;
+        }
+        #player-container {
+            flex-grow: 1;
+            display: grid;
+            gap: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #ffffff;
+            border: none;
+        }
+        .player-box {
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: none;
+            position: relative;
+        }
+        .player-box.active {
+            border: none;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 5px 5px 5px 0;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            width: 90px;
+        }
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        h3, h4 {
+            font-size: 16px;
+            margin: 10px 0 5px;
+            color: #495057;
+        }
+        a {
+            display: block;
+            margin: 15px 0;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+            color: #0056b3;
+        }
+        #custom-url-container {
+            margin: 10px 0;
+        }
+        #custom-url-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #split-screen-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+        .toggle-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toggle-header::after {
+            content: '▼';
+            font-size: 12px;
+        }
+        .toggle-header.collapsed::after {
+            content: '▶';
+        }
+        #spotv-channels {
+            display: none;
+        }
+        #spotv-channels.active {
+            display: flex;
+        }
+        #favorite-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1100;
+            width: 90%;
+            max-width: 450px;
+            display: none;
+            box-sizing: border-box;
+        }
+        #favorite-modal h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        #favorite-modal .input-row {
+            margin-bottom: 10px;
+        }
+        #favorite-modal .favorite-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        #favorite-modal #add-favorite-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            background-color: #007bff;
+        }
+        #favorite-modal #add-favorite-btn:hover {
+            background-color: #0056b3;
+        }
+        #favorite-modal ul {
+            margin-top: 20px;
+            margin-bottom: 15px;
+            padding: 0;
+            max-height: 250px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+        }
+        #favorite-modal li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 5px;
+            border-bottom: 1px solid #eee;
+        }
+        #favorite-modal li:last-child {
+            border-bottom: none;
+        }
+        #favorite-modal .button-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+        #favorite-modal #close-favorite-modal {
+            padding: 8px 20px;
+        }
+        .favorite-btn {
+            background: #007bff;
+        }
+        .favorite-btn:hover {
+            background: #0056b3;
+        }
+    </style>
 </head>
-
 <body>
-    <div id="main-container">
-        <div id="sidebar" class="collapsed"> <h3>LCK 채널</h3>
-            <div id="lck-channels"></div>
-            <h3>야구 채널</h3>
-            <div id="baseball-channels"></div>
-            <h3 class="toggle-header" id="spotv-toggle">스포티비 채널 <span id="spotv-arrow">▼</span></h3>
-            <div id="spotv-channels"></div>
-            <h3>TV 채널</h3>
-            <div id="tv-channels"></div>
-            <h3>즐찾 채널</h3>
-            <div id="sidebar-favorite-list"></div>
-            <h3>분할 화면 설정</h3>
-            <div id="split-screen-buttons">
-                <button class="channel-btn" data-split="1">1분할</button>
-                <button class="channel-btn" data-split="2">2분할</button>
-                <button class="channel-btn" data-split="3">3분할</button>
-                <button class="channel-btn" data-split="4">4분할</button>
-            </div>
-            <div id="custom-url-container">
-                <input type="text" id="custom-url-input" placeholder="URL 입력">
-                <button class="channel-btn" id="play-custom-url-btn">실행</button>
-            </div>
-            <button id="close-sidebar-btn">닫기</button>
+    <div id="sidebar">
+        <h3>숙제 채널</h3>
+        <div id="lck-channels"></div>
+        <h4>스트리머 채널</h4>
+        <div id="chzzk-channels"></div>
+        <h4>즐겨찾기 채널</h4>
+        <div id="favorite-channels"></div>
+        <h4 class="toggle-header" onclick="toggleSpotv()">스포티비 채널</h4>
+        <div id="spotv-channels"></div>
+        <h4>야구 채널</h4>
+        <div id="baseball-channels"></div>
+        <h3>분할 화면 설정</h3>
+        <div id="split-screen-buttons">
+            <button onclick="setSplitScreen(1)">1분할</button>
+            <button onclick="setSplitScreen(2)">2분할</button>
+            <button onclick="setSplitScreen(3)">3분할</button>
+            <button onclick="setSplitScreen(4)">4분할</button>
         </div>
-
-        <div id="player-container">
-            <div class="video-section" id="video-section">
-                </div>
+        <div id="custom-url-container">
+            <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
+            <button onclick="playCustomUrl()">실행</button>
+            <button class="favorite-btn" onclick="showFavoriteModal()">즐겨찾기</button>
         </div>
-
-        <div class="right-container" id="right-container">
-            <div class="menu-section" id="menu-section">
-                <button id="hrm-btn" class="menu-button">흐름</button>
-                <button id="toggle-sidebar-btn" class="menu-button">슬라이드</button>
-                <button id="flow-btn" class="menu-button">flow</button>
-                <button id="favorite-btn" class="menu-button">즐찾</button>
-                <button id="refresh-btn" class="menu-button">F5</button>
-            </div>
-            <div class="chat-section" id="chat-section">
-                <iframe id="chat-iframe" src="" frameborder="0"></iframe>
-            </div>
-        </div>
+        <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
+        <a href="https://baseball-hls-player-mook.hlsp.workers.dev/" target="_self">파폭용 페이지로 가기</a>
+    </div>
+    <div id="player-container">
+        <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
     </div>
 
-    <div id="favorite-modal" class="modal">
-        <div style="display: flex; flex-direction: column; align-items: center;">
-            <h3>즐겨찾기 목록</h3>
-            <input type="text" id="favorite-name-input" placeholder="이름 입력" class="favorite-input" style="flex: 1;" />
-            <div class="input-row">
-                <input type="text" id="favorite-url-input" placeholder="주소 입력" class="favorite-input" />
-            </div>
-            <button id="add-favorite-btn" class="menu-button">추가</button>
+    <div id="favorite-modal">
+        <h3>즐겨찾기 관리</h3>
+        <div class="input-row">
+            <input type="text" id="favorite-name-input" class="favorite-input" placeholder="이름">
+            <input type="text" id="favorite-url-input" class="favorite-input" placeholder="URL 또는 채널 ID">
+            <button id="add-favorite-btn" onclick="addFavorite()">추가</button>
         </div>
-        <ul id="favorite-list" style="list-style-type: none; padding: 0; width: 100%;"></ul>
+        <ul id="favorite-list"></ul>
         <div class="button-container">
-            <button id="close-favorite-modal" class="menu-button" style="background-color: #dc3545; color: white;">닫기</button>
+            <button id="close-favorite-modal" onclick="favoriteModal.style.display='none'">닫기</button>
         </div>
     </div>
 
-    <script src="script.js" defer></script>
-</body>
+    <script>
+        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
+        const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
+        const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
 
+        const CHANNELS = {
+            youtube: {
+                id: 'UCw1DsweY9b2AKGjV4kGJP1A',
+                name: 'K',
+                type: 'iframe',
+                tooltip: 'youtube'
+            }
+        };
+
+        const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
+            name: `야${i + 1}`,
+            url: `${baseballBaseUrl}${i + 1}/master.m3u8`
+        }));
+
+        const spotvChannels = Array.from({ length: 40 }, (_, i) => {
+            const channelNum = String(i + 1).padStart(2, '0');
+            return {
+                name: `${i + 1}`,
+                url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8`
+            };
+        });
+
+        const lckChannels = [
+            { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
+            { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
+            { name: CHANNELS.youtube.name, url: '', type: CHANNELS.youtube.type, tooltip: CHANNELS.youtube.tooltip }
+        ];
+
+        const chzzkChannels = [
+            { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced' },
+            { name: '침', id: 'bb382c2c0cc9fa7c86ab3b037fb5799c' },
+            { name: '추', id: '181a3baebe508d3b5fa5d9fe4d6b5241' },
+            { name: '솝', id: '34a2bd4f5988e37693e94306f0bfe57f' },
+            { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181' }
+        ];
+
+        const baseballChannelList = document.getElementById('baseball-channels');
+        const lckChannelList = document.getElementById('lck-channels');
+        const chzzkChannelList = document.getElementById('chzzk-channels');
+        const spotvChannelList = document.getElementById('spotv-channels');
+        const favoriteChannelList = document.getElementById('favorite-channels');
+        const playerContainer = document.getElementById('player-container');
+        const sidebar = document.getElementById('sidebar');
+        const favoriteModal = document.getElementById('favorite-modal');
+        const favoriteList = document.getElementById('favorite-list');
+        let playerCount = 1;
+        let clickIndex = 0;
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
+        // KST 날짜 계산
+        function getKstDate() {
+            const date = new Date();
+            const kstOffset = 9 * 60; // KST는 UTC+9
+            const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+            const kstDate = new Date(utc + (kstOffset * 60 * 1000));
+            return kstDate.toISOString().split('T')[0]; // YYYY-MM-DD
+            // 테스트용: return '2025-04-11';
+        }
+
+        // YouTube 라이브 URL 가져오기
+        function getYouTubeLiveOrUpcoming() {
+            const today = getKstDate();
+            const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
+            if (savedUrls[today] && savedUrls[today].url) {
+                const transformedUrl = transformUrl(savedUrls[today].url);
+                console.log(`Loading transformed YouTube URL for ${today}: ${transformedUrl}`);
+                return transformedUrl;
+            }
+            return null;
+        }
+
+        // URL 변환 함수
+        function transformUrl(url) {
+            if (!url) return null;
+            console.log('Transforming URL:', url);
+            const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
+            if (chzzkChannelIdPattern.test(url)) {
+                return `${chzzkProxyBaseUrl}${url}`;
+            }
+            if (url.includes('.m3u8')) {
+                return url;
+            }
+            if (url.includes('youtu.be') || url.includes('youtube.com/watch?v=')) {
+                const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            }
+            if (url.startsWith('https://www.youtube.com/embed/')) {
+                return url;
+            }
+            console.warn('Invalid YouTube URL:', url);
+            return null;
+        }
+
+        // 공통 채널 렌더링 함수
+        function renderChannelList(container, channels, className, options = {}) {
+            const { type = 'm3u8', tooltipKey = 'tooltip', urlKey = 'url', idKey = 'id', nameKey = 'name' } = options;
+            container.innerHTML = '';
+            channels.forEach(channel => {
+                const btn = document.createElement('div');
+                btn.className = className;
+                btn.draggable = true;
+                btn.textContent = channel[nameKey];
+                
+                let url = channel[urlKey];
+                if (idKey && channel[idKey]) {
+                    url = `${chzzkProxyBaseUrl}${channel[idKey]}`;
+                }
+                btn.dataset.url = url;
+                btn.dataset.type = channel.type || type;
+                if (channel[tooltipKey]) btn.title = channel[tooltipKey];
+                if (!url) btn.classList.add('disabled');
+
+                btn.addEventListener('dragstart', (e) => {
+                    if (btn.dataset.url) {
+                        e.dataTransfer.setData('text/plain', btn.dataset.url);
+                        e.dataTransfer.setData('text/type', btn.dataset.type);
+                    }
+                });
+
+                btn.addEventListener('click', () => {
+                    if (btn.dataset.url) {
+                        const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                        if (playerBoxes.length > 0) {
+                            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                            loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
+                            clickIndex++;
+                        }
+                    }
+                });
+
+                container.appendChild(btn);
+            });
+        }
+
+        // LCK 채널 렌더링
+        async function renderLckChannels() {
+            try {
+                const youtubeUrl = getYouTubeLiveOrUpcoming();
+                console.log('YouTube URL to load:', youtubeUrl);
+                lckChannels[2].url = youtubeUrl || '';
+                lckChannels[2].name = CHANNELS.youtube.name;
+                console.log('LCK Channels[2]:', lckChannels[2]);
+                renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
+                    tooltipKey: 'tooltip',
+                    nameKey: 'name',
+                    urlKey: 'url'
+                });
+            } catch (error) {
+                console.error('LCK channel render error:', error);
+            }
+        }
+
+        // 치지직 채널 렌더링
+        function renderChzzkChannels() {
+            renderChannelList(chzzkChannelList, chzzkChannels, 'chzzk-btn', {
+                nameKey: 'name',
+                idKey: 'id'
+            });
+        }
+
+        // SPOTV 채널 렌더링
+        function renderSpotvChannels() {
+            renderChannelList(spotvChannelList, spotvChannels, 'small-channel-btn', {
+                nameKey: 'name',
+                urlKey: 'url'
+            });
+        }
+
+        // 야구 채널 렌더링
+        function renderBaseballChannels() {
+            renderChannelList(baseballChannelList, baseballChannels, 'baseball-btn', {
+                nameKey: 'name',
+                urlKey: 'url'
+            });
+        }
+
+        // 즐겨찾기 채널 렌더링
+        function renderSidebarFavorites() {
+            favoriteChannelList.innerHTML = '';
+            favorites.forEach(favorite => {
+                const btn = document.createElement('div');
+                btn.className = 'favorite-btn-channel';
+                btn.draggable = true;
+                btn.textContent = favorite.name;
+                const transformedUrl = transformUrl(favorite.url);
+                btn.dataset.url = transformedUrl;
+                btn.dataset.type = (transformedUrl && (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8'))) ? 'm3u8' : 'iframe';
+                btn.addEventListener('dragstart', (e) => {
+                    if (transformedUrl) {
+                        e.dataTransfer.setData('text/plain', transformedUrl);
+                        e.dataTransfer.setData('text/type', btn.dataset.type);
+                    }
+                });
+                btn.addEventListener('click', () => {
+                    if (transformedUrl) {
+                        const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                        if (playerBoxes.length > 0) {
+                            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                            const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
+                            loadPlayer(targetBox, transformedUrl, type);
+                            clickIndex++;
+                        }
+                    }
+                });
+                favoriteChannelList.appendChild(btn);
+            });
+        }
+
+        // 모달 내 즐겨찾기 목록 렌더링
+        function renderFavorites() {
+            favoriteList.innerHTML = '';
+            favorites.forEach((favorite, index) => {
+                const li = document.createElement('li');
+                const contentContainer = document.createElement('div');
+                contentContainer.style.cursor = 'pointer';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = favorite.name;
+
+                const urlSpan = document.createElement('span');
+                urlSpan.textContent = favorite.url;
+
+                contentContainer.appendChild(nameSpan);
+                contentContainer.appendChild(urlSpan);
+
+                contentContainer.addEventListener('click', () => {
+                    const transformedUrl = transformUrl(favorite.url);
+                    if (transformedUrl) {
+                        const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                        if (playerBoxes.length > 0) {
+                            const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                            const type = (transformedUrl.includes('chzzk-api-proxy') || transformedUrl.includes('.m3u8')) ? 'm3u8' : 'iframe';
+                            loadPlayer(targetBox, transformedUrl, type);
+                            clickIndex++;
+                            favoriteModal.style.display = 'none';
+                        }
+                    }
+                });
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '삭제';
+                deleteBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    deleteFavorite(index);
+                });
+
+                li.appendChild(contentContainer);
+                li.appendChild(deleteBtn);
+                favoriteList.appendChild(li);
+            });
+        }
+
+        // 즐겨찾기 추가
+        function addFavorite() {
+            const nameInput = document.getElementById('favorite-name-input');
+            const urlInput = document.getElementById('favorite-url-input');
+            const name = nameInput.value.trim();
+            const url = urlInput.value.trim();
+
+            if (name && url) {
+                if (!url.startsWith('http') && !url.includes('/') && !/^[0-9a-fA-F]{32}$/.test(url) && !url.includes('.m3u8')) {
+                    alert('유효한 URL 형식이나 채널 ID를 입력해주세요.');
+                    return;
+                }
+
+                if (favorites.some(fav => fav.url === url && fav.name === name)) {
+                    alert('동일한 이름과 주소의 즐겨찾기가 이미 존재합니다.');
+                    return;
+                }
+
+                favorites.push({ name, url });
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+                renderFavorites();
+                renderSidebarFavorites();
+                nameInput.value = '';
+                urlInput.value = '';
+                favoriteModal.style.display = 'block';
+            } else {
+                alert('이름과 주소를 모두 입력해주세요.');
+            }
+        }
+
+        // 즐겨찾기 삭제
+        function deleteFavorite(index) {
+            if (confirm(`'${favorites[index].name}' 즐겨찾기를 삭제하시겠습니까?`)) {
+                favorites.splice(index, 1);
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+                renderFavorites();
+                renderSidebarFavorites();
+                favoriteModal.style.display = 'block';
+            }
+        }
+
+        // 즐겨찾기 모달 표시
+        function showFavoriteModal() {
+            renderFavorites();
+            favoriteModal.style.display = 'block';
+        }
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('collapsed');
+            adjustPlayerLayout();
+        }
+
+        function toggleSpotv() {
+            const spotvChannels = document.getElementById('spotv-channels');
+            const toggleHeader = document.querySelector('.toggle-header');
+            spotvChannels.classList.toggle('active');
+            toggleHeader.classList.toggle('collapsed');
+        }
+
+        function extractM3u8Url(data) {
+            const urlPattern = /(https?:\/\/[^\s]+\.m3u8[^\s]*)/i;
+            const match = data.match(urlPattern);
+            return match ? match[0] : null;
+        }
+
+        function setSplitScreen(count) {
+            playerCount = count;
+            clickIndex = 0;
+            adjustPlayerLayout();
+            const existingToggleBtn = document.getElementById('toggle-btn');
+            playerContainer.innerHTML = '';
+            playerContainer.appendChild(existingToggleBtn);
+            for (let i = 0; i < count; i++) {
+                const box = document.createElement('div');
+                box.className = 'player-box';
+                box.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                box.addEventListener('drop', createDropHandler(box));
+                playerContainer.appendChild(box);
+            }
+        }
+
+        function adjustPlayerLayout() {
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            playerContainer.style.padding = isCollapsed ? '0' : '10px';
+            playerContainer.style.gap = isCollapsed ? '0' : '0';
+            playerContainer.style.gridTemplateColumns = `repeat(${Math.min(playerCount, 2)}, 1fr)`;
+            playerContainer.style.gridTemplateRows = `repeat(${Math.ceil(playerCount / 2)}, 1fr)`;
+            playerContainer.style.marginLeft = isCollapsed ? '0' : '250px';
+        }
+
+        function loadPlayer(box, url, type) {
+            while (box.firstChild) {
+                box.removeChild(box.firstChild);
+            }
+            if (!url) {
+                box.innerHTML = 'URL이 없습니다.';
+                return;
+            }
+            const iframe = document.createElement('iframe');
+            console.log('Loading iframe with URL:', url);
+            if (type === 'm3u8' || url.includes('.m3u8')) {
+                iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
+            } else {
+                iframe.src = url;
+                iframe.allow = 'autoplay; fullscreen';
+                iframe.onerror = () => {
+                    console.error('Iframe load failed:', url);
+                    box.innerHTML = '비디오를 로드할 수 없습니다.';
+                };
+            }
+            box.appendChild(iframe);
+            box.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+            box.addEventListener('drop', createDropHandler(box));
+            box.className = 'player-box active';
+        }
+
+        function createDropHandler(box) {
+            return (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const textPlain = e.dataTransfer.getData('text/plain');
+                const textHtml = e.dataTransfer.getData('text/html');
+                const textUri = e.dataTransfer.getData('text/uri-list');
+
+                let url = textUri;
+                if (!url && textHtml) {
+                    url = extractM3u8Url(textHtml) || transformUrl(textHtml);
+                }
+                if (!url && textPlain) {
+                    url = extractM3u8Url(textPlain) || transformUrl(textPlain);
+                }
+
+                if (url) {
+                    const finalUrl = transformUrl(url);
+                    if (finalUrl) {
+                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(box, finalUrl, type);
+                    }
+                }
+            };
+        }
+
+        function playCustomUrl() {
+            const customUrl = document.getElementById('custom-url-input').value.trim();
+            if (customUrl) {
+                const finalUrl = transformUrl(customUrl);
+                if (finalUrl) {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                        const type = finalUrl.includes('chzzk-api-proxy') || finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(targetBox, finalUrl, type);
+                        clickIndex++;
+                    }
+                } else {
+                    alert('유효한 URL 또는 채널 ID를 입력해주세요.');
+                }
+            } else {
+                alert('URL 또는 채널 ID를 입력해주세요.');
+            }
+        }
+
+        // 초기화 함수
+        async function initialize() {
+            // 2025-04-11 데이터 삭제 (필요 시 주석 해제)
+            /*
+            const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
+            delete savedUrls['2025-04-11'];
+            localStorage.setItem('youtubeUrls', JSON.stringify(savedUrls));
+            console.log('Cleaned youtubeUrls:', savedUrls);
+            */
+
+            favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            setSplitScreen(1);
+            renderSidebarFavorites();
+            renderChzzkChannels();
+            renderSpotvChannels();
+            renderBaseballChannels();
+            await renderLckChannels();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const m3u8Url = urlParams.get('url');
+            if (m3u8Url) {
+                const finalUrl = transformUrl(decodeURIComponent(m3u8Url));
+                if (finalUrl) {
+                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
+                    if (playerBoxes.length > 0) {
+                        const type = finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
+                        loadPlayer(playerBoxes[0], finalUrl, type);
+                    }
+                }
+            }
+        }
+
+        window.onload = () => {
+            initialize();
+        };
+    </script>
+</body>
 </html>
