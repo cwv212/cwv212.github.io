@@ -27,6 +27,8 @@
             height: 100%;
             z-index: 10;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
         }
         #sidebar.collapsed { transform: translateX(-100%); }
         #toggle-btn {
@@ -133,7 +135,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 5px;
         }
-        #input-modal, #auth-modal {
+        #input-modal, #auth-modal, #favorite-modal {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -145,7 +147,7 @@
             z-index: 1000;
             display: none;
         }
-        #input-modal input, #auth-modal input {
+        #input-modal input, #auth-modal input, #favorite-modal input {
             width: 100%;
             padding: 8px;
             margin: 5px 0;
@@ -154,6 +156,18 @@
         }
         #saved-urls { max-height: 200px; overflow-y: auto; margin-top: 10px; }
         #saved-urls div { padding: 5px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        #settings-btn {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            font-size: 18px;
+            margin-top: auto;
+            background: #e9ecef;
+            color: #333;
+        }
+        #settings-btn:hover { background: #dee2e6; }
+        #favorite-modal ul { max-height: 200px; overflow-y: auto; margin-top: 10px; }
+        #favorite-modal li { padding: 5px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -178,8 +192,9 @@
         <div id="custom-url-container">
             <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
             <button onclick="playCustomUrl()">실행</button>
-            <button onclick="showAuthModal()">URL 입력</button>
+            <button onclick="showFavoriteModal()">즐겨찾기</button>
         </div>
+        <button id="settings-btn" onclick="showAuthModal()">⚙️</button>
     </div>
     <div id="player-container">
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
@@ -196,14 +211,24 @@
         <input type="date" id="date-input">
         <input type="text" id="url-input" placeholder="YouTube URL 입력">
         <button onclick="saveUrl()">저장</button>
+        <button onclick="inputModal.style.display='none'">닫기</button>
         <div id="saved-urls"></div>
+    </div>
+
+    <div id="favorite-modal">
+        <h3>즐겨찾기 관리</h3>
+        <input type="text" id="favorite-name-input" placeholder="이름">
+        <input type="text" id="favorite-url-input" placeholder="URL 또는 채널 ID">
+        <button onclick="addFavorite()">추가</button>
+        <button onclick="favoriteModal.style.display='none'">닫기</button>
+        <ul id="favorite-list"></ul>
     </div>
 
     <script>
         const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
-        const PASSWORD = 'yourpassword'; // 비밀번호 설정
+        const PASSWORD = 'zksxkxk!'; // 비밀번호 설정
 
         const CHANNELS = {
             youtube: { id: 'UCw1DsweY9b2AKGjV4kGJP1A', name: 'K', type: 'iframe', tooltip: 'youtube' }
@@ -237,12 +262,16 @@
         const lckChannelList = document.getElementById('lck-channels');
         const chzzkChannelList = document.getElementById('chzzk-channels');
         const spotvChannelList = document.getElementById('spotv-channels');
+        const favoriteChannelList = document.getElementById('favorite-channels');
         const playerContainer = document.getElementById('player-container');
         const sidebar = document.getElementById('sidebar');
         const inputModal = document.getElementById('input-modal');
         const authModal = document.getElementById('auth-modal');
+        const favoriteModal = document.getElementById('favorite-modal');
+        const favoriteList = document.getElementById('favorite-list');
         let playerCount = 1;
         let clickIndex = 0;
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
         function getKstDate() {
             const date = new Date();
@@ -349,6 +378,46 @@
 
         function renderBaseballChannels() {
             renderChannelList(baseballChannelList, baseballChannels, 'baseball-btn', { nameKey: 'name', urlKey: 'url' });
+        }
+
+        function renderSidebarFavorites() {
+            renderChannelList(favoriteChannelList, favorites, 'favorite-btn-channel', { nameKey: 'name', urlKey: 'url' });
+        }
+
+        function renderFavorites() {
+            favoriteList.innerHTML = '';
+            favorites.forEach((favorite, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${favorite.name}: ${favorite.url}`;
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '삭제';
+                deleteBtn.onclick = () => {
+                    favorites.splice(index, 1);
+                    localStorage.setItem('favorites', JSON.stringify(favorites));
+                    renderFavorites();
+                    renderSidebarFavorites();
+                };
+                li.appendChild(deleteBtn);
+                favoriteList.appendChild(li);
+            });
+        }
+
+        function addFavorite() {
+            const name = document.getElementById('favorite-name-input').value.trim();
+            const url = document.getElementById('favorite-url-input').value.trim();
+            if (name && url) {
+                favorites.push({ name, url });
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+                renderFavorites();
+                renderSidebarFavorites();
+                document.getElementById('favorite-name-input').value = '';
+                document.getElementById('favorite-url-input').value = '';
+            }
+        }
+
+        function showFavoriteModal() {
+            renderFavorites();
+            favoriteModal.style.display = 'block';
         }
 
         function toggleSidebar() {
@@ -493,6 +562,7 @@
 
         async function initialize() {
             setSplitScreen(1);
+            renderSidebarFavorites();
             renderChzzkChannels();
             renderSpotvChannels();
             renderBaseballChannels();
