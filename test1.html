@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>m3u8 플레이어 (Chrome)</title>
+    <title>m3u8 플레이어</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
@@ -15,6 +15,7 @@
             overflow: hidden;
             background: #f4f7fa;
             color: #333;
+            transition: all 0.3s ease;
         }
         #sidebar {
             width: 220px;
@@ -37,7 +38,6 @@
             left: 205px;
             width: 20px;
             height: 20px;
-            background: #007bff;
             border: none;
             border-radius: 50%;
             cursor: pointer;
@@ -50,7 +50,7 @@
             text-align: center;
         }
         #sidebar.collapsed + #player-container #toggle-btn { left: 10px; }
-        #toggle-btn:hover { background: #0056b3; }
+        #toggle-btn:hover { background: var(--hover-color); }
         #baseball-channels, #chzzk-channels, #spotv-channels, #lck-channels, #favorite-channels {
             display: flex;
             flex-wrap: wrap;
@@ -111,7 +111,7 @@
         button {
             padding: 8px 15px;
             margin: 5px 5px 5px 0;
-            background: #007bff;
+            background: var(--button-color);
             color: white;
             border: none;
             border-radius: 6px;
@@ -119,7 +119,7 @@
             transition: background 0.3s, transform 0.2s;
             width: 90px;
         }
-        button:hover { background: #0056b3; transform: translateY(-2px); }
+        button:hover { background: var(--hover-color); transform: translateY(-2px); }
         h3, h4 { font-size: 16px; margin: 10px 0 5px; color: #495057; }
         #custom-url-container { margin: 10px 0; }
         #custom-url-input {
@@ -173,6 +173,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 16px;
+            margin: 10px 0 5px;
+            color: #495057;
         }
         .toggle-header::after {
             content: '▼';
@@ -187,6 +190,11 @@
         #spotv-channels.active {
             display: flex;
         }
+        #mode-toggle-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+        #firefox-notice { display: none; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -197,7 +205,7 @@
         <div id="chzzk-channels"></div>
         <h4>즐겨찾기 채널</h4>
         <div id="favorite-channels"></div>
-        <h4 class="toggle-header" onclick="toggleSpotv()">스포티비 채널</h4>
+        <h4 class="toggle-header" id="spotv-toggle">스포티비 채널</h4>
         <div id="spotv-channels"></div>
         <h4>야구 채널</h4>
         <div id="baseball-channels"></div>
@@ -213,7 +221,11 @@
             <button onclick="playCustomUrl()">실행</button>
             <button onclick="showFavoriteModal()">즐겨찾기</button>
         </div>
+        <div id="firefox-notice">
+            <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어(설치 필수)</a>
+        </div>
         <button id="settings-btn" onclick="showAuthModal()">⚙️</button>
+        <button id="mode-toggle-btn" onclick="toggleMode()">파이어폭스 모드로 전환</button>
     </div>
     <div id="player-container">
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
@@ -244,10 +256,14 @@
     </div>
 
     <script>
-        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
+        const CHROME_EXTENSION_ID = 'eakdijdofmnclopcffkkgmndadhbjgka';
+        const FIREFOX_EXTENSION_ID = 'ace413ec-8009-4e7c-841a-d0b581794b61';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
         const PASSWORD = 'yourpassword'; // 비밀번호 설정
+
+        let isFirefoxMode = false;
+        let extensionId = CHROME_EXTENSION_ID;
 
         const CHANNELS = {
             youtube: { id: 'UCw1DsweY9b2AKGjV4kGJP1A', name: 'K', type: 'iframe', tooltip: 'youtube' }
@@ -288,10 +304,34 @@
         const authModal = document.getElementById('auth-modal');
         const favoriteModal = document.getElementById('favorite-modal');
         const favoriteList = document.getElementById('favorite-list');
-        const spotvToggle = document.getElementById('spotv-toggle');
+        const modeToggleBtn = document.getElementById('mode-toggle-btn');
+        const firefoxNotice = document.getElementById('firefox-notice');
         let playerCount = 1;
         let clickIndex = 0;
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
+        function updateModeStyles() {
+            const root = document.documentElement;
+            if (isFirefoxMode) {
+                root.style.setProperty('--button-color', '#008040');
+                root.style.setProperty('--hover-color', '#006633');
+                modeToggleBtn.textContent = '크롬 모드로 전환';
+                firefoxNotice.style.display = 'block';
+                extensionId = FIREFOX_EXTENSION_ID;
+            } else {
+                root.style.setProperty('--button-color', '#007bff');
+                root.style.setProperty('--hover-color', '#0056b3');
+                modeToggleBtn.textContent = '파이어폭스 모드로 전환';
+                firefoxNotice.style.display = 'none';
+                extensionId = CHROME_EXTENSION_ID;
+            }
+            document.getElementById('toggle-btn').style.background = isFirefoxMode ? '#008040' : '#007bff';
+        }
+
+        function toggleMode() {
+            isFirefoxMode = !isFirefoxMode;
+            updateModeStyles();
+        }
 
         function getKstDate() {
             const date = new Date();
@@ -481,7 +521,9 @@
             const iframe = document.createElement('iframe');
             console.log('Loading iframe with URL:', url);
             if (type === 'm3u8' || url.includes('.m3u8')) {
-                iframe.src = `chrome-extension://${extensionId}/player.html#${url}`;
+                iframe.src = isFirefoxMode 
+                    ? `moz-extension://${extensionId}/player.html#${url}`
+                    : `chrome-extension://${extensionId}/player.html#${url}`;
             } else {
                 iframe.src = url;
                 iframe.allow = 'autoplay; fullscreen';
@@ -580,7 +622,7 @@
 
         function toggleSpotv() {
             const spotvChannels = document.getElementById('spotv-channels');
-            const toggleHeader = document.querySelector('.toggle-header');
+            const toggleHeader = document.getElementById('spotv-toggle');
             spotvChannels.classList.toggle('active');
             toggleHeader.classList.toggle('collapsed');
         }
@@ -592,7 +634,7 @@
             renderSpotvChannels();
             renderBaseballChannels();
             await renderLckChannels();
-            spotvToggle.addEventListener('click', toggleSpotvChannels);
+            updateModeStyles();
         }
 
         window.onload = initialize;
