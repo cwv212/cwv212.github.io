@@ -226,7 +226,6 @@
         #spotv-channels.active {
             display: flex;
         }
-        /* 즐겨찾기 모달 스타일 */
         #favorite-modal {
             position: fixed;
             top: 50%;
@@ -297,46 +296,16 @@
         #favorite-modal #close-favorite-modal {
             padding: 8px 20px;
         }
-        /* 즐겨찾기 버튼 스타일 */
         .favorite-btn {
             background: #007bff;
         }
         .favorite-btn:hover {
             background: #0056b3;
         }
-        #lck-schedule {
-    max-height: 150px;
-    overflow-y: auto;
-    margin-bottom: 10px;
-    padding: 5px;
-    background: #e9ecef;
-    border-radius: 4px;
-}
-.schedule-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px;
-    font-size: 12px;
-    border-bottom: 1px solid #dee2e6;
-}
-.schedule-item:last-child {
-    border-bottom: none;
-}
-.schedule-team {
-    flex: 1;
-    text-align: center;
-}
-.schedule-time {
-    color: #007bff;
-    font-weight: 500;
-}
     </style>
 </head>
 <body>
     <div id="sidebar">
-        <h3>LCK 대진표</h3>
-        <div id="lck-schedule"></div>
         <h3>숙제 채널</h3>
         <div id="lck-channels"></div>
         <h4>스트리머 채널</h4>
@@ -380,10 +349,9 @@
     </div>
 
     <script>
-        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka'; // Chrome용 HLS 플레이어 확장 ID
+        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
-        const workersUrl = 'https://lck-sch.hlsp.workers.dev'; // Worker URL 고정
 
         const CHANNELS = {
             youtube: {
@@ -410,7 +378,7 @@
         const lckChannels = [
             { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
             { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
-            { name: CHANNELS.youtube.name, url: '', type: CHANNELS.youtube.type, tooltip: CHANNELS.youtube.tooltip } // URL은 동적으로 설정
+            { name: CHANNELS.youtube.name, url: '', type: CHANNELS.youtube.type, tooltip: CHANNELS.youtube.tooltip }
         ];
 
         const chzzkChannels = [
@@ -434,17 +402,27 @@
         let clickIndex = 0;
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
+        // KST 날짜 계산
+        function getKstDate() {
+            const date = new Date();
+            const kstOffset = 9 * 60; // KST는 UTC+9
+            const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+            const kstDate = new Date(utc + (kstOffset * 60 * 1000));
+            return kstDate.toISOString().split('T')[0]; // YYYY-MM-DD
+        }
+
         // YouTube 라이브 URL 가져오기
-        async function getYouTubeLiveOrUpcoming() {
-            try {
-                const response = await fetch(`${workersUrl}/youtube-live/${CHANNELS.youtube.id}`);
-                const data = await response.json();
-                console.log('Worker response:', data);
-                return data.url || `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
-            } catch (error) {
-                console.error('YouTube live fetch error:', error);
-                return `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
+        function getYouTubeLiveOrUpcoming() {
+            const today = getKstDate();
+            const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
+
+            if (savedUrls[today]) {
+                console.log(`Loading saved YouTube URL for ${today}: ${savedUrls[today].url}`);
+                return savedUrls[today].url;
             }
+
+            // 저장된 URL이 없으면 기본 채널 URL 반환
+            return `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
         }
 
         // 공통 채널 렌더링 함수
@@ -486,9 +464,10 @@
         // LCK 채널 렌더링
         async function renderLckChannels() {
             try {
-                const youtubeUrl = await getYouTubeLiveOrUpcoming();
+                const youtubeUrl = getYouTubeLiveOrUpcoming();
                 console.log('YouTube URL to load:', youtubeUrl);
                 lckChannels[2].url = youtubeUrl;
+                lckChannels[2].name = CHANNELS.youtube.name; // 항상 K
                 renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
                     tooltipKey: 'tooltip',
                     nameKey: 'name',
@@ -522,141 +501,7 @@
                 urlKey: 'url'
             });
         }
-// 페이지 선택 로직
-function getPageTitle(date) {
-    const dateMs = date.getTime();
-    const rounds12Start = new Date('2025-04-02').getTime();
-    const rounds12End = new Date('2025-06-01').getTime();
-    const roadToMsiStart = new Date('2025-06-07').getTime();
-    const roadToMsiEnd = new Date('2025-06-15').getTime();
-    const rounds35Start = new Date('2025-06-27').getTime();
-    const rounds35End = new Date('2025-07-12').getTime();
 
-    if (dateMs >= rounds12Start && dateMs <= rounds12End) {
-        return 'LCK/2025_Season/Rounds_1-2';
-    }
-    if (dateMs >= roadToMsiStart && dateMs <= roadToMsiEnd) {
-        return 'LCK/2025_Season/Road_to_MSI';
-    }
-    if (dateMs >= rounds35Start && dateMs <= rounds35End) {
-        return 'LCK/2025_Season/Rounds_3-5';
-    }
-    return null;
-}
-
-async function fetchLckSchedule() {
-    try {
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
-        const cacheKey = `lckSchedule_${todayStr}`;
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) return JSON.parse(cached);
-
-        let schedule = [];
-        const pageTitle = getPageTitle(today);
-
-        if (pageTitle) {
-            const response = await fetch(
-                `${workersUrl}/lck-schedule?date=${todayStr}&page=${encodeURIComponent(pageTitle)}`
-            );
-            schedule = await response.json();
-        }
-
-        if (schedule.length === 0) {
-            schedule = await fetchUpcomingSchedule(today);
-        }
-
-        localStorage.setItem(cacheKey, JSON.stringify(schedule));
-        return schedule;
-    } catch (error) {
-        console.error('LCK schedule fetch error:', error);
-        return [];
-    }
-}
-
-async function fetchUpcomingSchedule(today) {
-    try {
-        const pages = [
-            { title: 'LCK/2025_Season/Rounds_1-2', start: '2025-04-02', end: '2025-06-01' },
-            { title: 'LCK/2025_Season/Road_to_MSI', start: '2025-06-07', end: '2025-06-15' },
-            { title: 'LCK/2025_Season/Rounds_3-5', start: '2025-06-27', end: '2025-07-12' }
-        ];
-        let schedule = [];
-        const futureDate = new Date(today);
-        futureDate.setDate(today.getDate() + 7);
-
-        for (const page of pages) {
-            const pageStart = new Date(page.start).getTime();
-            const pageEnd = new Date(page.end).getTime();
-            const todayMs = today.getTime();
-            if (todayMs > pageEnd) continue;
-
-            const response = await fetch(
-                `${workersUrl}/lck-schedule?date=${today.toISOString().split('T')[0]}&page=${encodeURIComponent(page.title)}&range=true`
-            );
-            const matches = await response.json();
-            schedule = schedule.concat(
-                matches.filter(match => {
-                    const matchDate = new Date(match.date);
-                    return matchDate >= today && matchDate <= futureDate;
-                })
-            );
-            if (schedule.length > 0) break;
-        }
-
-        return schedule.sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
-    } catch (error) {
-        console.error('Upcoming schedule fetch error:', error);
-        return [];
-    }
-}
-
-function renderLckSchedule() {
-    const scheduleContainer = document.getElementById('lck-schedule');
-    scheduleContainer.innerHTML = '<div>Loading...</div>';
-
-    fetchLckSchedule().then(schedule => {
-        scheduleContainer.innerHTML = '';
-        if (schedule.length === 0) {
-            scheduleContainer.innerHTML = '<div>다가오는 경기 없음</div>';
-            return;
-        }
-
-        schedule.forEach(match => {
-            const item = document.createElement('div');
-            item.className = 'schedule-item';
-            const displayDate = match.date && match.date !== today.toISOString().split('T')[0] 
-                ? `${match.date.slice(5)} ` : '';
-            item.innerHTML = `
-                <span class="schedule-team">${match.team1}</span>
-                <span class="schedule-team">vs</span>
-                <span class="schedule-team">${match.team2}</span>
-                <span class="schedule-time">${displayDate}${match.time}</span>
-            `;
-            scheduleContainer.appendChild(item);
-        });
-    });
-}
-
-async function initialize() {
-    favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    setSplitScreen(1);
-    renderSidebarFavorites();
-    renderChzzkChannels();
-    renderSpotvChannels();
-    renderBaseballChannels();
-    await renderLckChannels();
-    renderLckSchedule();
-
-    setInterval(() => {
-        const now = new Date();
-        if (now.getHours() === 0 && now.getMinutes() === 0) {
-            localStorage.removeItem(`lckSchedule_${now.toISOString().split('T')[0]}`);
-            renderLckSchedule();
-        }
-    }, 60000);
-}
-        
         // 즐겨찾기 채널 렌더링
         function renderSidebarFavorites() {
             favoriteChannelList.innerHTML = '';
