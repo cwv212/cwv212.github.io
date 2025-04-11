@@ -547,20 +547,30 @@ function updateModeStyles() {
             };
         }
 
-        function playCustomUrl() {
-            const customUrl = document.getElementById('custom-url-input').value.trim();
-            if (customUrl) {
-                const finalUrl = transformUrl(customUrl);
-                if (finalUrl) {
-                    const playerBoxes = playerContainer.querySelectorAll('.player-box');
-                    if (playerBoxes.length > 0) {
-                        const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        loadPlayer(targetBox, finalUrl, finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe');
-                        clickIndex++;
-                    }
-                }
-            }
+function playCustomUrl() {
+    const customUrl = document.getElementById('custom-url-input').value.trim();
+    if (customUrl) {
+        // 치지직 채널 ID인지 확인 (32자리 16진수)
+        const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
+        let finalUrl = customUrl;
+        if (chzzkChannelIdPattern.test(customUrl)) {
+            // 채널 ID면 프록시 URL 붙이기
+            finalUrl = `${chzzkProxyBaseUrl}${customUrl}`;
         }
+        // URL 변환
+        finalUrl = transformUrl(finalUrl);
+        if (finalUrl) {
+            const playerBoxes = playerContainer.querySelectorAll('.player-box');
+            if (playerBoxes.length > 0) {
+                const targetBox = playerBoxes[clickIndex % playerBoxes.length];
+                loadPlayer(targetBox, finalUrl, finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe');
+                clickIndex++;
+            }
+        } else {
+            alert('유효한 m3u8 URL 또는 치지직 채널 ID를 입력해주세요.');
+        }
+    }
+}
 
         function showAuthModal() {
             authModal.style.display = 'block';
