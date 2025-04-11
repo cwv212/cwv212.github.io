@@ -5,7 +5,6 @@
     <title>m3u8 플레이어</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* 기존 스타일 유지 */
         * { box-sizing: border-box; }
         body {
             font-family: 'Roboto', sans-serif;
@@ -215,18 +214,18 @@
             <button onclick="setSplitScreen(3)">3분할</button>
             <button onclick="setSplitScreen(4)">4분할</button>
         </div>
-        <div id="custom-url-container">
-            <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
-            <button onclick="playCustomUrl()">실행</button>
-            <button onclick="showFavoriteModal()">즐겨찾기</button>
-        </div>
-        <div id="firefox-notice">
-            <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어(설치 필수)</a>
-        </div>
-        <div id="chrome-notice">
-            <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
-        </div>
-        <button id="settings-btn" onclick="showAuthModal()">⚙️</button>
+<div id="custom-url-container">
+    <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 채널 ID를 입력하세요">
+    <button onclick="playCustomUrl()">실행</button>
+    <button onclick="showFavoriteModal()">즐겨찾기</button>
+</div>
+<div id="firefox-notice">
+    <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어(설치 필수)</a>
+</div>
+<div id="chrome-notice">
+    <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어(설치 필수)</a>
+</div>
+<button id="settings-btn" onclick="showAuthModal()">⚙️</button>
         <button id="mode-toggle-btn" onclick="toggleMode()">파이어폭스 모드로 전환</button>
     </div>
     <div id="player-container">
@@ -235,10 +234,8 @@
 
     <div id="auth-modal">
         <h3>인증</h3>
-        <form>
-            <input type="password" id="auth-password" placeholder="비밀번호 입력" autocomplete="new-password">
-            <button type="button" onclick="verifyPassword()">확인</button>
-        </form>
+        <input type="password" id="auth-password" placeholder="비밀번호 입력">
+        <button onclick="verifyPassword()">확인</button>
     </div>
 
     <div id="input-modal">
@@ -264,8 +261,7 @@
         const FIREFOX_EXTENSION_ID = 'ace413ec-8009-4e7c-841a-d0b581794b61';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
-        const PASSWORD = 'yourpassword';
-        const WORKERS_URL = 'https://playground-worker-empty-bread-9ff1.hlsp.workers.dev';
+        const PASSWORD = 'yourpassword'; // 비밀번호 설정
 
         let isFirefoxMode = false;
         let extensionId = CHROME_EXTENSION_ID;
@@ -315,25 +311,25 @@
         let clickIndex = 0;
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
-        function updateModeStyles() {
-            const root = document.documentElement;
-            if (isFirefoxMode) {
-                root.style.setProperty('--button-color', '#008040');
-                root.style.setProperty('--hover-color', '#006633');
-                modeToggleBtn.textContent = '크롬 모드로 전환';
-                firefoxNotice.style.display = 'block';
-                document.getElementById('chrome-notice').style.display = 'none';
-                extensionId = FIREFOX_EXTENSION_ID;
-            } else {
-                root.style.setProperty('--button-color', '#007bff');
-                root.style.setProperty('--hover-color', '#0056b3');
-                modeToggleBtn.textContent = '파이어폭스 모드로 전환';
-                firefoxNotice.style.display = 'none';
-                document.getElementById('chrome-notice').style.display = 'block';
-                extensionId = CHROME_EXTENSION_ID;
-            }
-            document.getElementById('toggle-btn').style.background = isFirefoxMode ? '#008040' : '#007bff';
-        }
+function updateModeStyles() {
+    const root = document.documentElement;
+    if (isFirefoxMode) {
+        root.style.setProperty('--button-color', '#008040');
+        root.style.setProperty('--hover-color', '#006633');
+        modeToggleBtn.textContent = '크롬 모드로 전환';
+        firefoxNotice.style.display = 'block';
+        document.getElementById('chrome-notice').style.display = 'none';
+        extensionId = FIREFOX_EXTENSION_ID;
+    } else {
+        root.style.setProperty('--button-color', '#007bff');
+        root.style.setProperty('--hover-color', '#0056b3');
+        modeToggleBtn.textContent = '파이어폭스 모드로 전환';
+        firefoxNotice.style.display = 'none';
+        document.getElementById('chrome-notice').style.display = 'block';
+        extensionId = CHROME_EXTENSION_ID;
+    }
+    document.getElementById('toggle-btn').style.background = isFirefoxMode ? '#008040' : '#007bff';
+}
 
         function toggleMode() {
             isFirefoxMode = !isFirefoxMode;
@@ -346,26 +342,26 @@
             const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
             const kstDate = new Date(utc + (kstOffset * 60 * 1000));
             return kstDate.toISOString().split('T')[0];
+            // 테스트용: return '2025-04-11';
         }
 
-        async function getYouTubeLiveOrUpcoming() {
-            const today = getKstDate();
-            try {
-                const response = await fetch(`${WORKERS_URL}/data`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const data = await response.json();
-                if (data[today] && data[today].url) {
-                    const transformedUrl = transformUrl(data[today].url);
-                    console.log(`Loading transformed YouTube URL for ${today}: ${transformedUrl}`);
-                    return transformedUrl;
-                }
-                console.log('No YouTube URL for today');
-                return null;
-            } catch (error) {
-                console.error('Error fetching YouTube data:', error);
-                return null;
+function getYouTubeLiveOrUpcoming() {
+    const today = getKstDate();
+    return fetch('https://playground-worker-empty-bread-9ff1.hlsp.workers.dev/data')
+        .then(response => response.json())
+        .then(data => {
+            if (data[today] && data[today].url) {
+                const transformedUrl = transformUrl(data[today].url);
+                console.log(`Loading transformed YouTube URL for ${today}: ${transformedUrl}`);
+                return transformedUrl;
             }
-        }
+            return null;
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            return null;
+        });
+}
 
         function transformUrl(url) {
             if (!url) return null;
@@ -389,10 +385,6 @@
         }
 
         function renderChannelList(container, channels, className, options = {}) {
-            if (!container) {
-                console.error('Container not found for rendering channels');
-                return;
-            }
             const { type = 'm3u8', tooltipKey = 'tooltip', urlKey = 'url', idKey = 'id', nameKey = 'name' } = options;
             container.innerHTML = '';
             channels.forEach(channel => {
@@ -421,11 +413,7 @@
                             const targetBox = playerBoxes[clickIndex % playerBoxes.length];
                             loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
                             clickIndex++;
-                        } else {
-                            console.error('No player boxes available');
                         }
-                    } else {
-                        console.log('No URL for this button');
                     }
                 });
 
@@ -435,8 +423,8 @@
 
         async function renderLckChannels() {
             try {
-                const youtubeUrl = await getYouTubeLiveOrUpcoming();
-                console.log('YouTube URL loaded:', youtubeUrl);
+                const youtubeUrl = getYouTubeLiveOrUpcoming();
+                console.log('YouTube URL to load:', youtubeUrl);
                 lckChannels[2].url = youtubeUrl || '';
                 lckChannels[2].name = CHANNELS.youtube.name;
                 renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
@@ -445,8 +433,7 @@
                     urlKey: 'url'
                 });
             } catch (error) {
-                console.error('Failed to render LCK channels:', error);
-                lckChannelList.innerHTML = '채널 로드 실패';
+                console.error('LCK channel render error:', error);
             }
         }
 
@@ -602,75 +589,66 @@
             renderSavedUrls();
         }
 
-        async function saveUrl() {
-            const dateInput = document.getElementById('date-input').value;
-            const url = document.getElementById('url-input').value.trim();
-            if (!dateInput || !url) {
-                alert('모든 필드를 입력해주세요.');
-                return;
-            }
-            const youtubePattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-            if (!youtubePattern.test(url)) {
-                alert('유효한 YouTube URL을 입력해주세요.');
-                return;
-            }
+function saveUrl() {
+    const dateInput = document.getElementById('date-input').value;
+    const url = document.getElementById('url-input').value.trim();
+    if (!dateInput || !url) {
+        alert('모든 필드를 입력해주세요.');
+        return;
+    }
+    const youtubePattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+    if (!youtubePattern.test(url)) {
+        alert('유효한 YouTube URL을 입력해주세요.');
+        return;
+    }
 
-            try {
-                const response = await fetch(`${WORKERS_URL}/save`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date: dateInput, url: url })
-                });
-                if (!response.ok) throw new Error(`Save failed: ${response.status}`);
-                const data = await response.json();
-                if (data.success) {
-                    await renderSavedUrls();
-                    await renderLckChannels();
-                    document.getElementById('date-input').value = '';
-                    document.getElementById('url-input').value = '';
-                } else {
-                    alert('저장에 실패했습니다.');
-                }
-            } catch (error) {
-                console.error('Error saving URL:', error);
-                alert('저장 중 오류가 발생했습니다.');
-            }
+    // GitHub에 저장 요청 (Workers 프록시 사용 예시)
+    fetch('https://playground-worker-empty-bread-9ff1.hlsp.workers.dev/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: dateInput, url: url })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            renderSavedUrls();
+            renderLckChannels();
+            document.getElementById('date-input').value = '';
+            document.getElementById('url-input').value = '';
+        } else {
+            alert('저장에 실패했습니다.');
         }
+    })
+    .catch(error => console.error('Error:', error));
+}
 
-        async function renderSavedUrls() {
-            try {
-                const response = await fetch(`${WORKERS_URL}/data`);
-                if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
-                const savedUrls = await response.json();
-                const savedUrlsDiv = document.getElementById('saved-urls');
-                savedUrlsDiv.innerHTML = '';
-                Object.entries(savedUrls).forEach(([date, data]) => {
-                    const div = document.createElement('div');
-                    div.textContent = `${date}: ${data.url}`;
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.textContent = '삭제';
-                    deleteBtn.onclick = async () => {
-                        try {
-                            const deleteResponse = await fetch(`${WORKERS_URL}/delete`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ date })
-                            });
-                            if (!deleteResponse.ok) throw new Error(`Delete failed: ${deleteResponse.status}`);
-                            await renderSavedUrls();
-                            await renderLckChannels();
-                        } catch (error) {
-                            console.error('Error deleting URL:', error);
-                        }
-                    };
-                    div.appendChild(deleteBtn);
-                    savedUrlsDiv.appendChild(div);
-                });
-            } catch (error) {
-                console.error('Error rendering saved URLs:', error);
-                document.getElementById('saved-urls').innerHTML = 'URL 로드 실패';
-            }
-        }
+function renderSavedUrls() {
+    fetch('https://playground-worker-empty-bread-9ff1.hlsp.workers.dev/data')
+        .then(response => response.json())
+        .then(savedUrls => {
+            const savedUrlsDiv = document.getElementById('saved-urls');
+            savedUrlsDiv.innerHTML = '';
+            Object.entries(savedUrls).forEach(([date, data]) => {
+                const div = document.createElement('div');
+                div.textContent = `${date}: ${data.url}`;
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '삭제';
+                deleteBtn.onclick = () => {
+                    fetch('https://playground-worker-empty-bread-9ff1.hlsp.workers.dev/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ date })
+                    })
+                    .then(() => {
+                        renderSavedUrls();
+                        renderLckChannels();
+                    });
+                };
+                div.appendChild(deleteBtn);
+                savedUrlsDiv.appendChild(div);
+            });
+        });
+}
 
         function toggleSpotv() {
             const spotvChannels = document.getElementById('spotv-channels');
@@ -679,28 +657,23 @@
             toggleHeader.classList.toggle('collapsed');
         }
 
-        function initialize() {
-            if (!lckChannelList || !chzzkChannelList || !spotvChannelList || !baseballChannelList || !favoriteChannelList) {
-                console.error('One or more channel containers not found in DOM');
-                document.body.innerHTML = '<p>페이지 로드 오류: 컨테이너를 찾을 수 없습니다.</p>';
-                return;
-            }
+async function initialize() {
+    // 브라우저 감지 후 모드 설정
+    if (navigator.userAgent.includes('Firefox')) {
+        isFirefoxMode = true;
+        updateModeStyles();
+    } else {
+        isFirefoxMode = false; // 명시적 초기화 (선택 사항)
+        updateModeStyles();
+    }
 
-            if (navigator.userAgent.includes('Firefox')) {
-                isFirefoxMode = true;
-                updateModeStyles();
-            } else {
-                isFirefoxMode = false;
-                updateModeStyles();
-            }
-
-            setSplitScreen(1);
-            renderSidebarFavorites();
-            renderChzzkChannels();
-            renderSpotvChannels();
-            renderBaseballChannels();
-            renderLckChannels();
-        }
+    setSplitScreen(1);
+    renderSidebarFavorites();
+    renderChzzkChannels();
+    renderSpotvChannels();
+    renderBaseballChannels();
+    await renderLckChannels();
+}
 
         window.onload = initialize;
     </script>
