@@ -351,10 +351,9 @@
     </div>
 
     <script>
-        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka'; // Chrome용 HLS 플레이어 확장 ID
+        const extensionId = 'eakdijdofmnclopcffkkgmndadhbjgka';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
-        const workersUrl = 'https://mobile.hlsp.workers.dev'; // Worker URL 고정
 
         const CHANNELS = {
             youtube: {
@@ -381,7 +380,7 @@
         const lckChannels = [
             { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
             { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
-            { name: CHANNELS.youtube.name, url: '', type: CHANNELS.youtube.type, tooltip: CHANNELS.youtube.tooltip } // URL은 동적으로 설정
+            { name: CHANNELS.youtube.name, url: '', type: CHANNELS.youtube.type, tooltip: CHANNELS.youtube.tooltip }
         ];
 
         const chzzkChannels = [
@@ -405,17 +404,27 @@
         let clickIndex = 0;
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
+        // KST 날짜 계산
+        function getKstDate() {
+            const date = new Date();
+            const kstOffset = 9 * 60; // KST는 UTC+9
+            const utc = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+            const kstDate = new Date(utc + (kstOffset * 60 * 1000));
+            return kstDate.toISOString().split('T')[0]; // YYYY-MM-DD
+        }
+
         // YouTube 라이브 URL 가져오기
-        async function getYouTubeLiveOrUpcoming() {
-            try {
-                const response = await fetch(`${workersUrl}/youtube-live/${CHANNELS.youtube.id}`);
-                const data = await response.json();
-                console.log('Worker response:', data);
-                return data.url || `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
-            } catch (error) {
-                console.error('YouTube live fetch error:', error);
-                return `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
+        function getYouTubeLiveOrUpcoming() {
+            const today = getKstDate();
+            const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
+
+            if (savedUrls[today]) {
+                console.log(`Loading saved YouTube URL for ${today}: ${savedUrls[today].url}`);
+                return savedUrls[today].url;
             }
+
+            // 저장된 URL이 없으면 기본 채널 URL 반환
+            return `https://www.youtube.com/embed/live_stream?channel=${CHANNELS.youtube.id}`;
         }
 
         // 공통 채널 렌더링 함수
@@ -457,9 +466,12 @@
         // LCK 채널 렌더링
         async function renderLckChannels() {
             try {
-                const youtubeUrl = await getYouTubeLiveOrUpcoming();
+                const youtubeUrl = getYouTubeLiveOrUpcoming();
                 console.log('YouTube URL to load:', youtubeUrl);
+                const today = getKstDate();
+                const savedUrls = JSON.parse(localStorage.getItem('youtubeUrls')) || {};
                 lckChannels[2].url = youtubeUrl;
+                lckChannels[2].name = savedUrls[today]?.name || CHANNELS.youtube.name;
                 renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
                     tooltipKey: 'tooltip',
                     nameKey: 'name',
@@ -704,7 +716,8 @@
             }
             if (!url.startsWith('http')) { return null; }
             if (url.startsWith('https://lolcast.kr/#/player/youtube/')) return `https://www.youtube.com/embed/${url.split('/').pop()}`;
-            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev&parent=playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
+            if (url.startsWith('https://lolcast.kr/#/player/twitch/')) return `https://player.twitch.tv/?channel=${url.split('/').pop()}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9واری
+
             if (url.startsWith('https://lolcast.kr/#/player/chzzk/')) return `https://chzzk.naver.com/live/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/kick/')) return `https://player.kick.com/${url.split('/').pop()}`;
             if (url.startsWith('https://lolcast.kr/#/player/afreeca/')) return `https://play.sooplive.co.kr/${url.split('/')[3]}/embed`;
