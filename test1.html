@@ -236,7 +236,7 @@
     <div id="auth-modal">
         <h3>인증</h3>
         <form>
-            <input type="password" id="auth-password" placeholder="비밀번호 입력">
+            <input type="password" id="auth-password" placeholder="비밀번호 입력" autocomplete="new-password">
             <button type="button" onclick="verifyPassword()">확인</button>
         </form>
     </div>
@@ -359,6 +359,7 @@
                     console.log(`Loading transformed YouTube URL for ${today}: ${transformedUrl}`);
                     return transformedUrl;
                 }
+                console.log('No YouTube URL for today');
                 return null;
             } catch (error) {
                 console.error('Error fetching YouTube data:', error);
@@ -420,7 +421,11 @@
                             const targetBox = playerBoxes[clickIndex % playerBoxes.length];
                             loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
                             clickIndex++;
+                        } else {
+                            console.error('No player boxes available');
                         }
+                    } else {
+                        console.log('No URL for this button');
                     }
                 });
 
@@ -677,6 +682,7 @@
         function initialize() {
             if (!lckChannelList || !chzzkChannelList || !spotvChannelList || !baseballChannelList || !favoriteChannelList) {
                 console.error('One or more channel containers not found in DOM');
+                document.body.innerHTML = '<p>페이지 로드 오류: 컨테이너를 찾을 수 없습니다.</p>';
                 return;
             }
 
