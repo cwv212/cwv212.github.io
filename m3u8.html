@@ -164,7 +164,7 @@
         /* 커스텀 URL 입력부 (최신 스타일 유지) */
         #custom-url-container { margin: 15px 0; }
         #custom-url-input {
-            width: calc(100% - 10px); /* 버튼 너비 고려 */
+            width: 100%; /* 버튼 너비 고려 */
             padding: 8px 10px;
             margin-bottom: 5px;
             border: 1px solid #ced4da;
@@ -268,10 +268,10 @@
         <div id="baseball-channels"></div>
         <h3>분할 화면 설정</h3>
         <div id="split-screen-buttons">
-            <button onclick="setSplitScreen(1)">1</button>
-            <button onclick="setSplitScreen(2)">2</button>
-            <button onclick="setSplitScreen(3)">3</button>
-            <button onclick="setSplitScreen(4)">4</button>
+            <button onclick="setSplitScreen(1)">1분할</button>
+            <button onclick="setSplitScreen(2)">2분할</button>
+            <button onclick="setSplitScreen(3)">3분할</button>
+            <button onclick="setSplitScreen(4)">4분할</button>
         </div>
         <div id="custom-url-container">
             <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 ID, 채널 URL 입력">
@@ -279,7 +279,7 @@
             <button onclick="showFavoriteModal()">즐겨찾기</button>
         </div>
         <div id="firefox-notice">
-            파이어폭스: <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어 (설치 필수)</a>
+            파폭: <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어 (설치 필수)</a>
         </div>
         <div id="chrome-notice">
             크롬: <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어 (설치 필수)</a>
