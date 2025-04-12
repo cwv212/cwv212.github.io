@@ -898,63 +898,78 @@
         }
 
 
-        // 플레이어 로드 함수 (*** 타입 처리 의존 ***)
-        function loadPlayer(box, url, type) {
-            while (box.firstChild) box.removeChild(box.firstChild);
+// 플레이어 로드 함수 (*** m3u8 처리 방식 수정: 이전 방식과 유사하게 복원 시도 ***)
+function loadPlayer(box, url, type) {
+    while (box.firstChild) box.removeChild(box.firstChild);
 
-            if (!url) {
-                 console.warn(`[loadPlayer] 유효하지 않은 URL 수신: box=${box.id}`);
-                 box.innerHTML = '<div style="text-align: center; color: #888;">URL 없음</div>';
-                 box.className = 'player-box';
-                return;
-            }
-             console.log(`[loadPlayer] 로딩 시작: box=${box.id}, type=${type}, url=${url}`);
+    if (!url) {
+         console.warn(`[loadPlayer] 유효하지 않은 URL 수신: box=${box.id}`);
+         box.innerHTML = '<div style="text-align: center; color: #888;">URL 없음</div>';
+         box.className = 'player-box';
+        return;
+    }
+     console.log(`[loadPlayer] 로딩 시작: box=${box.id}, type=${type}, url=${url}`);
 
-            const iframe = document.createElement('iframe');
-            iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
-            iframe.setAttribute('allowfullscreen', '');
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+    iframe.setAttribute('allowfullscreen', '');
 
-            // *** 타입을 기준으로 확장 프로그램 사용 결정 ***
-            if (type === 'm3u8') {
-                 console.log(`[loadPlayer] 타입 'm3u8' 확인 -> HLS 확장 프로그램 사용`);
-                 const currentExtensionId = isFirefoxMode ? FIREFOX_EXTENSION_ID : CHROME_EXTENSION_ID;
-                 const extensionPrefix = isFirefoxMode ? 'moz-extension://' : 'chrome-extension://';
+    // *** HLS 확장 프로그램 사용 조건 수정 ***
+    // 1. 명시적 type이 'm3u8' 이거나
+    // 2. URL 자체에 '.m3u8'이 포함된 경우 (이전 방식 고려)
+    let useExtension = false;
+    if (type === 'm3u8') {
+        console.log("[loadPlayer] 명시적 타입 'm3u8' 확인.");
+        useExtension = true;
+    } else if (url.includes('.m3u8')) {
+        console.warn(`[loadPlayer] 타입은 '${type}'이지만 URL에 '.m3u8' 포함 -> 확장 사용 시도.`);
+        useExtension = true; // URL 기반으로 확장 사용 결정 (이전 방식 유사)
+        type = 'm3u8'; // 타입을 강제로 맞춰줌 (로그 및 추후 처리 일관성 위해)
+    } else {
+        console.log(`[loadPlayer] 타입 '${type}', URL에 '.m3u8' 미포함 -> 직접 iframe 로드.`);
+        useExtension = false;
+    }
 
-                 if (!currentExtensionId) {
-                     const browserName = isFirefoxMode ? 'Firefox' : 'Chrome';
-                      console.error(`[loadPlayer] ${browserName} 확장 프로그램 ID 없음!`);
-                      box.innerHTML = `<div style="text-align: center; color: red;">${browserName} HLS Player ID 오류</div>`;
-                      box.className = 'player-box';
-                      return;
-                 }
 
-                 const playerUrl = `${extensionPrefix}${currentExtensionId}/player.html#${encodeURIComponent(url)}`;
-                 console.log(`[loadPlayer] 생성된 확장 프로그램 player URL: ${playerUrl}`);
-                 iframe.src = playerUrl;
+    if (useExtension) {
+         console.log(`[loadPlayer] 최종 결정: HLS 확장 프로그램 사용 (type=${type})`);
+         const currentExtensionId = isFirefoxMode ? FIREFOX_EXTENSION_ID : CHROME_EXTENSION_ID;
+         const extensionPrefix = isFirefoxMode ? 'moz-extension://' : 'chrome-extension://';
 
-                 iframe.onload = () => console.log(`[loadPlayer] iframe 로드됨 (확장): ${playerUrl}`);
-                 iframe.onerror = (e) => {
-                     console.error(`[loadPlayer] 확장 프로그램 iframe 로드 오류: ${playerUrl}`, e);
-                     box.innerHTML = `<div style="text-align: center; color: red; padding: 10px;">HLS Player 확장 로드 실패<br><small>설치, 활성화, ID 확인 필요</small></div>`;
-                     box.className = 'player-box';
-                 };
+         if (!currentExtensionId) {
+             const browserName = isFirefoxMode ? 'Firefox' : 'Chrome';
+              console.error(`[loadPlayer] ${browserName} 확장 프로그램 ID 없음!`);
+              box.innerHTML = `<div style="text-align: center; color: red;">${browserName} HLS Player ID 오류</div>`;
+              box.className = 'player-box';
+              return;
+         }
 
-            } else { // type === 'iframe' 또는 기타
-                 console.log(`[loadPlayer] 타입 '${type}' 확인 -> 직접 iframe 로드: ${url}`);
-                 iframe.src = url;
+         const playerUrl = `${extensionPrefix}${currentExtensionId}/player.html#${encodeURIComponent(url)}`;
+         console.log(`[loadPlayer] 생성된 확장 프로그램 player URL: ${playerUrl}`);
+         iframe.src = playerUrl;
 
-                 iframe.onload = () => console.log(`[loadPlayer] iframe 로드됨 (직접): ${url}`);
-                 iframe.onerror = (e) => {
-                     console.error(`[loadPlayer] 직접 iframe 로드 오류: ${url}`, e);
-                     box.innerHTML = `<div style="text-align: center; color: red; padding: 10px;">컨텐츠 로드 실패<br><small>${url}</small></div>`;
-                     box.className = 'player-box';
-                 };
-            }
+         iframe.onload = () => console.log(`[loadPlayer] iframe 로드됨 (확장): ${playerUrl}`);
+         iframe.onerror = (e) => {
+             console.error(`[loadPlayer] 확장 프로그램 iframe 로드 오류: ${playerUrl}`, e);
+             box.innerHTML = `<div style="text-align: center; color: red; padding: 10px;">HLS Player 확장 로드 실패<br><small>설치, 활성화, ID 확인 필요</small></div>`;
+             box.className = 'player-box';
+         };
 
-            box.appendChild(iframe);
-            box.className = 'player-box active';
-        }
+    } else { // useExtension === false
+         console.log(`[loadPlayer] 최종 결정: 직접 iframe 로드 (type=${type})`);
+         iframe.src = url;
 
+         iframe.onload = () => console.log(`[loadPlayer] iframe 로드됨 (직접): ${url}`);
+         iframe.onerror = (e) => {
+             console.error(`[loadPlayer] 직접 iframe 로드 오류: ${url}`, e);
+             box.innerHTML = `<div style="text-align: center; color: red; padding: 10px;">컨텐츠 로드 실패<br><small>${url}</small></div>`;
+             box.className = 'player-box';
+         };
+    }
+
+    box.appendChild(iframe);
+    box.className = 'player-box active';
+}
         // 드롭 핸들러
         function createDropHandler(box) {
             return (e) => {
