@@ -5,243 +5,256 @@
     <title>m3u8 플레이어</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
-/* --- 전체 스타일 다시 제공 (수정 사항 포함) --- */
-* { box-sizing: border-box; }
-body {
-    font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
-    background: #f4f7fa;
-    color: #333;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-#sidebar {
-    width: 220px;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.95);
-    transition: transform 0.3s ease;
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    z-index: 10;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-}
-#sidebar.collapsed { transform: translateX(-100%); }
-#toggle-btn {
-    position: fixed;
-    top: 10px;
-    left: 205px;
-    width: 20px;
-    height: 20px;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 14px;
-    color: white;
-    transition: left 0.3s ease, background 0.3s;
-    padding: 0;
-    z-index: 11;
-    line-height: 20px;
-    text-align: center;
-    background: var(--button-color, #007bff);
-}
-#sidebar.collapsed + #player-container #toggle-btn { left: 10px; }
-#toggle-btn:hover { background: var(--hover-color, #0056b3); }
+        /* --- 기본 및 최신 레이아웃 스타일 --- */
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background: #f4f7fa;
+            color: #333;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        #sidebar {
+            width: 220px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            transition: transform 0.3s ease;
+            position: fixed; /* 고정 위치 */
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 10;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* 내용 많을 시 스크롤 */
+        }
+        #sidebar.collapsed { transform: translateX(-100%); }
+        #toggle-btn {
+            position: fixed;
+            top: 10px;
+            left: 205px; /* 사이드바 너비 + 여백 고려 */
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            transition: left 0.3s ease, background 0.3s;
+            padding: 0;
+            z-index: 11;
+            line-height: 20px;
+            text-align: center;
+            background: var(--button-color, #007bff); /* 기본값 설정 */
+        }
+        #sidebar.collapsed + #player-container #toggle-btn { left: 10px; }
+        #toggle-btn:hover { background: var(--hover-color, #0056b3); } /* 기본값 설정 */
 
-#baseball-channels, #chzzk-channels, #spotv-channels, #lck-channels, #favorite-channels {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin: 5px 0;
-}
+        /* --- 채널 버튼 스타일 (사용자가 제공한 원본 CSS 적용) --- */
+        #baseball-channels, #chzzk-channels, #spotv-channels, #lck-channels, #favorite-channels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        /* 일반 채널 버튼 (원본 스타일) */
+        .baseball-btn, .chzzk-btn, .lck-btn, .favorite-btn-channel {
+            flex: 1; /* 원본: 동일 비율로 늘어남 */
+            padding: 6px 0; /* 원본: 상하 패딩만 */
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px; /* 원본 */
+        }
+        .baseball-btn:hover, .chzzk-btn:hover, .lck-btn:hover, .favorite-btn-channel:hover {
+            background: #dee2e6; /* 원본 */
+        }
+        /* 작은 채널 버튼 (원본 스타일) */
+        .small-channel-btn {
+            /* flex 속성 없음 (원본) */
+            padding: 6px 10px; /* 원본 */
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px; /* 원본 */
+        }
+        .small-channel-btn:hover {
+            background: #dee2e6; /* 원본 */
+        }
+        /* 비활성화 버튼 스타일 (최신 스타일 유지) */
+        .disabled {
+            cursor: not-allowed !important;
+            opacity: 0.6;
+            background-color: #f8f9fa !important;
+        }
 
-/* 일반 채널 버튼 스타일 (늘어남 허용) */
-.baseball-btn, .chzzk-btn, .lck-btn, .favorite-btn-channel {
-    flex: 1 1 auto; /* 공간 채우도록 늘어남 */
-    padding: 6px 8px;
-    background: #e9ecef;
-    border-radius: 4px;
-    cursor: move;
-    user-select: none;
-    transition: background 0.2s;
-    border: none;
-    font-size: 12px;
-    text-align: center;
-    min-width: 35px;
-    white-space: nowrap;
-}
-.baseball-btn:hover, .chzzk-btn:hover, .lck-btn:hover, .favorite-btn-channel:hover {
-    background: #dee2e6;
-}
+        /* --- 나머지 레이아웃 및 컴포넌트 (최신 스타일 유지) --- */
+        #player-container {
+            flex-grow: 1;
+            display: grid;
+            gap: 2px; /* 플레이어 간 간격 */
+            padding: 2px; /* 컨테이너 내부 여백 */
+            height: 100vh;
+            width: calc(100% - 220px); /* 사이드바 제외 너비 */
+            transition: margin-left 0.3s ease, width 0.3s ease;
+            position: relative; /* 토글 버튼 기준 */
+            background: #e0e0e0; /* 그리드 배경 */
+            margin-left: 220px; /* 초기 사이드바 너비만큼 왼쪽 마진 */
+            border: none;
+        }
+        #sidebar.collapsed + #player-container {
+             margin-left: 0;
+             width: 100%;
+        }
+        .player-box {
+            background: #f0f2f5; /* 기본 배경 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: none; /* 테두리 제거 */
+            position: relative; /* 내부 요소 기준점 */
+        }
+        .player-box.active { }
+        .player-box iframe { width: 100%; height: 100%; border: none; display: block; }
+        .player-box div { padding: 15px; font-size: 14px; color: #6c757d; text-align: center;}
+        .player-box div small { display: block; margin-top: 5px; font-size: 11px; color: #adb5bd; word-break: break-all; }
 
-/* 작은 채널 버튼 스타일 (Spotv 등, 늘어나지 않음) - *** 수정된 부분 *** */
-.small-channel-btn {
-    flex: 0 0 auto; /* 중요: 늘어나거나 줄어들지 않고, 크기는 내용물/패딩/너비 기준 */
-    /* 또는 flex: none; */
-    padding: 6px 10px; /* 작은 버튼에 맞는 패딩 */
-    background: #e9ecef;
-    border-radius: 4px;
-    cursor: move;
-    user-select: none;
-    transition: background 0.2s;
-    border: none;
-    font-size: 12px;
-    text-align: center;
-    min-width: 33px; /* 최소 너비 유지 */
-    white-space: nowrap;
-    /* 필요시 고정 너비 추가 가능: width: 40px; */
-}
-.small-channel-btn:hover {
-    background: #dee2e6;
-}
+        /* 일반 버튼 (최신 스타일 유지) */
+        button {
+            padding: 8px 15px;
+            margin: 5px 5px 5px 0;
+            background: var(--button-color, #007bff);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            font-size: 14px;
+             /* width: 90px; 제거 (최신 스타일) */
+        }
+        button:hover { background: var(--hover-color, #0056b3); transform: translateY(-1px); }
 
-/* --- 나머지 스타일은 이전과 동일 --- */
-.disabled {
-    cursor: not-allowed !important;
-    opacity: 0.6;
-    background-color: #f8f9fa !important;
-}
-#player-container {
-    flex-grow: 1;
-    display: grid;
-    gap: 2px;
-    padding: 2px;
-    height: 100vh;
-    width: calc(100% - 220px);
-    transition: margin-left 0.3s ease, width 0.3s ease;
-    position: relative;
-    background: #e0e0e0;
-    margin-left: 220px;
-    border: none;
-}
-#sidebar.collapsed + #player-container {
-     margin-left: 0;
-     width: 100%;
-}
-.player-box {
-    background: #f0f2f5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    border: none;
-    position: relative;
-}
-.player-box.active { }
-.player-box iframe { width: 100%; height: 100%; border: none; display: block; }
-.player-box div { padding: 15px; font-size: 14px; color: #6c757d; text-align: center;}
-.player-box div small { display: block; margin-top: 5px; font-size: 11px; color: #adb5bd; word-break: break-all; }
-button {
-    padding: 8px 15px;
-    margin: 5px 5px 5px 0;
-    background: var(--button-color, #007bff);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s, transform 0.2s;
-    font-size: 14px;
-}
-button:hover { background: var(--hover-color, #0056b3); transform: translateY(-1px); }
-h3, h4 {
-    font-size: 15px;
-    margin: 12px 0 6px;
-    color: #495057;
-    font-weight: 500;
-    border-bottom: 1px solid #e9ecef;
-    padding-bottom: 4px;
- }
-h4 { font-size: 14px; margin-top: 15px;}
-#custom-url-container { margin: 15px 0; }
-#custom-url-input {
-    width: calc(100% - 100px);
-    padding: 8px 10px;
-    margin-bottom: 5px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 13px;
-    display: inline-block;
-    vertical-align: middle;
-    height: 36px;
-}
- #custom-url-container button {
-    width: auto;
-     padding: 8px 12px;
-     vertical-align: middle;
-     height: 36px;
-     margin-left: 5px;
-     margin-right: 0;
-}
-#split-screen-buttons {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 5px;
-    margin-bottom: 15px;
-}
-#split-screen-buttons button {
-    width: 100%;
-    margin: 0;
-    padding: 7px 0;
-}
-#favorite-modal {
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    background: white; padding: 25px; border-radius: 8px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2); z-index: 1000;
-    display: none; min-width: 350px;
-}
-#favorite-modal h3 { margin-top: 0; border: none; }
-#favorite-modal input {
-    width: 100%; padding: 9px 12px; margin: 8px 0;
-    border: 1px solid #ced4da; border-radius: 4px;
-    box-sizing: border-box; font-size: 14px;
-}
-#favorite-modal button { width: auto; padding: 9px 18px; margin-top: 10px; margin-right: 8px; }
-#favorite-modal button:last-child { margin-right: 0; }
-#favorite-modal ul {
-    max-height: 250px; overflow-y: auto; margin-top: 15px;
-    padding-left: 0; list-style-type: none; border-top: 1px solid #eee;
-}
-#favorite-modal li {
-    padding: 10px 5px; display: flex; justify-content: space-between;
-    align-items: center; border-bottom: 1px solid #eee;
-}
- #favorite-modal li span {
-    flex-grow: 1; margin-right: 10px; word-break: break-all;
-    font-size: 14px; line-height: 1.4;
- }
-#favorite-modal li button {
-    padding: 4px 9px; font-size: 12px; background-color: #dc3545;
-    margin: 0; flex-shrink: 0; line-height: 1;
-}
-#favorite-modal li button:hover { background-color: #c82333; }
-.toggle-header {
-    cursor: pointer; display: flex; justify-content: space-between;
-    align-items: center; padding: 5px 0; border-bottom: none;
-}
-.toggle-header::after {
-    content: '▼'; font-size: 11px; margin-left: 5px;
-    transition: transform 0.2s ease;
-}
-.toggle-header.collapsed::after { transform: rotate(-90deg); }
-#spotv-channels { display: none; }
-#spotv-channels.active { display: flex; }
-#mode-toggle-btn { width: 100%; margin-top: auto; margin-bottom: 10px; padding: 9px 0; }
-#firefox-notice, #chrome-notice {
-     display: none; margin: 10px 0; padding: 10px; background-color: #fff3cd;
-     border: 1px solid #ffeeba; border-radius: 4px; font-size: 12px; line-height: 1.5;
-}
-#firefox-notice a, #chrome-notice a { color: #856404; font-weight: bold; text-decoration: none; }
-#firefox-notice a:hover, #chrome-notice a:hover { text-decoration: underline; }
+        /* 헤더 스타일 (최신 스타일 유지) */
+        h3, h4 {
+            font-size: 15px;
+            margin: 12px 0 6px;
+            color: #495057;
+            font-weight: 500;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 4px;
+         }
+        h4 { font-size: 14px; margin-top: 15px;}
+
+        /* 커스텀 URL 입력부 (최신 스타일 유지) */
+        #custom-url-container { margin: 15px 0; }
+        #custom-url-input {
+            width: 100%; /* 버튼 너비 고려 */
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 13px;
+            display: inline-block;
+            vertical-align: middle;
+            height: 36px; /* 버튼 높이와 맞춤 */
+        }
+         #custom-url-container button { /* 실행, 즐겨찾기 버튼 */
+            width: auto;
+             padding: 8px 12px;
+             vertical-align: middle;
+             height: 36px;
+             margin-left: 5px;
+             margin-right: 0;
+        }
+
+        /* 분할 화면 버튼 (최신 스타일 유지) */
+        #split-screen-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4개 버튼 한 줄에 */
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        #split-screen-buttons button { /* 1, 2, 3, 4 버튼 */
+            width: 100%; /* 그리드 셀 채우기 */
+            margin: 0; /* 그리드 갭 사용 */
+            padding: 7px 0; /* 높이 조절 */
+        }
+
+        /* 모달 스타일 (최신 스타일 유지) */
+        #favorite-modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; padding: 25px; border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2); z-index: 1000;
+            display: none; min-width: 350px;
+        }
+        #favorite-modal h3 { margin-top: 0; border: none; }
+        #favorite-modal input {
+            width: 100%; padding: 9px 12px; margin: 8px 0;
+            border: 1px solid #ced4da; border-radius: 4px;
+            box-sizing: border-box; font-size: 14px;
+        }
+        #favorite-modal button { width: auto; padding: 9px 18px; margin-top: 10px; margin-right: 8px; }
+        #favorite-modal button:last-child { margin-right: 0; }
+        #favorite-modal ul {
+            max-height: 250px; overflow-y: auto; margin-top: 15px;
+            padding-left: 0; list-style-type: none; border-top: 1px solid #eee;
+        }
+        #favorite-modal li {
+            padding: 10px 5px; display: flex; justify-content: space-between;
+            align-items: center; border-bottom: 1px solid #eee;
+        }
+         #favorite-modal li span {
+            flex-grow: 1; margin-right: 10px; word-break: break-all;
+            font-size: 14px; line-height: 1.4;
+         }
+        #favorite-modal li button { /* 삭제 버튼 */
+            padding: 4px 9px; font-size: 12px; background-color: #dc3545;
+            margin: 0; flex-shrink: 0; line-height: 1;
+        }
+        #favorite-modal li button:hover { background-color: #c82333; }
+
+        /* 토글 헤더 (최신 스타일 유지) */
+        .toggle-header {
+            cursor: pointer; display: flex; justify-content: space-between;
+            align-items: center; padding: 5px 0; border-bottom: none;
+        }
+        .toggle-header::after {
+            content: '▼'; font-size: 11px; margin-left: 5px;
+            transition: transform 0.2s ease;
+        }
+        .toggle-header.collapsed::after { transform: rotate(-90deg); }
+        #spotv-channels { display: none; }
+        #spotv-channels.active { display: flex; }
+
+        /* 모드 토글 버튼 및 알림 (최신 스타일 유지) */
+        #mode-toggle-btn { width: 100%; margin-top: auto; margin-bottom: 10px; padding: 9px 0; }
+        #firefox-notice, #chrome-notice {
+             display: none; margin: 10px 0; padding: 10px; background-color: #fff3cd;
+             border: 1px solid #ffeeba; border-radius: 4px; font-size: 12px; line-height: 1.5;
+        }
+        #firefox-notice a, #chrome-notice a { color: #856404; font-weight: bold; text-decoration: none; }
+        #firefox-notice a:hover, #chrome-notice a:hover { text-decoration: underline; }
+
     </style>
 </head>
 <body>
+    <!-- HTML 구조 및 JavaScript는 이전 답변과 동일하게 유지 -->
     <div id="sidebar">
         <h3>숙제 채널</h3>
         <div id="lck-channels"></div>
@@ -249,16 +262,16 @@ h4 { font-size: 14px; margin-top: 15px;}
         <div id="chzzk-channels"></div>
         <h4>즐겨찾기 채널</h4>
         <div id="favorite-channels"></div>
-        <h4 class="toggle-header collapsed" onclick="toggleSpotv(this)">스포티비 채널</h4> 
+        <h4 class="toggle-header collapsed" onclick="toggleSpotv(this)">스포티비 채널</h4>
         <div id="spotv-channels"></div>
         <h4>야구 채널</h4>
         <div id="baseball-channels"></div>
         <h3>분할 화면 설정</h3>
         <div id="split-screen-buttons">
-            <button onclick="setSplitScreen(1)">1</button> 
-            <button onclick="setSplitScreen(2)">2</button>
-            <button onclick="setSplitScreen(3)">3</button>
-            <button onclick="setSplitScreen(4)">4</button>
+            <button onclick="setSplitScreen(1)">1분할</button>
+            <button onclick="setSplitScreen(2)">2분할</button>
+            <button onclick="setSplitScreen(3)">3분할</button>
+            <button onclick="setSplitScreen(4)">4분할</button>
         </div>
         <div id="custom-url-container">
             <input type="text" id="custom-url-input" placeholder="m3u8, 치지직 ID, 채널 URL 입력">
@@ -266,7 +279,7 @@ h4 { font-size: 14px; margin-top: 15px;}
             <button onclick="showFavoriteModal()">즐겨찾기</button>
         </div>
         <div id="firefox-notice">
-            파이어폭스: <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어 (설치 필수)</a>
+            파폭: <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어 (설치 필수)</a>
         </div>
         <div id="chrome-notice">
             크롬: <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어 (설치 필수)</a>
@@ -275,7 +288,7 @@ h4 { font-size: 14px; margin-top: 15px;}
     </div>
     <div id="player-container">
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
-        </div>
+    </div>
 
     <div id="favorite-modal">
         <h3>즐겨찾기 관리</h3>
@@ -287,12 +300,13 @@ h4 { font-size: 14px; margin-top: 15px;}
     </div>
 
     <script>
-        // --- Google Apps Script 설정 ---
-        // !!! 중요: 아래 URL을 배포된 Google Apps Script 웹 앱의 URL로 교체하세요 !!!
-        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyfH8NgvggsTWd9-GNpajUFQrBf0GF4sqHyMl9VUljqRmOYdO-NaWlrBMM-ZEDIYvDg1w/exec'; // 여기에 실제 URL 넣기
+        // --- JavaScript 코드는 이전 답변(m3u8 다운로드 문제 해결 시도 버전)과 동일하게 유지 ---
+        // (Google Apps Script URL, 상수 정의, 함수 정의 등)
+        // ... (이전 답변의 전체 스크립트 내용 붙여넣기) ...
+        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyfH8NgvggsTWd9-GNpajUFQrBf0GF4sqHyMl9VUljqRmOYdO-NaWlrBMM-ZEDIYvDg1w/exec'; // 실제 URL 확인
 
         const CHROME_EXTENSION_ID = 'eakdijdofmnclopcffkkgmndadhbjgka';
-        const FIREFOX_EXTENSION_ID = 'ace413ec-8009-4e7c-841a-d0b581794b61'; // 실제 파이어폭스 ID 확인 필요
+        const FIREFOX_EXTENSION_ID = 'ace413ec-8009-4e7c-841a-d0b581794b61';
         const baseballBaseUrl = 'https://global-media.sooplive.com/live/soopbaseball';
         const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/';
 
@@ -300,37 +314,26 @@ h4 { font-size: 14px; margin-top: 15px;}
         let extensionId = CHROME_EXTENSION_ID;
         let youtubeUrlsFromSheet = {};
 
-        // --- 채널 데이터 정의 ---
         const baseballChannels = Array.from({ length: 5 }, (_, i) => ({
-            name: `야${i + 1}`,
-            url: `${baseballBaseUrl}${i + 1}/master.m3u8`,
-            type: 'm3u8' // 타입 명시
+            name: `야${i + 1}`, url: `${baseballBaseUrl}${i + 1}/master.m3u8`, type: 'm3u8'
         }));
-
         const spotvChannels = Array.from({ length: 40 }, (_, i) => {
             const channelNum = String(i + 1).padStart(2, '0');
-            return {
-                name: `${i + 1}`,
-                url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8`,
-                type: 'm3u8' // 타입 명시
-            };
+            return { name: `${i + 1}`, url: `https://ch${channelNum}-nlivecdn.spotvnow.co.kr/ch${channelNum}/decr/medialist_14173921312004482655_hls.m3u8`, type: 'm3u8' };
         });
-
         const lckChannels = [
             { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop' },
             { name: 'C', url: 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redirect/9381e7d6816e6d915a44a13c0195b202', type: 'm3u8', tooltip: 'chzzk' },
-            { name: 'K', url: '', type: 'iframe', tooltip: 'youtube' } // 초기 URL은 비워둠, 타입은 데이터 로드 후 결정
+            { name: 'K', url: '', type: 'iframe', tooltip: 'youtube' }
         ];
-
         const chzzkChannels = [
-            { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced', type: 'm3u8' }, // 타입 명시 (ID 기반 = m3u8 프록시)
+            { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced', type: 'm3u8' },
             { name: '침', id: 'bb382c2c0cc9fa7c86ab3b037fb5799c', type: 'm3u8' },
             { name: '추', id: '181a3baebe508d3b5fa5d9fe4d6b5241', type: 'm3u8' },
             { name: '솝', id: '34a2bd4f5988e37693e94306f0bfe57f', type: 'm3u8' },
             { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181', type: 'm3u8' }
         ];
 
-        // --- DOM 요소 가져오기 ---
         const baseballChannelList = document.getElementById('baseball-channels');
         const lckChannelList = document.getElementById('lck-channels');
         const chzzkChannelList = document.getElementById('chzzk-channels');
@@ -344,13 +347,11 @@ h4 { font-size: 14px; margin-top: 15px;}
         const firefoxNotice = document.getElementById('firefox-notice');
         const chromeNotice = document.getElementById('chrome-notice');
 
-        // --- 상태 변수 ---
         let playerCount = 1;
         let clickIndex = 0;
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
-        // --- 함수 정의 ---
-
+        // --- 함수 정의 (이전 답변의 함수들 그대로 사용) ---
         function updateModeStyles() {
             const root = document.documentElement;
             const isCollapsed = sidebar.classList.contains('collapsed');
@@ -391,127 +392,118 @@ h4 { font-size: 14px; margin-top: 15px;}
 
         function getYouTubeLiveOrUpcoming() {
             const today = getKstDate();
-            console.log("[getYouTubeLiveOrUpcoming] 오늘 날짜(KST):", today);
-            console.log("[getYouTubeLiveOrUpcoming] 시트 데이터:", youtubeUrlsFromSheet);
+            // console.log("[getYouTubeLiveOrUpcoming] 오늘 날짜(KST):", today);
+            // console.log("[getYouTubeLiveOrUpcoming] 시트 데이터:", youtubeUrlsFromSheet);
             if (youtubeUrlsFromSheet && youtubeUrlsFromSheet[today] && youtubeUrlsFromSheet[today].url) {
                 const rawUrl = youtubeUrlsFromSheet[today].url;
-                // YouTube URL은 항상 transformUrl을 거치도록 함
                 const transformedUrl = transformUrl(rawUrl);
-                console.log(`[getYouTubeLiveOrUpcoming] ${today} 날짜 YouTube URL 로드 (원본: ${rawUrl}, 변환: ${transformedUrl})`);
-                return transformedUrl; // 변환된 URL 반환
+                // console.log(`[getYouTubeLiveOrUpcoming] ${today} 날짜 YouTube URL 로드 (원본: ${rawUrl}, 변환: ${transformedUrl})`);
+                return transformedUrl;
             }
-             console.log(`[getYouTubeLiveOrUpcoming] ${today} 날짜 YouTube URL 없음`);
+             // console.log(`[getYouTubeLiveOrUpcoming] ${today} 날짜 YouTube URL 없음`);
             return null;
         }
 
-        function transformUrl(url) {
+         function transformUrl(url) {
              if (!url) return null;
-             const originalUrl = url; // 디버깅용 원본 저장
-             console.log('[transformUrl] 입력 URL:', originalUrl);
+             const originalUrl = url;
+             // console.log('[transformUrl] 입력 URL:', originalUrl);
 
-             // 1. m3u8 URL은 그대로 반환 (다른 변환보다 우선)
              if (url.includes('.m3u8')) {
-                  console.log('[transformUrl] .m3u8 감지 -> 원본 URL 반환');
+                  // console.log('[transformUrl] .m3u8 감지 -> 원본 URL 반환');
                  return url;
              }
 
-             // 2. 치지직 채널 ID (32자리 16진수) - 프록시 URL 생성
-             // 주의: playCustomUrl에서 이미 처리될 수 있으나, 즐겨찾기 등 다른 곳에서도 사용될 수 있으므로 유지
              const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
              if (chzzkChannelIdPattern.test(url)) {
                   const transformed = `${chzzkProxyBaseUrl}${url}`;
-                  console.log('[transformUrl] 치지직 ID 감지 -> 프록시 URL 반환:', transformed);
+                  // console.log('[transformUrl] 치지직 ID 감지 -> 프록시 URL 반환:', transformed);
                  return transformed;
              }
 
-             // 3. lolcast.kr 기반 URL 처리
              if (url.startsWith('https://lolcast.kr/#/player/')) {
                  const parts = url.split('/');
                  if (parts.length >= 6) {
                      const platform = parts[4];
                      const channelId = parts[5];
-                     let transformed = url; // 기본값은 원본
-                     console.log(`[transformUrl] lolcast.kr 감지: ${platform}/${channelId}`);
+                     let transformed = url;
+                     // console.log(`[transformUrl] lolcast.kr 감지: ${platform}/${channelId}`);
                      switch (platform) {
                          case 'youtube': transformed = `https://www.youtube.com/embed/${channelId}`; break;
-                         case 'twitch': transformed = `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`; break; // parent 파라미터 확인 필요
+                         case 'twitch': transformed = `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`; break;
                          case 'chzzk': transformed = `https://chzzk.naver.com/live/${channelId}`; break;
                          case 'kick': transformed = `https://player.kick.com/${channelId}`; break;
                          case 'afreeca': transformed = `https://play.sooplive.co.kr/${channelId}/embed`; break;
-                         default: console.warn(`[transformUrl] 지원되지 않는 lolcast 플랫폼: ${platform}`); break; // 변환 안 함
+                         default: /* console.warn(`[transformUrl] 지원되지 않는 lolcast 플랫폼: ${platform}`); */ break;
                      }
-                     console.log('[transformUrl] lolcast.kr 변환 결과:', transformed);
+                     // console.log('[transformUrl] lolcast.kr 변환 결과:', transformed);
                      return transformed;
                  }
              }
 
-             // 4. 짧은 형식 URL 처리 (예: youtube/채널ID)
              const shortFormMatch = url.match(/^(youtube|twitch|chzzk|kick|afreeca)\/([^\/]+)$/);
              if (shortFormMatch) {
                  const platform = shortFormMatch[1];
                  const channelId = shortFormMatch[2];
                  let transformed = null;
-                 console.log(`[transformUrl] 짧은 형식 감지: ${platform}/${channelId}`);
+                 // console.log(`[transformUrl] 짧은 형식 감지: ${platform}/${channelId}`);
                  switch (platform) {
                     case 'youtube': transformed = `https://www.youtube.com/embed/${channelId}`; break;
-                    case 'twitch': transformed = `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`; break; // parent 확인
+                    case 'twitch': transformed = `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`; break;
                     case 'chzzk': transformed = `https://chzzk.naver.com/live/${channelId}`; break;
                     case 'kick': transformed = `https://player.kick.com/${channelId}`; break;
                     case 'afreeca': transformed = `https://play.sooplive.co.kr/${channelId}/embed`; break;
-                    default: console.warn(`[transformUrl] 지원되지 않는 짧은 형식 플랫폼: ${platform}`); return url; // 알 수 없으면 원본 반환 시도
+                    default: /* console.warn(`[transformUrl] 지원되지 않는 짧은 형식 플랫폼: ${platform}`); */ return url;
                  }
-                 console.log('[transformUrl] 짧은 형식 변환 결과:', transformed);
+                 // console.log('[transformUrl] 짧은 형식 변환 결과:', transformed);
                  return transformed;
              }
 
-             // 5. 풀 URL 처리
              if (url.startsWith('https://www.youtube.com/watch?v=') || url.startsWith('https://youtu.be/')) {
                  const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/);
                  if (match && match[1]) {
                      const transformed = `https://www.youtube.com/embed/${match[1]}`;
-                     console.log('[transformUrl] 유튜브 watch/youtu.be 감지 -> embed 변환:', transformed);
+                     // console.log('[transformUrl] 유튜브 watch/youtu.be 감지 -> embed 변환:', transformed);
                      return transformed;
                  }
              }
              if (url.startsWith('https://www.youtube.com/embed/')) {
-                 console.log('[transformUrl] 유튜브 embed URL 감지 -> 원본 반환');
-                 return url; // 이미 embed 형식이면 그대로 사용
+                 // console.log('[transformUrl] 유튜브 embed URL 감지 -> 원본 반환');
+                 return url;
              }
-            // YouTube 채널 URL 등은 iframe 로드를 위해 그대로 반환 시도
              if (url.includes('youtube.com/channel/') || url.includes('youtube.com/@')) {
-                  console.log('[transformUrl] 유튜브 채널 URL 감지 -> 원본 반환 시도');
+                  // console.log('[transformUrl] 유튜브 채널 URL 감지 -> 원본 반환 시도');
                  return url;
              }
 
              if (url.startsWith('https://twitch.tv/') || url.startsWith('https://www.twitch.tv/')) {
-                 const channelId = url.split('/').filter(Boolean).pop(); // 맨 끝 ID 추출 (슬래시 처리 포함)
-                 const transformed = `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`; // parent 확인
-                 console.log(`[transformUrl] 트위치 풀 URL 감지 -> 변환 (채널: ${channelId}):`, transformed);
+                 const channelId = url.split('/').filter(Boolean).pop();
+                 const transformed = `https://player.twitch.tv/?channel=${channelId}&parent=lolcast.kr&parent=0c5ac3b1-playground-worker-empty-bread-9ff1.hlsp.workers.dev`;
+                 // console.log(`[transformUrl] 트위치 풀 URL 감지 -> 변환 (채널: ${channelId}):`, transformed);
                  return transformed;
              }
              if (url.startsWith('https://player.twitch.tv/')) {
-                 console.log('[transformUrl] 트위치 플레이어 URL 감지 -> 원본 반환');
-                 return url; // 이미 플레이어 형식이면 그대로 사용
+                 // console.log('[transformUrl] 트위치 플레이어 URL 감지 -> 원본 반환');
+                 return url;
              }
 
 
              if (url.startsWith('https://chzzk.naver.com/live/')) {
-                 // ID 추출 후 재구성하여 정규화 (혹시 모를 추가 파라미터 제거)
                   const parts = url.split('/');
                   const liveIndex = parts.indexOf('live');
                   if (liveIndex !== -1 && parts.length > liveIndex + 1) {
-                      const channelId = parts[liveIndex + 1].split('?')[0]; // 파라미터 제거
+                      const channelId = parts[liveIndex + 1].split('?')[0];
                       const transformed = `https://chzzk.naver.com/live/${channelId}`;
-                      console.log(`[transformUrl] 치지직 풀 URL 감지 -> 정규화 (ID: ${channelId}):`, transformed);
+                      // console.log(`[transformUrl] 치지직 풀 URL 감지 -> 정규화 (ID: ${channelId}):`, transformed);
                       return transformed;
                   }
              }
-              if (url.startsWith('https://chzzk.naver.com/')) { // live 없는 경우도 ID 추출 시도
+              if (url.startsWith('https://chzzk.naver.com/')) {
                  const parts = url.split('/');
                  const potentialId = parts.pop() || parts.pop();
                   if (potentialId && potentialId.length === 32 && /^[0-9a-fA-F]+$/.test(potentialId)) {
                      const transformed = `https://chzzk.naver.com/live/${potentialId}`;
-                     console.log('[transformUrl] chzzk.naver.com URL 감지 -> live URL로 변환:', transformed);
+                     // console.log('[transformUrl] chzzk.naver.com URL 감지 -> live URL로 변환:', transformed);
                      return transformed;
                   }
               }
@@ -519,82 +511,76 @@ h4 { font-size: 14px; margin-top: 15px;}
              if (url.startsWith('https://kick.com/')) {
                  const channelId = url.split('/').filter(Boolean).pop();
                  const transformed = `https://player.kick.com/${channelId}`;
-                  console.log(`[transformUrl] 킥 풀 URL 감지 -> 변환 (채널: ${channelId}):`, transformed);
+                  // console.log(`[transformUrl] 킥 풀 URL 감지 -> 변환 (채널: ${channelId}):`, transformed);
                  return transformed;
              }
              if (url.startsWith('https://player.kick.com/')) {
-                 console.log('[transformUrl] 킥 플레이어 URL 감지 -> 원본 반환');
+                 // console.log('[transformUrl] 킥 플레이어 URL 감지 -> 원본 반환');
                  return url;
              }
 
              if (url.startsWith('https://play.sooplive.co.kr/')) {
                  const parts = url.split('/');
-                  if (parts.length >= 4 && parts[3]) { // /live/ 등 중간 경로 무시, BJ ID 부분 확인
-                     const channelId = parts[3].split('/')[0]; // embed 등이 붙을 수 있으므로 첫 부분만 사용
+                  if (parts.length >= 4 && parts[3]) {
+                     const channelId = parts[3].split('/')[0];
                      const transformed = `https://play.sooplive.co.kr/${channelId}/embed`;
-                     console.log(`[transformUrl] SOOP URL 감지 -> embed 변환 (채널: ${channelId}):`, transformed);
+                     // console.log(`[transformUrl] SOOP URL 감지 -> embed 변환 (채널: ${channelId}):`, transformed);
                      return transformed;
                   }
              }
 
-             // 프로토콜 없는 입력 처리 (기본적으로는 null)
              if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                 console.log('[transformUrl] 프로토콜 없음 -> null 반환');
+                 // console.log('[transformUrl] 프로토콜 없음 -> null 반환');
                  return null;
              }
 
-             // 위 모든 규칙에 해당하지 않으면 원본 URL 반환 (iframe 로드 시도)
-             console.log('[transformUrl] 특정 규칙 미일치 -> 원본 URL 반환 시도:', url);
+             // console.log('[transformUrl] 특정 규칙 미일치 -> 원본 URL 반환 시도:', url);
              return url;
          }
 
         function playCustomUrl() {
             const customUrlInput = document.getElementById('custom-url-input');
-            const userInput = customUrlInput.value.trim(); // 사용자가 입력한 원본 값
-            console.log('[playCustomUrl] 입력값:', userInput);
+            const userInput = customUrlInput.value.trim();
+            // console.log('[playCustomUrl] 입력값:', userInput);
 
             if (userInput) {
                 let finalUrl = null;
-                let type = 'iframe'; // 기본 타입
+                let type = 'iframe';
 
-                // 1. 치지직 32자리 ID 확인
                 const chzzkChannelIdPattern = /^[0-9a-fA-F]{32}$/;
                 if (chzzkChannelIdPattern.test(userInput)) {
-                    console.log('[playCustomUrl] 입력값은 치지직 ID입니다.');
-                    finalUrl = `${chzzkProxyBaseUrl}${userInput}`; // 프록시 URL 사용
-                    type = 'm3u8'; // *** 타입 명시적으로 m3u8 설정 ***
-                    console.log(`[playCustomUrl] 타입 '${type}' 설정, 프록시 URL 생성: ${finalUrl}`);
+                    // console.log('[playCustomUrl] 입력값은 치지직 ID입니다.');
+                    finalUrl = `${chzzkProxyBaseUrl}${userInput}`;
+                    type = 'm3u8';
+                    // console.log(`[playCustomUrl] 타입 '${type}' 설정, 프록시 URL 생성: ${finalUrl}`);
                 } else {
-                    // 2. ID가 아니면 URL로 간주하고 변환 시도
-                    console.log('[playCustomUrl] 입력값은 URL입니다. transformUrl 호출.');
-                    finalUrl = transformUrl(userInput); // URL 변환
+                    // console.log('[playCustomUrl] 입력값은 URL입니다. transformUrl 호출.');
+                    finalUrl = transformUrl(userInput);
 
                     if (finalUrl) {
-                         // 변환된 URL이 m3u8을 포함하면 타입 변경
                          if (finalUrl.includes('.m3u8')) {
-                             console.log('[playCustomUrl] transformUrl 결과 .m3u8 포함.');
+                             // console.log('[playCustomUrl] transformUrl 결과 .m3u8 포함.');
                              type = 'm3u8';
                          } else {
-                            console.log('[playCustomUrl] transformUrl 결과 .m3u8 미포함.');
-                             type = 'iframe'; // 기본 iframe 유지
+                            // console.log('[playCustomUrl] transformUrl 결과 .m3u8 미포함.');
+                             type = 'iframe';
                          }
-                         console.log(`[playCustomUrl] 타입 '${type}' 설정, 변환된 URL: ${finalUrl}`);
+                         // console.log(`[playCustomUrl] 타입 '${type}' 설정, 변환된 URL: ${finalUrl}`);
                     } else {
-                         console.log('[playCustomUrl] transformUrl 결과 null. 유효하지 않은 URL.');
+                         // console.log('[playCustomUrl] transformUrl 결과 null. 유효하지 않은 URL.');
                     }
                 }
 
-                // 최종 URL과 타입으로 플레이어 로드
                 if (finalUrl) {
                     const playerBoxes = playerContainer.querySelectorAll('.player-box');
                     if (playerBoxes.length > 0) {
                         const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                        console.log(`[playCustomUrl] loadPlayer 호출: box=${targetBox.id}, url=${finalUrl}, type=${type}`);
+                        // console.log(`[playCustomUrl] loadPlayer 호출: box=${targetBox.id}, url=${finalUrl}, type=${type}`);
                         loadPlayer(targetBox, finalUrl, type);
                         clickIndex++;
-                        customUrlInput.value = ''; // 입력 필드 초기화
+                        customUrlInput.value = '';
                     } else {
-                         console.error('[playCustomUrl] 플레이어 박스를 찾을 수 없습니다.');
+                         // console.error('[playCustomUrl] 플레이어 박스를 찾을 수 없습니다.');
                     }
                 } else {
                     alert('유효하지 않거나 지원하지 않는 형식의 URL 또는 ID입니다.');
@@ -602,13 +588,9 @@ h4 { font-size: 14px; margin-top: 15px;}
             }
         }
 
-
-        // 채널 목록 렌더링 (*** 타입 처리 수정 ***)
         function renderChannelList(container, channels, className, options = {}) {
-             // 옵션 기본값 설정 및 구조분해할당
              const { tooltipKey = 'tooltip', urlKey = 'url', idKey = 'id', nameKey = 'name' } = options;
-
-             container.innerHTML = ''; // 기존 버튼들 제거
+             container.innerHTML = '';
 
              channels.forEach(channel => {
                  const btn = document.createElement('div');
@@ -616,51 +598,44 @@ h4 { font-size: 14px; margin-top: 15px;}
                  btn.draggable = true;
                  btn.textContent = channel[nameKey];
 
-                 let initialUrl = ''; // 변환 전 원본 URL 또는 ID 기반 URL
-                 let initialType = channel.type || 'iframe'; // 채널 데이터의 타입 우선 사용, 없으면 iframe
+                 let initialUrl = '';
+                 let initialType = channel.type || 'iframe';
 
-                 // 1. 초기 URL 및 타입 결정
                  if (idKey && channel[idKey]) {
                      initialUrl = `${chzzkProxyBaseUrl}${channel[idKey]}`;
-                     initialType = 'm3u8'; // ID 기반은 무조건 m3u8 프록시
-                     console.log(`[renderChannelList] 채널 '${channel[nameKey]}': ID 기반 -> 초기 URL=${initialUrl}, 초기 타입=${initialType}`);
+                     initialType = 'm3u8';
+                     // console.log(`[renderChannelList] 채널 '${channel[nameKey]}': ID 기반 -> 초기 URL=${initialUrl}, 초기 타입=${initialType}`);
                  } else if (urlKey && channel[urlKey]) {
                      initialUrl = channel[urlKey];
-                     // 채널 데이터에 타입 명시 없으면 URL 보고 추정 (선택적)
                      if (!channel.type && initialUrl.includes('.m3u8')) {
                          initialType = 'm3u8';
                      }
-                     console.log(`[renderChannelList] 채널 '${channel[nameKey]}': URL 기반 -> 초기 URL=${initialUrl}, 초기 타입=${initialType}`);
+                     // console.log(`[renderChannelList] 채널 '${channel[nameKey]}': URL 기반 -> 초기 URL=${initialUrl}, 초기 타입=${initialType}`);
                  } else {
-                     console.log(`[renderChannelList] 채널 '${channel[nameKey]}': URL/ID 정보 없음`);
-                     initialType = 'iframe'; // URL 없으면 기본 iframe
+                     // console.log(`[renderChannelList] 채널 '${channel[nameKey]}': URL/ID 정보 없음`);
+                     initialType = 'iframe';
                  }
 
-
-                 // 2. URL 변환 시도 (initialUrl 기준)
-                 // 주의: transformUrl은 ID를 m3u8 프록시로 바꾸거나, youtube 등을 embed로 바꾸는 역할
                  const transformedUrl = transformUrl(initialUrl);
-                 console.log(`[renderChannelList] 채널 '${channel[nameKey]}': 변환 후 URL=${transformedUrl}`);
+                 // console.log(`[renderChannelList] 채널 '${channel[nameKey]}': 변환 후 URL=${transformedUrl}`);
 
-                 // 3. 버튼 데이터 설정
                  if (transformedUrl) {
-                     btn.dataset.url = transformedUrl; // 최종 사용할 URL 설정
-                     btn.dataset.type = initialType; // *** 결정된 초기 타입을 그대로 사용 ***
+                     btn.dataset.url = transformedUrl;
+                     btn.dataset.type = initialType;
                      if (channel[tooltipKey]) btn.title = channel[tooltipKey];
                  } else {
-                      console.log(`[renderChannelList] 채널 '${channel[nameKey]}': 유효한 URL 변환 실패 -> 비활성화`);
-                     btn.dataset.url = ''; // URL 없음
-                     btn.dataset.type = 'iframe'; // 타입은 기본으로
+                      // console.log(`[renderChannelList] 채널 '${channel[nameKey]}': 유효한 URL 변환 실패 -> 비활성화`);
+                     btn.dataset.url = '';
+                     btn.dataset.type = 'iframe';
                      btn.classList.add('disabled');
                      btn.title = "URL 정보 없음";
                      btn.draggable = false;
                  }
 
-                  // 4. 이벤트 리스너 설정
                  btn.addEventListener('dragstart', (e) => {
                      if (btn.dataset.url && btn.dataset.type) {
                          e.dataTransfer.setData('text/plain', btn.dataset.url);
-                         e.dataTransfer.setData('text/type', btn.dataset.type); // 저장된 타입 사용
+                         e.dataTransfer.setData('text/type', btn.dataset.type);
                      } else {
                          e.preventDefault();
                      }
@@ -671,8 +646,8 @@ h4 { font-size: 14px; margin-top: 15px;}
                          const playerBoxes = playerContainer.querySelectorAll('.player-box');
                          if (playerBoxes.length > 0) {
                              const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                              console.log(`[Button Click] loadPlayer 호출: box=${targetBox.id}, url=${btn.dataset.url}, type=${btn.dataset.type}`);
-                             loadPlayer(targetBox, btn.dataset.url, btn.dataset.type); // 저장된 URL과 타입 사용
+                              // console.log(`[Button Click] loadPlayer 호출: box=${targetBox.id}, url=${btn.dataset.url}, type=${btn.dataset.type}`);
+                             loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
                              clickIndex++;
                          }
                      }
@@ -682,71 +657,49 @@ h4 { font-size: 14px; margin-top: 15px;}
              });
          }
 
-
-        // LCK 채널 렌더링 (데이터 로드 후 실행)
         async function renderLckChannels() {
-            console.log("[renderLckChannels] 시작");
+            // console.log("[renderLckChannels] 시작");
             try {
-                const youtubeUrl = getYouTubeLiveOrUpcoming(); // Google Sheet 데이터 사용
+                const youtubeUrl = getYouTubeLiveOrUpcoming();
                 const youtubeChannelIndex = lckChannels.findIndex(ch => ch.name === 'K');
 
                 if (youtubeChannelIndex !== -1) {
-                     // 'K' 버튼에 대한 URL 및 타입 업데이트
                      lckChannels[youtubeChannelIndex].url = youtubeUrl || '';
-                     // YouTube URL은 m3u8이 아니므로 기본적으로 iframe 타입
                      lckChannels[youtubeChannelIndex].type = 'iframe';
-                     console.log(`[renderLckChannels] 'K' 채널 URL 업데이트: ${youtubeUrl}`);
+                     // console.log(`[renderLckChannels] 'K' 채널 URL 업데이트: ${youtubeUrl}`);
                 } else {
-                    console.warn("[renderLckChannels] 'K' 채널 정의를 찾을 수 없음");
+                    // console.warn("[renderLckChannels] 'K' 채널 정의를 찾을 수 없음");
                 }
-
-                // urlKey와 type을 channel 데이터에서 직접 사용하도록 옵션 전달
                 renderChannelList(lckChannelList, lckChannels, 'lck-btn', {
-                    tooltipKey: 'tooltip',
-                    nameKey: 'name',
-                    urlKey: 'url' // urlKey 지정 필수
+                    tooltipKey: 'tooltip', nameKey: 'name', urlKey: 'url'
                 });
             } catch (error) {
                 console.error('[renderLckChannels] 오류:', error);
-                // 오류 발생 시에도 기본 목록 렌더링 시도 (YouTube 제외 가능)
                  renderChannelList(lckChannelList, lckChannels.filter(ch => ch.name !== 'K'), 'lck-btn', {
                      tooltipKey: 'tooltip', nameKey: 'name', urlKey: 'url'
                  });
             }
         }
 
-
-        // 다른 채널 렌더링 함수들
         function renderChzzkChannels() {
-             // nameKey와 idKey 사용, idKey가 있으면 type='m3u8'로 간주됨
              renderChannelList(chzzkChannelList, chzzkChannels, 'chzzk-btn', { nameKey: 'name', idKey: 'id' });
         }
-
         function renderSpotvChannels() {
-             // nameKey와 urlKey 사용, URL에 .m3u8 포함 여부로 타입 결정될 수 있음 (또는 채널 데이터에 type 명시)
              renderChannelList(spotvChannelList, spotvChannels, 'small-channel-btn', { nameKey: 'name', urlKey: 'url' });
         }
-
         function renderBaseballChannels() {
-             // nameKey와 urlKey 사용
              renderChannelList(baseballChannelList, baseballChannels, 'baseball-btn', { nameKey: 'name', urlKey: 'url' });
         }
-
-        // 즐겨찾기 관련 함수들
         function renderSidebarFavorites() {
-             // 즐겨찾기는 name, url 가지고 있음. url 보고 타입 추정 가능하지만, m3u8 프록시 ID 등 애매할 수 있음.
-             // renderChannelList 내부 로직에 따라 처리됨.
              renderChannelList(favoriteChannelList, favorites, 'favorite-btn-channel', { nameKey: 'name', urlKey: 'url' });
         }
-
-        function renderFavorites() { // 모달 내부 목록
+        function renderFavorites() {
             favoriteList.innerHTML = '';
             favorites.forEach((favorite, index) => {
                 const li = document.createElement('li');
                 const span = document.createElement('span');
                 span.textContent = `${favorite.name}: ${favorite.url}`;
                 li.appendChild(span);
-
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = '삭제';
                 deleteBtn.onclick = () => {
@@ -759,19 +712,17 @@ h4 { font-size: 14px; margin-top: 15px;}
                 favoriteList.appendChild(li);
             });
         }
-
         function addFavorite() {
             const nameInput = document.getElementById('favorite-name-input');
             const urlInput = document.getElementById('favorite-url-input');
             const name = nameInput.value.trim();
-            const urlOrId = urlInput.value.trim(); // URL 또는 ID 원본 저장
-
+            const urlOrId = urlInput.value.trim();
             if (name && urlOrId) {
                  if (favorites.some(fav => fav.name === name || fav.url === urlOrId)) {
                      alert('이미 같은 이름 또는 URL/ID의 즐겨찾기가 존재합니다.');
                      return;
                  }
-                favorites.push({ name, url: urlOrId }); // 원본 값 저장
+                favorites.push({ name, url: urlOrId });
                 localStorage.setItem('favorites', JSON.stringify(favorites));
                 renderFavorites();
                 renderSidebarFavorites();
@@ -781,59 +732,44 @@ h4 { font-size: 14px; margin-top: 15px;}
                 alert('이름과 URL 또는 채널 ID를 모두 입력해주세요.');
             }
         }
-
         function showFavoriteModal() {
             renderFavorites();
             favoriteModal.style.display = 'block';
         }
 
-        // --- 레이아웃 및 플레이어 제어 ---
-
         function toggleSidebar() {
             sidebar.classList.toggle('collapsed');
             adjustPlayerLayout();
-            updateModeStyles(); // 토글 버튼 위치 업데이트 포함
+            updateModeStyles();
         }
-
          function setSplitScreen(count) {
              playerCount = count;
              clickIndex = 0;
              const toggleBtn = document.getElementById('toggle-btn');
-             playerContainer.innerHTML = ''; // 기존 플레이어 제거
-             if(toggleBtn) playerContainer.appendChild(toggleBtn); // 토글 버튼 다시 추가
-
+             playerContainer.innerHTML = '';
+             if(toggleBtn) playerContainer.appendChild(toggleBtn);
              for (let i = 0; i < count; i++) {
                  const box = document.createElement('div');
                  box.className = 'player-box';
-                 box.id = `player-box-${i}`; // ID 부여
-                 // 드래그 앤 드롭 이벤트 리스너
+                 box.id = `player-box-${i}`;
                  box.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
                  box.addEventListener('drop', createDropHandler(box));
                  playerContainer.appendChild(box);
              }
              adjustPlayerLayout();
          }
-
         function adjustPlayerLayout() {
             const isCollapsed = sidebar.classList.contains('collapsed');
             playerContainer.style.marginLeft = isCollapsed ? '0px' : '220px';
             playerContainer.style.width = isCollapsed ? '100%' : 'calc(100% - 220px)';
-
             let cols = 1, rows = 1;
             if (playerCount === 2) { cols = 2; rows = 1; }
             else if (playerCount === 3) { cols = 2; rows = 2; }
             else if (playerCount === 4) { cols = 2; rows = 2; }
-            // else if (playerCount > 4) { cols = Math.ceil(Math.sqrt(playerCount)); rows = Math.ceil(playerCount / cols); } // N개 분할 시
-
              playerContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
              playerContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-
-             // 3분할 특별 처리 (위 2, 아래 1)
              const boxes = playerContainer.querySelectorAll('.player-box');
-             boxes.forEach(box => { // 이전 스타일 초기화
-                 box.style.gridColumn = '';
-                 box.style.gridRow = '';
-             });
+             boxes.forEach(box => { box.style.gridColumn = ''; box.style.gridRow = ''; });
              if (playerCount === 3 && boxes.length === 3) {
                  boxes[0].style.gridColumn = '1 / 2'; boxes[0].style.gridRow = '1 / 2';
                  boxes[1].style.gridColumn = '2 / 3'; boxes[1].style.gridRow = '1 / 2';
@@ -841,111 +777,89 @@ h4 { font-size: 14px; margin-top: 15px;}
              }
         }
 
+        // *** m3u8 다운로드 문제 해결 시도 버전의 loadPlayer 사용 ***
+        function loadPlayer(box, url, type) {
+            while (box.firstChild) box.removeChild(box.firstChild);
+            if (!url) {
+                 // console.warn(`[loadPlayer] 유효하지 않은 URL 수신: box=${box.id}`);
+                 box.innerHTML = '<div style="text-align: center; color: #888;">URL 없음</div>';
+                 box.className = 'player-box';
+                return;
+            }
+             // console.log(`[loadPlayer] 로딩 시작: box=${box.id}, type=${type}, url=${url}`);
+            const iframe = document.createElement('iframe');
+            iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+            iframe.setAttribute('allowfullscreen', '');
 
-// 플레이어 로드 함수 (*** m3u8 처리 방식 수정: 이전 방식과 유사하게 복원 시도 ***)
-function loadPlayer(box, url, type) {
-    while (box.firstChild) box.removeChild(box.firstChild);
+            let useExtension = false;
+            if (type === 'm3u8') {
+                // console.log("[loadPlayer] 명시적 타입 'm3u8' 확인.");
+                useExtension = true;
+            } else if (url.includes('.m3u8')) {
+                // console.warn(`[loadPlayer] 타입은 '${type}'이지만 URL에 '.m3u8' 포함 -> 확장 사용 시도.`);
+                useExtension = true;
+                type = 'm3u8';
+            } else {
+                // console.log(`[loadPlayer] 타입 '${type}', URL에 '.m3u8' 미포함 -> 직접 iframe 로드.`);
+                useExtension = false;
+            }
 
-    if (!url) {
-         console.warn(`[loadPlayer] 유효하지 않은 URL 수신: box=${box.id}`);
-         box.innerHTML = '<div style="text-align: center; color: #888;">URL 없음</div>';
-         box.className = 'player-box';
-        return;
-    }
-     console.log(`[loadPlayer] 로딩 시작: box=${box.id}, type=${type}, url=${url}`);
+            if (useExtension) {
+                 // console.log(`[loadPlayer] 최종 결정: HLS 확장 프로그램 사용 (type=${type})`);
+                 const currentExtensionId = isFirefoxMode ? FIREFOX_EXTENSION_ID : CHROME_EXTENSION_ID;
+                 const extensionPrefix = isFirefoxMode ? 'moz-extension://' : 'chrome-extension://';
+                 if (!currentExtensionId) {
+                     const browserName = isFirefoxMode ? 'Firefox' : 'Chrome';
+                      console.error(`[loadPlayer] ${browserName} 확장 프로그램 ID 없음!`);
+                      box.innerHTML = `<div style="text-align: center; color: red;">${browserName} HLS Player ID 오류</div>`;
+                      box.className = 'player-box';
+                      return;
+                 }
+                 const playerUrl = `${extensionPrefix}${currentExtensionId}/player.html#${encodeURIComponent(url)}`;
+                 // console.log(`[loadPlayer] 생성된 확장 프로그램 player URL: ${playerUrl}`);
+                 iframe.src = playerUrl;
+                 iframe.onload = () => {} // console.log(`[loadPlayer] iframe 로드됨 (확장): ${playerUrl}`);
+                 iframe.onerror = (e) => {
+                     console.error(`[loadPlayer] 확장 프로그램 iframe 로드 오류: ${playerUrl}`, e);
+                     box.innerHTML = `<div style="text-align: center; color: red; padding: 10px;">HLS Player 확장 로드 실패<br><small>설치, 활성화, ID 확인 필요</small></div>`;
+                     box.className = 'player-box';
+                 };
+            } else {
+                 // console.log(`[loadPlayer] 최종 결정: 직접 iframe 로드 (type=${type})`);
+                 iframe.src = url;
+                 iframe.onload = () => {} // console.log(`[loadPlayer] iframe 로드됨 (직접): ${url}`);
+                 iframe.onerror = (e) => {
+                     console.error(`[loadPlayer] 직접 iframe 로드 오류: ${url}`, e);
+                     box.innerHTML = `<div style="text-align: center; color: red; padding: 10px;">컨텐츠 로드 실패<br><small>${url}</small></div>`;
+                     box.className = 'player-box';
+                 };
+            }
+            box.appendChild(iframe);
+            box.className = 'player-box active';
+        }
 
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
-    iframe.setAttribute('allowfullscreen', '');
-
-    // *** HLS 확장 프로그램 사용 조건 수정 ***
-    // 1. 명시적 type이 'm3u8' 이거나
-    // 2. URL 자체에 '.m3u8'이 포함된 경우 (이전 방식 고려)
-    let useExtension = false;
-    if (type === 'm3u8') {
-        console.log("[loadPlayer] 명시적 타입 'm3u8' 확인.");
-        useExtension = true;
-    } else if (url.includes('.m3u8')) {
-        console.warn(`[loadPlayer] 타입은 '${type}'이지만 URL에 '.m3u8' 포함 -> 확장 사용 시도.`);
-        useExtension = true; // URL 기반으로 확장 사용 결정 (이전 방식 유사)
-        type = 'm3u8'; // 타입을 강제로 맞춰줌 (로그 및 추후 처리 일관성 위해)
-    } else {
-        console.log(`[loadPlayer] 타입 '${type}', URL에 '.m3u8' 미포함 -> 직접 iframe 로드.`);
-        useExtension = false;
-    }
-
-
-    if (useExtension) {
-         console.log(`[loadPlayer] 최종 결정: HLS 확장 프로그램 사용 (type=${type})`);
-         const currentExtensionId = isFirefoxMode ? FIREFOX_EXTENSION_ID : CHROME_EXTENSION_ID;
-         const extensionPrefix = isFirefoxMode ? 'moz-extension://' : 'chrome-extension://';
-
-         if (!currentExtensionId) {
-             const browserName = isFirefoxMode ? 'Firefox' : 'Chrome';
-              console.error(`[loadPlayer] ${browserName} 확장 프로그램 ID 없음!`);
-              box.innerHTML = `<div style="text-align: center; color: red;">${browserName} HLS Player ID 오류</div>`;
-              box.className = 'player-box';
-              return;
-         }
-
-         const playerUrl = `${extensionPrefix}${currentExtensionId}/player.html#${encodeURIComponent(url)}`;
-         console.log(`[loadPlayer] 생성된 확장 프로그램 player URL: ${playerUrl}`);
-         iframe.src = playerUrl;
-
-         iframe.onload = () => console.log(`[loadPlayer] iframe 로드됨 (확장): ${playerUrl}`);
-         iframe.onerror = (e) => {
-             console.error(`[loadPlayer] 확장 프로그램 iframe 로드 오류: ${playerUrl}`, e);
-             box.innerHTML = `<div style="text-align: center; color: red; padding: 10px;">HLS Player 확장 로드 실패<br><small>설치, 활성화, ID 확인 필요</small></div>`;
-             box.className = 'player-box';
-         };
-
-    } else { // useExtension === false
-         console.log(`[loadPlayer] 최종 결정: 직접 iframe 로드 (type=${type})`);
-         iframe.src = url;
-
-         iframe.onload = () => console.log(`[loadPlayer] iframe 로드됨 (직접): ${url}`);
-         iframe.onerror = (e) => {
-             console.error(`[loadPlayer] 직접 iframe 로드 오류: ${url}`, e);
-             box.innerHTML = `<div style="text-align: center; color: red; padding: 10px;">컨텐츠 로드 실패<br><small>${url}</small></div>`;
-             box.className = 'player-box';
-         };
-    }
-
-    box.appendChild(iframe);
-    box.className = 'player-box active';
-}
-        // 드롭 핸들러
         function createDropHandler(box) {
             return (e) => {
                 e.preventDefault();
                 const droppedUrl = e.dataTransfer.getData('text/plain');
-                const droppedType = e.dataTransfer.getData('text/type') || 'iframe'; // 드롭 시 타입 정보 가져오기
-                 console.log(`[Drop Event] box=${box.id}, url=${droppedUrl}, type=${droppedType}`);
-
-                // 드롭된 URL도 변환 시도 (선택사항: 원본 URL 그대로 사용할 수도 있음)
-                 const finalUrl = transformUrl(droppedUrl); // 드롭된 것도 변환해주는게 일관성 있음
-                 let finalType = droppedType; // 드롭 시 전달된 타입 우선 사용
-
-                 // 만약 타입 정보가 없었거나, 변환 결과 m3u8이 명확하다면 타입 재설정
-                 if (!droppedType || droppedType === 'text/plain') { // 타입 정보 제대로 못 받았을 때
+                const droppedType = e.dataTransfer.getData('text/type') || 'iframe';
+                 // console.log(`[Drop Event] box=${box.id}, url=${droppedUrl}, type=${droppedType}`);
+                 const finalUrl = transformUrl(droppedUrl);
+                 let finalType = droppedType;
+                 if (!droppedType || droppedType === 'text/plain') {
                      finalType = finalUrl && finalUrl.includes('.m3u8') ? 'm3u8' : 'iframe';
                  }
-                 // 치지직 ID 드롭 시 m3u8 프록시 변환 및 타입 강제
                  const chzzkIdPattern = /^[0-9a-fA-F]{32}$/;
                  if(chzzkIdPattern.test(droppedUrl)){
                     finalType = 'm3u8';
-                    // finalUrl = transformUrl(droppedUrl); // transformUrl이 ID -> proxy 처리함
                  }
-
-
                 if (finalUrl) {
-                     console.log(`[Drop Event] loadPlayer 호출: box=${box.id}, url=${finalUrl}, type=${finalType}`);
+                     // console.log(`[Drop Event] loadPlayer 호출: box=${box.id}, url=${finalUrl}, type=${finalType}`);
                     loadPlayer(box, finalUrl, finalType);
-                     // 드롭 성공 후 클릭 인덱스 이동
                      const boxes = Array.from(playerContainer.querySelectorAll('.player-box'));
                      clickIndex = (boxes.indexOf(box) + 1) % boxes.length;
                 } else {
-                     console.warn("[Drop Event] 유효하지 않은 URL 드롭:", droppedUrl);
+                     // console.warn("[Drop Event] 유효하지 않은 URL 드롭:", droppedUrl);
                 }
             };
         }
@@ -956,14 +870,13 @@ function loadPlayer(box, url, type) {
             headerElement.classList.toggle('collapsed', !spotvChannelsDiv.classList.contains('active'));
         }
 
-         // Google Sheet 데이터 가져오기
          async function fetchYouTubeUrlsFromSheet() {
              if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
                  console.error("Google Apps Script URL is not set!");
                  alert("Google Apps Script URL이 설정되지 않았습니다. 스크립트 내에서 URL을 확인해주세요.");
                  return;
              }
-             console.log("[fetchYouTubeUrlsFromSheet] 데이터 가져오기 시작:", GOOGLE_APPS_SCRIPT_URL);
+             // console.log("[fetchYouTubeUrlsFromSheet] 데이터 가져오기 시작:", GOOGLE_APPS_SCRIPT_URL);
              try {
                  const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
                  if (!response.ok) {
@@ -977,7 +890,7 @@ function loadPlayer(box, url, type) {
                       throw new Error("Apps Script 오류: " + data.error);
                   }
                  youtubeUrlsFromSheet = data;
-                 console.log("[fetchYouTubeUrlsFromSheet] 데이터 로드 성공:", youtubeUrlsFromSheet);
+                 // console.log("[fetchYouTubeUrlsFromSheet] 데이터 로드 성공:", youtubeUrlsFromSheet);
              } catch (error) {
                  console.error("[fetchYouTubeUrlsFromSheet] 데이터 로드/파싱 오류:", error);
                  alert("LCK YouTube URL 데이터를 불러오는 데 실패했습니다. 콘솔을 확인해주세요.");
@@ -985,64 +898,48 @@ function loadPlayer(box, url, type) {
              }
          }
 
-          // 모든 플레이어 새로고침 (모드 변경 등)
           function refreshAllPlayers() {
-              console.log("[refreshAllPlayers] 모든 활성 플레이어 새로고침 시작");
+              // console.log("[refreshAllPlayers] 모든 활성 플레이어 새로고침 시작");
               const playerBoxes = playerContainer.querySelectorAll('.player-box.active');
               playerBoxes.forEach(box => {
                   const iframe = box.querySelector('iframe');
                   if (iframe && iframe.src) {
                        const currentSrc = iframe.getAttribute('src');
-                       console.log(`[refreshAllPlayers] 새로고침 대상: box=${box.id}, src=${currentSrc}`);
-
-                       // HLS 확장 플레이어 URL인지 확인
+                       // console.log(`[refreshAllPlayers] 새로고침 대상: box=${box.id}, src=${currentSrc}`);
                        if (currentSrc.includes('/player.html#')) {
                             const encodedUrl = currentSrc.split('#')[1];
                             if (encodedUrl) {
                                 const originalUrl = decodeURIComponent(encodedUrl);
-                                console.log(`[refreshAllPlayers] m3u8 재로드: url=${originalUrl}`);
-                                loadPlayer(box, originalUrl, 'm3u8'); // 타입 m3u8 명시
+                                // console.log(`[refreshAllPlayers] m3u8 재로드: url=${originalUrl}`);
+                                loadPlayer(box, originalUrl, 'm3u8');
                             } else {
-                                console.warn(`[refreshAllPlayers] HLS 플레이어 URL에서 원본 URL 추출 실패: ${currentSrc}`);
+                                // console.warn(`[refreshAllPlayers] HLS 플레이어 URL에서 원본 URL 추출 실패: ${currentSrc}`);
                             }
                        } else {
-                            // 일반 iframe 재로드
-                            console.log(`[refreshAllPlayers] iframe 재로드: url=${currentSrc}`);
-                            loadPlayer(box, currentSrc, 'iframe'); // 타입 iframe 명시
+                            // console.log(`[refreshAllPlayers] iframe 재로드: url=${currentSrc}`);
+                            loadPlayer(box, currentSrc, 'iframe');
                        }
                   } else {
-                       console.log(`[refreshAllPlayers] 건너뛰기 (활성 iframe 없음): box=${box.id}`);
+                       // console.log(`[refreshAllPlayers] 건너뛰기 (활성 iframe 없음): box=${box.id}`);
                   }
               });
           }
 
-
-        // --- 초기화 ---
         async function initialize() {
-             console.log("[initialize] 초기화 시작");
-             // 1. 브라우저 감지 및 초기 모드 설정
+             // console.log("[initialize] 초기화 시작");
              if (navigator.userAgent.includes('Firefox')) isFirefoxMode = true;
              updateModeStyles();
-
-             // 2. Google Sheet 데이터 비동기 로드
              await fetchYouTubeUrlsFromSheet();
-
-             // 3. 기본 분할 화면 설정
              setSplitScreen(1);
-
-             // 4. 채널 목록 렌더링 (LCK는 데이터 로드 후)
              renderSidebarFavorites();
              renderChzzkChannels();
              renderSpotvChannels();
              renderBaseballChannels();
-             await renderLckChannels(); // YouTube URL 적용
-
-             // 5. 초기 레이아웃 조정
+             await renderLckChannels();
              adjustPlayerLayout();
-             console.log("[initialize] 초기화 완료");
+             // console.log("[initialize] 초기화 완료");
         }
 
-        // 페이지 로드 시 초기화 함수 실행
         window.onload = initialize;
 
     </script>
