@@ -55,29 +55,35 @@
         #sidebar.collapsed + #player-container #toggle-btn { left: 10px; }
         #toggle-btn:hover { background: var(--hover-color, #0056b3); } /* 기본값 설정 */
 
-        #baseball-channels, #chzzk-channels, #spotv-channels, #lck-channels, #favorite-channels {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        .baseball-btn, .chzzk-btn, .lck-btn, .favorite-btn-channel, .small-channel-btn {
-            flex: 1 1 auto; /* 자동 줄바꿈 및 기본 크기 */
-            padding: 6px 8px; /* 좌우 여백 추가 */
+        .baseball-btn, .chzzk-btn, .lck-btn, .favorite-btn-channel {
+            flex: 1;
+            padding: 6px 0;
             background: #e9ecef;
             border-radius: 4px;
-            cursor: move; /* 드래그 가능 표시 */
-            user-select: none; /* 텍스트 선택 방지 */
+            cursor: move;
+            user-select: none;
             transition: background 0.2s;
             border: none;
             font-size: 12px;
             text-align: center;
-            min-width: 35px; /* 최소 너비 */
-            white-space: nowrap; /* 줄바꿈 방지 */
+            min-width: 33px;
         }
-        .baseball-btn:hover, .chzzk-btn:hover, .lck-btn:hover, .favorite-btn-channel:hover, .small-channel-btn:hover {
+        .baseball-btn:hover, .chzzk-btn:hover, .lck-btn:hover, .favorite-btn-channel:hover {
             background: #dee2e6;
         }
+        .small-channel-btn {
+            padding: 6px 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            min-width: 33px;
+        }
+        .small-channel-btn:hover { background: #dee2e6; }
         .disabled {
             cursor: not-allowed !important;
             opacity: 0.6;
@@ -161,15 +167,12 @@
 
         #custom-url-container { margin: 15px 0; }
         #custom-url-input {
-            width: calc(100% - 10px); /* 버튼 너비 고려 (실행, 즐겨찾기) */
-            padding: 8px 10px;
+            width: 100%;
+            padding: 8px;
             margin-bottom: 5px;
-            border: 1px solid #ced4da;
+            border: 1px solid #ccc;
             border-radius: 4px;
-            font-size: 13px;
-            display: inline-block;
-            vertical-align: middle;
-            height: 36px; /* 버튼 높이와 맞춤 */
+            font-size: 14px;
         }
          #custom-url-container button {
             width: auto; /* 너비 자동 조정 */
