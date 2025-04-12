@@ -5,299 +5,240 @@
     <title>m3u8 플레이어</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* --- 스타일은 이전과 동일하게 유지 --- */
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-            background: #f4f7fa;
-            color: #333;
-            transition: background-color 0.3s ease, color 0.3s ease; /* 테마 변경 고려 시 */
-        }
-        #sidebar {
-            width: 220px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            transition: transform 0.3s ease;
-            position: fixed; /* 고정 위치 */
-            top: 0;
-            left: 0;
-            height: 100%;
-            z-index: 10;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto; /* 내용 많을 시 스크롤 */
-        }
-        #sidebar.collapsed { transform: translateX(-100%); }
-        #toggle-btn {
-            position: fixed;
-            top: 10px;
-            left: 205px; /* 사이드바 너비 + 여백 고려 */
-            width: 20px;
-            height: 20px;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 14px;
-            color: white;
-            transition: left 0.3s ease, background 0.3s;
-            padding: 0;
-            z-index: 11;
-            line-height: 20px;
-            text-align: center;
-            background: var(--button-color, #007bff); /* 기본값 설정 */
-        }
-        #sidebar.collapsed + #player-container #toggle-btn { left: 10px; }
-        #toggle-btn:hover { background: var(--hover-color, #0056b3); } /* 기본값 설정 */
+/* --- 전체 스타일 다시 제공 (수정 사항 포함) --- */
+* { box-sizing: border-box; }
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background: #f4f7fa;
+    color: #333;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+#sidebar {
+    width: 220px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    transition: transform 0.3s ease;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 10;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+#sidebar.collapsed { transform: translateX(-100%); }
+#toggle-btn {
+    position: fixed;
+    top: 10px;
+    left: 205px;
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    color: white;
+    transition: left 0.3s ease, background 0.3s;
+    padding: 0;
+    z-index: 11;
+    line-height: 20px;
+    text-align: center;
+    background: var(--button-color, #007bff);
+}
+#sidebar.collapsed + #player-container #toggle-btn { left: 10px; }
+#toggle-btn:hover { background: var(--hover-color, #0056b3); }
 
-        .baseball-btn, .chzzk-btn, .lck-btn, .favorite-btn-channel {
-            flex: 1;
-            padding: 6px 0;
-            background: #e9ecef;
-            border-radius: 4px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            font-size: 12px;
-            text-align: center;
-            min-width: 33px;
-        }
-        .baseball-btn:hover, .chzzk-btn:hover, .lck-btn:hover, .favorite-btn-channel:hover {
-            background: #dee2e6;
-        }
-        .small-channel-btn {
-            padding: 6px 10px;
-            background: #e9ecef;
-            border-radius: 4px;
-            cursor: move;
-            user-select: none;
-            transition: background 0.2s;
-            border: none;
-            font-size: 12px;
-            text-align: center;
-            min-width: 33px;
-        }
-        .small-channel-btn:hover { background: #dee2e6; }
-        .disabled {
-            cursor: not-allowed !important;
-            opacity: 0.6;
-            background-color: #f8f9fa !important;
-        }
+#baseball-channels, #chzzk-channels, #spotv-channels, #lck-channels, #favorite-channels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 5px 0;
+}
 
-        #player-container {
-            flex-grow: 1;
-            display: grid;
-            gap: 2px; /* 플레이어 간 간격 */
-            padding: 2px; /* 컨테이너 내부 여백 */
-            height: 100vh;
-            width: calc(100% - 220px); /* 사이드바 제외 너비 */
-            transition: margin-left 0.3s ease, width 0.3s ease;
-            position: relative; /* 토글 버튼 기준 */
-            background: #e0e0e0; /* 그리드 배경 */
-            margin-left: 220px; /* 초기 사이드바 너비만큼 왼쪽 마진 */
-            border: none;
-        }
-        #sidebar.collapsed + #player-container {
-             margin-left: 0;
-             width: 100%;
-        }
+/* 일반 채널 버튼 스타일 (늘어남 허용) */
+.baseball-btn, .chzzk-btn, .lck-btn, .favorite-btn-channel {
+    flex: 1 1 auto; /* 공간 채우도록 늘어남 */
+    padding: 6px 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    cursor: move;
+    user-select: none;
+    transition: background 0.2s;
+    border: none;
+    font-size: 12px;
+    text-align: center;
+    min-width: 35px;
+    white-space: nowrap;
+}
+.baseball-btn:hover, .chzzk-btn:hover, .lck-btn:hover, .favorite-btn-channel:hover {
+    background: #dee2e6;
+}
 
-        .player-box {
-            background: #f0f2f5; /* 기본 배경 */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border: none; /* 테두리 제거 */
-            position: relative; /* 내부 요소 기준점 */
-        }
-        .player-box.active {
-            /* 활성화 시 특별한 스타일 불필요 (기존 border 제거) */
-        }
-        .player-box iframe {
-             width: 100%;
-             height: 100%;
-             border: none;
-             display: block; /* 혹시 모를 inline 공백 제거 */
-        }
-        /* 플레이어 내부 메시지 스타일 */
-        .player-box div {
-            padding: 15px;
-            font-size: 14px;
-            color: #6c757d;
-        }
-         .player-box div small {
-            display: block;
-            margin-top: 5px;
-            font-size: 11px;
-            color: #adb5bd;
-            word-break: break-all;
-         }
+/* 작은 채널 버튼 스타일 (Spotv 등, 늘어나지 않음) - *** 수정된 부분 *** */
+.small-channel-btn {
+    flex: 0 0 auto; /* 중요: 늘어나거나 줄어들지 않고, 크기는 내용물/패딩/너비 기준 */
+    /* 또는 flex: none; */
+    padding: 6px 10px; /* 작은 버튼에 맞는 패딩 */
+    background: #e9ecef;
+    border-radius: 4px;
+    cursor: move;
+    user-select: none;
+    transition: background 0.2s;
+    border: none;
+    font-size: 12px;
+    text-align: center;
+    min-width: 33px; /* 최소 너비 유지 */
+    white-space: nowrap;
+    /* 필요시 고정 너비 추가 가능: width: 40px; */
+}
+.small-channel-btn:hover {
+    background: #dee2e6;
+}
 
-        button {
-            padding: 8px 15px;
-            margin: 5px 5px 5px 0;
-            background: var(--button-color, #007bff);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.2s;
-            font-size: 14px;
-        }
-        button:hover {
-            background: var(--hover-color, #0056b3);
-            transform: translateY(-1px); /* 약간의 움직임 효과 */
-        }
-        h3, h4 {
-            font-size: 15px; /* 약간 줄임 */
-            margin: 12px 0 6px;
-            color: #495057;
-            font-weight: 500; /* 약간 굵게 */
-            border-bottom: 1px solid #e9ecef; /* 구분선 */
-            padding-bottom: 4px;
-         }
-        h4 { font-size: 14px; margin-top: 15px;}
-
-        #custom-url-container { margin: 15px 0; }
-        #custom-url-input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-         #custom-url-container button {
-            width: auto; /* 너비 자동 조정 */
-             padding: 8px 12px; /* 내부 여백 조정 */
-             vertical-align: middle;
-             height: 36px; /* 인풋 높이와 맞춤 */
-             margin-left: 5px; /* 왼쪽 간격 */
-             margin-right: 0;
-        }
-        #split-screen-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 4개 버튼 한 줄에 */
-            gap: 5px;
-            margin-bottom: 15px;
-        }
-        #split-screen-buttons button {
-            width: 100%; /* 그리드 셀 채우기 */
-            margin: 0; /* 그리드 갭 사용 */
-            padding: 7px 0; /* 높이 조절 */
-        }
-
-        #favorite-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-            display: none;
-            min-width: 350px;
-        }
-        #favorite-modal h3 { margin-top: 0; border: none; }
-        #favorite-modal input {
-            width: 100%;
-            padding: 9px 12px;
-            margin: 8px 0;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-        #favorite-modal button {
-            width: auto;
-            padding: 9px 18px;
-            margin-top: 10px;
-            margin-right: 8px;
-        }
-         #favorite-modal button:last-child { margin-right: 0; }
-        #favorite-modal ul {
-            max-height: 250px; /* 높이 증가 */
-            overflow-y: auto;
-            margin-top: 15px;
-            padding-left: 0;
-            list-style-type: none;
-            border-top: 1px solid #eee; /* 목록 구분선 */
-        }
-        #favorite-modal li {
-            padding: 10px 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-        }
-         #favorite-modal li span {
-            flex-grow: 1;
-            margin-right: 10px;
-            word-break: break-all;
-            font-size: 14px;
-            line-height: 1.4;
-         }
-        #favorite-modal li button { /* 삭제 버튼 */
-            padding: 4px 9px;
-            font-size: 12px;
-            background-color: #dc3545;
-            margin: 0;
-            flex-shrink: 0;
-            line-height: 1; /* 라인 높이 조정 */
-        }
-        #favorite-modal li button:hover { background-color: #c82333; }
-
-        .toggle-header {
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 0; /* 클릭 영역 확보 */
-             border-bottom: none; /* h4 기본 밑줄 제거 */
-        }
-        .toggle-header::after {
-            content: '▼';
-            font-size: 11px;
-            margin-left: 5px;
-             transition: transform 0.2s ease;
-        }
-        .toggle-header.collapsed::after {
-             transform: rotate(-90deg); /* 화살표 회전 */
-        }
-        #spotv-channels { display: none; } /* 기본 숨김 */
-        #spotv-channels.active { display: flex; } /* 활성화 시 보임 */
-
-        #mode-toggle-btn {
-            width: 100%;
-            margin-top: auto; /* 맨 아래로 */
-            margin-bottom: 10px;
-            padding: 9px 0;
-        }
-        #firefox-notice, #chrome-notice {
-             display: none;
-             margin: 10px 0;
-             padding: 10px;
-             background-color: #fff3cd;
-             border: 1px solid #ffeeba;
-             border-radius: 4px;
-             font-size: 12px;
-             line-height: 1.5;
-        }
-        #firefox-notice a, #chrome-notice a {
-            color: #856404;
-            font-weight: bold;
-            text-decoration: none;
-        }
-         #firefox-notice a:hover, #chrome-notice a:hover { text-decoration: underline; }
+/* --- 나머지 스타일은 이전과 동일 --- */
+.disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    background-color: #f8f9fa !important;
+}
+#player-container {
+    flex-grow: 1;
+    display: grid;
+    gap: 2px;
+    padding: 2px;
+    height: 100vh;
+    width: calc(100% - 220px);
+    transition: margin-left 0.3s ease, width 0.3s ease;
+    position: relative;
+    background: #e0e0e0;
+    margin-left: 220px;
+    border: none;
+}
+#sidebar.collapsed + #player-container {
+     margin-left: 0;
+     width: 100%;
+}
+.player-box {
+    background: #f0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: none;
+    position: relative;
+}
+.player-box.active { }
+.player-box iframe { width: 100%; height: 100%; border: none; display: block; }
+.player-box div { padding: 15px; font-size: 14px; color: #6c757d; text-align: center;}
+.player-box div small { display: block; margin-top: 5px; font-size: 11px; color: #adb5bd; word-break: break-all; }
+button {
+    padding: 8px 15px;
+    margin: 5px 5px 5px 0;
+    background: var(--button-color, #007bff);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    font-size: 14px;
+}
+button:hover { background: var(--hover-color, #0056b3); transform: translateY(-1px); }
+h3, h4 {
+    font-size: 15px;
+    margin: 12px 0 6px;
+    color: #495057;
+    font-weight: 500;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 4px;
+ }
+h4 { font-size: 14px; margin-top: 15px;}
+#custom-url-container { margin: 15px 0; }
+#custom-url-input {
+    width: calc(100% - 100px);
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 13px;
+    display: inline-block;
+    vertical-align: middle;
+    height: 36px;
+}
+ #custom-url-container button {
+    width: auto;
+     padding: 8px 12px;
+     vertical-align: middle;
+     height: 36px;
+     margin-left: 5px;
+     margin-right: 0;
+}
+#split-screen-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    margin-bottom: 15px;
+}
+#split-screen-buttons button {
+    width: 100%;
+    margin: 0;
+    padding: 7px 0;
+}
+#favorite-modal {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: white; padding: 25px; border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2); z-index: 1000;
+    display: none; min-width: 350px;
+}
+#favorite-modal h3 { margin-top: 0; border: none; }
+#favorite-modal input {
+    width: 100%; padding: 9px 12px; margin: 8px 0;
+    border: 1px solid #ced4da; border-radius: 4px;
+    box-sizing: border-box; font-size: 14px;
+}
+#favorite-modal button { width: auto; padding: 9px 18px; margin-top: 10px; margin-right: 8px; }
+#favorite-modal button:last-child { margin-right: 0; }
+#favorite-modal ul {
+    max-height: 250px; overflow-y: auto; margin-top: 15px;
+    padding-left: 0; list-style-type: none; border-top: 1px solid #eee;
+}
+#favorite-modal li {
+    padding: 10px 5px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1px solid #eee;
+}
+ #favorite-modal li span {
+    flex-grow: 1; margin-right: 10px; word-break: break-all;
+    font-size: 14px; line-height: 1.4;
+ }
+#favorite-modal li button {
+    padding: 4px 9px; font-size: 12px; background-color: #dc3545;
+    margin: 0; flex-shrink: 0; line-height: 1;
+}
+#favorite-modal li button:hover { background-color: #c82333; }
+.toggle-header {
+    cursor: pointer; display: flex; justify-content: space-between;
+    align-items: center; padding: 5px 0; border-bottom: none;
+}
+.toggle-header::after {
+    content: '▼'; font-size: 11px; margin-left: 5px;
+    transition: transform 0.2s ease;
+}
+.toggle-header.collapsed::after { transform: rotate(-90deg); }
+#spotv-channels { display: none; }
+#spotv-channels.active { display: flex; }
+#mode-toggle-btn { width: 100%; margin-top: auto; margin-bottom: 10px; padding: 9px 0; }
+#firefox-notice, #chrome-notice {
+     display: none; margin: 10px 0; padding: 10px; background-color: #fff3cd;
+     border: 1px solid #ffeeba; border-radius: 4px; font-size: 12px; line-height: 1.5;
+}
+#firefox-notice a, #chrome-notice a { color: #856404; font-weight: bold; text-decoration: none; }
+#firefox-notice a:hover, #chrome-notice a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
