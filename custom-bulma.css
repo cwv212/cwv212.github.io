@@ -1,0 +1,214 @@
+/* --- Globals & Variables --- */
+:root {
+    /* 필요 시 변수 정의 */
+}
+
+html {
+    overflow: hidden !important;
+    height: 100%;
+}
+
+/* --- Mobile Layout --- */
+body {
+    display: flex;
+    flex-direction: column; /* <<< Changed to column */
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Roboto', sans-serif;
+    background-color: #14161A;
+}
+
+/* Main content area holding player and chat */
+#main-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Take remaining vertical space */
+    height: 100vh; /* Ensure it tries to fill viewport height */
+    overflow: hidden; /* Prevent internal scroll */
+}
+
+/* Player container takes flexible top part */
+#player-container {
+    flex-grow: 1; /* Takes up available space */
+    display: grid; /* Use grid for 1 or 2 players */
+    gap: 1px; /* Small gap between players */
+    background-color: #111; /* Dark background */
+    overflow: hidden;
+    /* Removed JS-controlled margin/width/transition */
+}
+
+/* Chat container fixed at the bottom */
+#chat-container {
+    flex-shrink: 0; /* Prevent shrinking */
+    height: 240px; /* Fixed height for chat, adjust as needed */
+    border-top: 1px solid #444; /* Separator line */
+    overflow: hidden;
+    background-color: #14161A; /* Match body bg */
+}
+
+#chat-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.player-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    background-color: #222; /* Darker background for empty player */
+    min-height: 0; /* Prevent flex/grid blowout */
+}
+
+.player-box iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+/* --- Sidebar as Overlay --- */
+#sidebar {
+    position: fixed; /* Changed to fixed */
+    top: 0;
+    left: 0;
+    width: 250px; /* Adjust width as needed for mobile */
+    max-width: 80%; /* Max width */
+    height: 100%;
+    background-color: #1c1e22; /* Slightly different bg for overlay */
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+    z-index: 1000; /* High z-index */
+    overflow-y: auto;
+    overflow-x: hidden;
+    transform: translateX(-100%); /* Start hidden */
+    transition: transform 0.3s ease; /* Animation */
+    display: flex;
+    flex-direction: column;
+    color: #c5c8cc;
+    padding: 1rem; /* Use standard padding */
+}
+
+#sidebar.is-visible { /* New class to show sidebar */
+    transform: translateX(0);
+}
+/* Remove is-collapsed styles */
+
+/* Sidebar Content Styling (minor adjustments for overlay) */
+#sidebar .title,
+#sidebar .subtitle {
+    color:  #e0e3e6;
+    margin-bottom: 0.5rem;
+}
+#sidebar .title:not(:first-child),
+#sidebar .subtitle:not(:first-child) {
+     margin-top: 0.75rem;
+}
+#sidebar #lck-schedule,
+#sidebar #favorite-channels,
+#sidebar #sports-channels + #split-screen-buttons,
+#sidebar #split-screen-buttons + #custom-url-container {
+    margin-top: 0.5rem;
+}
+#sidebar .buttons {
+    margin-bottom: 0.2rem;
+}
+#sidebar #lck-schedule {
+    color: #a0a5ac;
+    max-height: 150px; /* Slightly more space if needed */
+}
+#sidebar #lck-schedule .schedule-item {
+     padding: 3px 0;
+}
+#sidebar .notification { display: none; } /* Hide old notices */
+
+/* --- Sidebar Toggle Button (Hamburger) --- */
+#toggle-btn {
+    position: fixed;
+    top: 10px;
+    left: 10px; /* Positioned top-left */
+    z-index: 1001; /* Above sidebar */
+    /* Keep Bulma styles for looks: is-small is-rounded is-link */
+    /* Use default Bulma size or adjust as needed */
+    /* width: 32px; height: 32px; padding: 0; font-size: 1rem; line-height: 32px; */
+}
+
+/* Channel Buttons Styles (Keep existing dark theme) */
+#sidebar .channel-button,
+#sidebar .lck-channel-btn {
+    background-color: #2a2d33;
+    border: 1px solid #4b505a;
+    color: #c5c8cc;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    padding: 4px 3px;
+    border-radius: 4px;
+    cursor: pointer; /* Change to pointer for mobile */
+    user-select: none;
+    font-size: 12px;
+    text-align: center;
+    flex-shrink: 0;
+}
+#sidebar .channel-button { width: 34px; flex-grow: 0; }
+#sidebar .lck-channel-btn { flex-grow: 1 !important; max-width: none; }
+
+#sidebar .channel-button:hover,
+#sidebar .lck-channel-btn:hover {
+    background-color: #3c4047;
+    border-color: #6a707c;
+    color: #e0e3e6;
+}
+
+/* Outlined buttons for contrast/variety if needed */
+#sidebar .button.is-outlined {
+    background-color: transparent !important;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #6a707c;
+    color: #a0a5ac;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+#sidebar .button.is-outlined:hover {
+    background-color: rgba(106, 112, 124, 0.15);
+    border-color: #a0a5ac;
+    color: #c5c8cc;
+}
+/* Ensure channel buttons also use outlined if class is present */
+#sidebar .channel-button.is-outlined,
+#sidebar .lck-channel-btn.is-outlined {
+     background-color: transparent !important;
+     border: 1px solid #6a707c;
+     color: #a0a5ac;
+}
+#sidebar .channel-button.is-outlined:hover,
+#sidebar .lck-channel-btn.is-outlined:hover {
+     background-color: rgba(106, 112, 124, 0.15);
+     border-color: #a0a5ac;
+     color: #c5c8cc;
+}
+
+#sidebar #favorite-channels,
+#sidebar #sports-channels {
+    gap: 3px !important;
+}
+
+/* Sports Channel Toggle */
+#sports-channels {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+#sports-channels.active {
+    max-height: 150px; /* Adjust max height if needed */
+    overflow-y: auto;
+}
+.toggle-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.toggle-header::after { content: '▼'; font-size: 0.75em; transition: transform 0.2s ease; margin-left: 5px; }
+.toggle-header.collapsed::after { content: '▶'; }
+
+/* Modal styles remain unchanged */
+#favorite-list .level { /* Adjust modal list slightly if needed */
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+}
