@@ -5,7 +5,6 @@ const chzzkProxyBaseUrl = 'https://chzzk-api-proxy.hibiya.workers.dev/m3u8-redir
 const HLS_PLAYER_EMBED_BASE_URL = 'https://www.livereacting.com/tools/hls-player-embed?url='; // New HLS Player
 
 // --- 상태 변수 ---
-// Removed isFirefoxMode, extensionId
 let youtubeUrlsFromSheet = {};
 let lckScheduleData = [];
 let playerCount = 1;
@@ -15,9 +14,9 @@ let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 // --- DOM 요소 캐싱 변수 ---
 let lckChannelList, favoriteChannelList, sportsChannelList,
     playerContainer, sidebar, favoriteModal, favoriteList,
-    lckScheduleContainer, toggleBtnElement, chatContainer; // Removed modeToggleBtn, firefoxNotice, chromeNotice. Added chatContainer
+    lckScheduleContainer, toggleBtnElement, chatContainer;
 
-// --- 채널 데이터 정의 (No changes needed here, but ensure className is appropriate) ---
+// --- 채널 데이터 정의 ---
 const baseballChannelsData = Array.from({ length: 5 }, (_, i) => ({
     name: `야${i + 1}`, url: `${baseballBaseUrl}${i + 1}/master.m3u8`, type: 'm3u8', className: 'channel-button is-outlined'
 }));
@@ -48,18 +47,14 @@ function cacheDOMElements() {
     sidebar = document.getElementById('sidebar');
     favoriteModal = document.getElementById('favorite-modal');
     favoriteList = document.getElementById('favorite-list');
-    // modeToggleBtn, firefoxNotice, chromeNotice removed
     lckScheduleContainer = document.getElementById('lck-schedule');
-    toggleBtnElement = document.getElementById('toggle-btn');
-    chatContainer = document.getElementById('chat-container'); // Cache chat container
+    toggleBtnElement = document.getElementById('toggle-btn'); // 토글 버튼 캐싱
+    chatContainer = document.getElementById('chat-container');
 }
 
 // --- 함수 정의 ---
 
-// Removed updateModeStyles()
-// Removed toggleMode()
-
-// --- KST Date and YouTube URL Fetching (Keep if needed) ---
+// --- KST Date and YouTube URL Fetching ---
 function getKstDate() {
     const date = new Date();
     const kstOffset = 9 * 60;
@@ -73,20 +68,16 @@ function getYouTubeLiveOrUpcoming() {
     if (youtubeUrlsFromSheet && youtubeUrlsFromSheet[today] && youtubeUrlsFromSheet[today].url) {
         return youtubeUrlsFromSheet[today].url;
     }
-    return null; // Keep default behavior
+    return null;
 }
 
-// --- URL Transformation (Keep as is, it prepares the URL for loadPlayer) ---
+// --- URL Transformation ---
 function transformUrl(url) {
-    // This function remains crucial for converting various inputs
-    // (Chzzk IDs, short URLs, channel pages) into direct embeddable
-    // or m3u8 URLs. The output of this function is then used by loadPlayer.
      if (!url) return null;
      if (url.includes('.m3u8')) return url; // Already m3u8, pass through
      const chzzkIdPattern = /^[0-9a-fA-F]{32}$/;
      if (chzzkIdPattern.test(url)) return `${chzzkProxyBaseUrl}${url}`; // Convert Chzzk ID to proxy m3u8 URL
 
-     // Handle lolcast URLs
      if (url.startsWith('https://lolcast.kr/#/player/')) {
          try {
              const hashPart = url.split('#')[1];
@@ -98,7 +89,7 @@ function transformUrl(url) {
                      console.log(`[transformUrl] lolcast.kr 파싱: 플랫폼=${platform}, 채널ID=${channelId}`);
                      switch (platform) {
                          case 'youtube': return `https://www.youtube.com/embed/${channelId}`;
-                         case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=${window.location.hostname}&parent=lolcast.kr&autoplay=true&muted=true`; // Added autoplay/muted
+                         case 'twitch': return `https://player.twitch.tv/?channel=${channelId}&parent=${window.location.hostname}&parent=lolcast.kr&autoplay=true&muted=true`;
                          case 'chzzk':
                              return chzzkIdPattern.test(channelId) ? `${chzzkProxyBaseUrl}${channelId}` : `https://chzzk.naver.com/live/${channelId}`;
                          case 'kick': return `https://player.kick.com/${channelId}`;
@@ -108,10 +99,9 @@ function transformUrl(url) {
                  } else { console.warn(`[transformUrl] lolcast.kr URL 경로 구조 오류: ${hashPart}`); }
              }
          } catch (error) { console.error("[transformUrl] lolcast.kr URL 파싱 중 오류:", error, url); return url; }
-         return url; // Return original on error or structure mismatch
+         return url;
      }
 
-     // Handle platform/channelId shorthand
      const platformChannelPattern = /^(youtube|twitch|chzzk|kick|afreeca)\/([^\/]+)$/;
      const platformMatch = url.match(platformChannelPattern);
      if (platformMatch) {
@@ -127,36 +117,33 @@ function transformUrl(url) {
          }
      }
 
-     // Handle specific URLs
      if (url.startsWith('https://www.youtube.com/watch?v=') || url.startsWith('https://youtu.be/')) {
          const youtubeMatch = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/);
          if (youtubeMatch && youtubeMatch[1]) return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
      }
-     if (url.startsWith('https://www.youtube.com/embed/')) return url; // Already embed
-     if (url.includes('youtube.com/channel/') || url.includes('youtube.com/@')) return url; // Channel URL, maybe show info page?
+     if (url.startsWith('https://www.youtube.com/embed/')) return url;
+     if (url.includes('youtube.com/channel/') || url.includes('youtube.com/@')) return url;
 
      if (url.startsWith('https://twitch.tv/') || url.startsWith('https://www.twitch.tv/')) {
          const channelId = url.split('/').filter(Boolean).pop();
          if (channelId) return `https://player.twitch.tv/?channel=${channelId}&parent=${window.location.hostname}&parent=lolcast.kr&autoplay=true&muted=true`;
      }
-     if (url.startsWith('https://player.twitch.tv/')) return url; // Already player
+     if (url.startsWith('https://player.twitch.tv/')) return url;
 
      if (url.startsWith('https://chzzk.naver.com/live/')) {
          const pathParts = url.split('/');
          const liveIndex = pathParts.indexOf('live');
          if (liveIndex !== -1 && pathParts.length > liveIndex + 1) {
              const channelId = pathParts[liveIndex + 1].split('?')[0];
-             return chzzkIdPattern.test(channelId) ? `${chzzkProxyBaseUrl}${channelId}` : url; // Return proxy if ID, else original live page
+             return chzzkIdPattern.test(channelId) ? `${chzzkProxyBaseUrl}${channelId}` : url;
          }
      }
-     if (url.startsWith('https://chzzk.naver.com/')) { // General chzzk links
+     if (url.startsWith('https://chzzk.naver.com/')) {
          const pathParts = url.split('/');
          const potentialId = pathParts.pop() || pathParts.pop();
          if (potentialId && chzzkIdPattern.test(potentialId)) {
              return `${chzzkProxyBaseUrl}${potentialId}`;
          }
-         // If not an ID, maybe it's a channel page? Return original or try live page.
-         // return url; // Keep original
      }
 
      if (url.startsWith('https://kick.com/')) {
@@ -169,37 +156,34 @@ function transformUrl(url) {
          const pathParts = url.split('/');
          if (pathParts.length >= 4 && pathParts[3]) {
              const channelId = pathParts[3].split('/')[0];
-             return `https://play.sooplive.co.kr/${channelId}/embed`; // Ensure embed format
+             return `https://play.sooplive.co.kr/${channelId}/embed`;
          }
-         return url; // Return original if structure is unexpected
+         return url;
      }
-     if (url.startsWith('http://bj.afreecatv.com/')) { // Handle old Afreeca links
+     if (url.startsWith('http://bj.afreecatv.com/')) {
         const channelId = url.split('/').filter(Boolean).pop();
         if(channelId) return `https://play.sooplive.co.kr/${channelId}/embed`;
      }
 
-
-     // Basic URL validation (already done better above, but keep as fallback)
      if (!url.startsWith('http://') && !url.startsWith('https://')) {
          console.warn(`[transformUrl] 유효하지 않은 URL 스키마 또는 형식: ${url}`);
          return null;
      }
 
      console.log(`[transformUrl] 처리 규칙 없음, 원본 반환: ${url}`);
-     return url; // Return original URL if no specific rule matched
+     return url;
  }
 
-// --- Play Custom URL (No change needed, relies on transformUrl and loadPlayer) ---
+// --- Play Custom URL ---
 function playCustomUrl() {
     const customUrlInput = document.getElementById('custom-url-input');
     if (!customUrlInput) return;
     const userInput = customUrlInput.value.trim();
     if (userInput) {
-        const finalUrl = transformUrl(userInput); // Transform first
-        let type = 'iframe'; // Default
+        const finalUrl = transformUrl(userInput);
+        let type = 'iframe';
 
         if (finalUrl) {
-            // Determine type based on the *transformed* URL
             if (finalUrl.includes(chzzkProxyBaseUrl) || finalUrl.endsWith('.m3u8')) {
                 type = 'm3u8';
             }
@@ -207,9 +191,12 @@ function playCustomUrl() {
             const playerBoxes = playerContainer?.querySelectorAll('.player-box');
             if (playerBoxes && playerBoxes.length > 0) {
                 const targetBox = playerBoxes[clickIndex % playerBoxes.length];
-                loadPlayer(targetBox, finalUrl, type); // Load with transformed URL and determined type
+                loadPlayer(targetBox, finalUrl, type);
                 clickIndex++;
                 customUrlInput.value = '';
+                 if (sidebar && sidebar.classList.contains('is-visible')) {
+                    toggleSidebar(); // 입력 후 사이드바 닫기 (선택 사항)
+                }
             }
         } else {
             alert('유효하지 않거나 지원하지 않는 형식의 URL 또는 ID입니다.');
@@ -217,8 +204,7 @@ function playCustomUrl() {
     }
 }
 
-
-// --- Render Channel Lists (Adapt slightly for mobile interaction) ---
+// --- Render Channel Lists ---
 function renderChannelList(container, channels, defaultClassName, options = {}) {
     if (!container) return;
     const { tooltipKey = 'tooltip', urlKey = 'url', idKey = 'id', nameKey = 'name' } = options;
@@ -229,41 +215,39 @@ function renderChannelList(container, channels, defaultClassName, options = {}) 
         const customClasses = channel.className || defaultClassName || '';
         btn.className = `${baseClasses} ${customClasses}`.trim().replace(/\s+/g, ' ');
 
-        // btn.draggable = true; // Drag and drop might be less useful on mobile, keep?
         btn.textContent = channel[nameKey];
 
         let urlToTransform = '';
-        if (idKey && channel[idKey]) { urlToTransform = channel[idKey]; } // Pass ID to transformUrl
+        if (idKey && channel[idKey]) { urlToTransform = channel[idKey]; }
         else if (urlKey && channel[urlKey]) { urlToTransform = channel[urlKey]; }
         else if (channel.url) { urlToTransform = channel.url; }
 
-        const finalUrl = transformUrl(urlToTransform); // Transform to get final URL
-        let finalType = 'iframe'; // Determine type based on final URL
+        const finalUrl = transformUrl(urlToTransform);
+        let finalType = 'iframe';
 
         if (finalUrl) {
              if (finalUrl.includes(chzzkProxyBaseUrl) || finalUrl.endsWith('.m3u8')) {
                 finalType = 'm3u8';
             }
-            btn.dataset.url = finalUrl; // Store the final URL
+            btn.dataset.url = finalUrl;
             btn.dataset.type = finalType;
-            if (channel[tooltipKey]) btn.title = channel[tooltipKey]; // Tooltips less useful on mobile tap
+            if (channel[tooltipKey]) btn.title = channel[tooltipKey];
         } else {
             btn.dataset.url = ''; btn.dataset.type = 'iframe';
             btn.classList.add('is-disabled'); btn.title = "URL 정보 없음";
-            // btn.draggable = false;
         }
 
-        // Removed dragstart listener
-        // btn.addEventListener('dragstart', ...);
-
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', () => { // click 이벤트 사용 (touchstart보다 안정적일 수 있음)
             if (btn.dataset.url && btn.dataset.type) {
                 const boxes = playerContainer?.querySelectorAll('.player-box');
                 if (boxes && boxes.length > 0) {
                     const targetBox = boxes[clickIndex % boxes.length];
                     loadPlayer(targetBox, btn.dataset.url, btn.dataset.type);
                     clickIndex++;
-                    toggleSidebar(); // Close sidebar after selection on mobile
+                    // 채널 선택 시 사이드바 닫기
+                    if (sidebar && sidebar.classList.contains('is-visible')) {
+                        toggleSidebar();
+                    }
                 }
             }
         });
@@ -271,21 +255,21 @@ function renderChannelList(container, channels, defaultClassName, options = {}) 
     });
 }
 
-// --- Render Specific Channel Sections (No changes needed) ---
-async function renderLckChannels() { /* ... No changes needed ... */
+// --- Render Specific Channel Sections ---
+async function renderLckChannels() {
     try {
         const youtubeUrl = getYouTubeLiveOrUpcoming();
         const kButton = lckChannels.find(ch => ch.name === 'K');
-        if (kButton) { kButton.url = youtubeUrl || ''; kButton.type = 'iframe'; } // Type might be overridden by transformUrl later
+        if (kButton) { kButton.url = youtubeUrl || ''; } // transformUrl이 타입을 결정하므로 여기선 URL만 설정
 
         if (lckChannelList) {
-            lckChannelList.innerHTML = ''; // Clear before render
+            lckChannelList.innerHTML = '';
             renderChannelList(lckChannelList, lckChannels, 'lck-channel-btn', { tooltipKey: 'tooltip', nameKey: 'name', urlKey: 'url' });
              lckChannelList.classList.add('buttons', 'are-small', 'is-flex-wrap-wrap');
         }
     } catch (error) { console.error('LCK 채널 렌더링 오류:', error); }
 }
-function renderSidebarFavorites() { /* ... No changes needed ... */
+function renderSidebarFavorites() {
     if (!favoriteChannelList) return;
     favoriteChannelList.innerHTML = '';
 
@@ -296,15 +280,15 @@ function renderSidebarFavorites() { /* ... No changes needed ... */
     renderChannelList(favoriteChannelList, userFavoritesWithClass, '', { nameKey: 'name', urlKey: 'url' });
     favoriteChannelList.classList.add('buttons', 'are-small', 'is-flex-wrap-wrap');
 }
-function renderSportsChannels() { /* ... No changes needed ... */
+function renderSportsChannels() {
     if (!sportsChannelList) return;
     sportsChannelList.innerHTML = '';
     renderChannelList(sportsChannelList, sportsChannels, '', { nameKey: 'name', urlKey: 'url' });
     sportsChannelList.classList.add('buttons', 'are-small', 'is-flex-wrap-wrap');
 }
 
-// --- Favorites Modal Logic (Keep as is) ---
-function renderFavorites() { /* ... No changes needed ... */
+// --- Favorites Modal Logic ---
+function renderFavorites() {
      if (!favoriteList) return;
     favoriteList.innerHTML = '';
 
@@ -323,7 +307,7 @@ function renderFavorites() { /* ... No changes needed ... */
         favoriteList.appendChild(itemDiv);
     });
 }
-function addFavorite() { /* ... No changes needed ... */
+function addFavorite() {
     const nameInput = document.getElementById('favorite-name-input');
     const urlInput = document.getElementById('favorite-url-input');
     if (!nameInput || !urlInput) return;
@@ -339,99 +323,80 @@ function addFavorite() { /* ... No changes needed ... */
         closeModal();
     } else { alert('이름과 URL 또는 채널 ID를 모두 입력해주세요.'); }
 }
-function openModal() { /* ... No changes needed ... */
+function openModal() {
     if (favoriteModal) { renderFavorites(); favoriteModal.classList.add('is-active'); }
     else { console.error("즐겨찾기 모달 요소를 찾을 수 없습니다."); }
 }
-function closeModal() { /* ... No changes needed ... */
+function closeModal() {
     if (favoriteModal) { favoriteModal.classList.remove('is-active'); }
 }
 
-
-// --- Sidebar Toggle (Modified for Overlay) ---
+// --- Sidebar Toggle ---
 function toggleSidebar() {
+    console.log("toggleSidebar function called"); // 디버깅 로그
     if (sidebar) {
-        sidebar.classList.toggle('is-visible'); // Toggle the visibility class
-        // No need to call adjustPlayerLayout here anymore
+        sidebar.classList.toggle('is-visible');
+        console.log("Sidebar classes after toggle:", sidebar.className); // 디버깅 로그
+    } else {
+        console.error("Sidebar element not found!");
     }
 }
 
-// --- Split Screen Setup (Modified for Max 2 Vertical) ---
+// --- Split Screen Setup ---
 function setSplitScreen(count) {
-    // Force count to be 1 or 2
     playerCount = Math.max(1, Math.min(2, count));
     console.log(`[setSplitScreen] Setting playerCount to: ${playerCount}`);
     clickIndex = 0;
 
     if(!playerContainer) return;
 
-    // Clear player container (keep sidebar toggle outside)
     playerContainer.innerHTML = '';
 
-    // Create 1 or 2 player boxes
     for (let i = 0; i < playerCount; i++) {
         const box = document.createElement('div');
-        box.className = 'player-box has-background-dark'; // Use dark background
+        box.className = 'player-box has-background-dark';
         box.id = `p-${i}`;
-        // Removed drag/drop listeners
-        // box.addEventListener('dragover', ...);
-        // box.addEventListener('drop', ...);
         playerContainer.appendChild(box);
     }
-
-    // Adjust layout based on the new playerCount
     adjustPlayerLayout();
 }
 
-// --- Adjust Player Layout (Modified for Vertical Split) ---
+// --- Adjust Player Layout ---
 function adjustPlayerLayout() {
     if (!playerContainer) return;
 
-    // Removed sidebar width logic
-
-    // --- Grid columns/rows for vertical split ---
     let columns = 1;
-    let rows = playerCount === 2 ? 2 : 1; // 1 row for 1 player, 2 rows for 2 players
+    let rows = playerCount === 2 ? 2 : 1;
 
     playerContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
     playerContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
     console.log(`[adjustPlayerLayout] playerCount: ${playerCount}, Set grid: ${columns}x${rows}`);
 
-    // --- Reset individual box styles (less critical now but good practice) ---
     const boxes = playerContainer.querySelectorAll('.player-box');
     boxes.forEach(box => {
         box.style.gridColumn = '';
         box.style.gridRow = '';
     });
-
-    // Removed 3-split specific layout
-    // Removed updateModeStyles call
 }
 
-
-// --- Load Player (MODIFIED for new HLS player, removed extension logic) ---
+// --- Load Player ---
 function loadPlayer(box, url, type) {
-    // Clear previous content
     while (box.firstChild) box.removeChild(box.firstChild);
 
-    // Handle null/empty URL
     if (!url) {
-        box.innerHTML='<div class="has-text-grey is-size-6 p-2">URL 없음</div>'; // Added padding
-        box.className='player-box has-background-dark is-flex is-align-items-center is-justify-content-center'; // Center text
+        box.innerHTML='<div class="has-text-grey is-size-6 p-2">URL 없음</div>';
+        box.className='player-box has-background-dark is-flex is-align-items-center is-justify-content-center';
         return;
     }
 
     const iframe = document.createElement('iframe');
     iframe.setAttribute('allow','autoplay; fullscreen; encrypted-media; picture-in-picture');
     iframe.setAttribute('allowfullscreen','');
-    iframe.style.border = 'none'; // Ensure no border
+    iframe.style.border = 'none';
 
-    // Determine if it's an HLS stream (m3u8)
-    // Use the 'type' determined earlier or check the URL ending
     const isHls = (type === 'm3u8') || url.endsWith('.m3u8');
 
     if (isHls) {
-        // *** Use the new LiveReacting HLS Player Embed ***
         const playerUrl = `${HLS_PLAYER_EMBED_BASE_URL}${encodeURIComponent(url)}`;
         iframe.src = playerUrl;
         console.log(`[loadPlayer] Loading HLS: ${playerUrl}`);
@@ -441,9 +406,8 @@ function loadPlayer(box, url, type) {
             box.className='player-box has-background-dark is-flex is-align-items-center is-justify-content-center';
         };
     } else {
-        // For non-HLS (YouTube, Twitch embed, etc.), use the URL directly
-        // transformUrl should have already prepared it
-        iframe.src = url;
+        // Non-HLS streams - transformUrl should provide the correct embed URL
+        iframe.src = url; // Use the already transformed URL
         console.log(`[loadPlayer] Loading IFrame: ${url}`);
         iframe.onerror = (e) => {
             console.error(`IFrame Load Error: ${url}`, e);
@@ -453,15 +417,10 @@ function loadPlayer(box, url, type) {
     }
 
     box.appendChild(iframe);
-    box.className = 'player-box'; // Reset class to remove background/text alignment on success
+    box.className = 'player-box'; // Reset class on successful load
 }
 
-
-// --- Drag/Drop Handler (Removed - less useful on mobile) ---
-// function createDropHandler(box) { ... }
-
-
-// --- Toggle Sports Section (Keep as is) ---
+// --- Toggle Sports Section ---
 function toggleSports(headerElement) {
     if (sportsChannelList && headerElement) {
         const isActive = sportsChannelList.classList.toggle('active');
@@ -469,43 +428,36 @@ function toggleSports(headerElement) {
     }
 }
 
-// --- Fetch Data from Sheet (Keep if needed for schedule/youtube) ---
+// --- Fetch Data from Sheet ---
 async function fetchDataFromSheet() {
-    // Only fetch if the URL is set and seems valid
     const targetUrl = GOOGLE_APPS_SCRIPT_URL;
     if (!targetUrl || targetUrl.includes('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL')) {
         console.warn("Google Apps Script URL not configured. Skipping data fetch.");
-        youtubeUrlsFromSheet = {};
-        lckScheduleData = [];
-        return;
+        youtubeUrlsFromSheet = {}; lckScheduleData = []; return;
     }
     try {
         console.log("Fetching data from Google Sheet...");
         const response = await fetch(targetUrl);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
         const data = await response.json();
         console.log("Data received:", data);
         youtubeUrlsFromSheet = data.youtubeUrls || {};
         lckScheduleData = data.lckSchedule || [];
     } catch (error) {
         console.error('Error fetching data from Google Sheet:', error);
-        youtubeUrlsFromSheet = {}; // Reset on error
-        lckScheduleData = [];     // Reset on error
-        // Optionally display an error to the user in the schedule area
+        youtubeUrlsFromSheet = {}; lckScheduleData = [];
         if (lckScheduleContainer) {
              lckScheduleContainer.innerHTML = '<p class="has-text-danger has-text-centered py-2">데이터 로드 실패</p>';
         }
     }
 }
 
-// --- Render LCK Schedule (Keep as is, uses Bulma classes) ---
-function renderLckSchedule() { /* ... No significant changes needed ... */
+// --- Render LCK Schedule ---
+function renderLckSchedule() {
     if (!lckScheduleContainer) return;
     console.log("[renderLckSchedule] 시작, 데이터:", lckScheduleData);
 
-    const logoBasePath = '/img/'; // Make sure this path is correct relative to your server setup
+    const logoBasePath = '/img/';
     const logoExtension = '.png';
     const defaultLogoPath = '/img/default.png';
 
@@ -514,7 +466,7 @@ function renderLckSchedule() { /* ... No significant changes needed ... */
         return;
     }
 
-    lckScheduleContainer.innerHTML = ''; // Clear before render
+    lckScheduleContainer.innerHTML = '';
 
     lckScheduleData.forEach(match => {
         if (!match || !match.team1 || !match.team2) return;
@@ -543,7 +495,7 @@ function renderLckSchedule() { /* ... No significant changes needed ... */
     console.log("[renderLckSchedule] 완료");
 }
 
-// --- Refresh Players (Simplified, re-calls loadPlayer) ---
+// --- Refresh Players ---
 function refreshAllPlayers() {
     const activePlayerIframes = playerContainer?.querySelectorAll('.player-box iframe') || [];
     console.log(`[refreshAllPlayers] Found ${activePlayerIframes.length} iframes to refresh.`);
@@ -554,33 +506,29 @@ function refreshAllPlayers() {
             if (!parentBox) return;
 
             console.log(`[refreshAllPlayers] Refreshing box ${parentBox.id} with src: ${currentSrc}`);
-
-            // Determine original URL and type to re-load
             let originalUrl = currentSrc;
-            let type = 'iframe'; // Default assumption
+            let type = 'iframe';
 
             if (currentSrc.startsWith(HLS_PLAYER_EMBED_BASE_URL)) {
-                // Extract URL from LiveReacting embed
                 try {
                     const urlParams = new URLSearchParams(currentSrc.split('?')[1]);
-                    originalUrl = urlParams.get('url');
+                    originalUrl = urlParams.get('url'); // HLS 플레이어 URL에서 원본 m3u8 추출
                     type = 'm3u8';
                     console.log(`[refreshAllPlayers] Extracted HLS URL: ${originalUrl}`);
                 } catch (e) {
                     console.error("[refreshAllPlayers] Error parsing HLS player URL", e);
-                    // Fallback to trying the full src as iframe
-                    originalUrl = currentSrc;
-                    type = 'iframe';
+                    originalUrl = currentSrc; type = 'iframe'; // 실패 시 iframe으로 재시도
                 }
             }
-            // No specific check needed for other types, assume iframe if not HLS embed
+            // Note: We might not know the original 'type' for non-HLS iframes.
+            // We rely on transformUrl to handle the 'originalUrl' correctly again if needed.
+            // However, refreshing standard iframe embeds usually just involves reloading the same src.
 
             if (originalUrl) {
-                 // Re-call loadPlayer with the deduced original URL and type
-                loadPlayer(parentBox, originalUrl, type);
+                 // Re-call loadPlayer. transformUrl will run again inside if needed.
+                loadPlayer(parentBox, originalUrl, type); // Use deduced type
             } else {
                 console.warn("[refreshAllPlayers] Could not determine original URL for refresh.");
-                // Optionally clear the box or show an error
                 parentBox.innerHTML = '<div class="has-text-warning p-2">새로고침 오류</div>';
                 parentBox.className='player-box has-background-dark is-flex is-align-items-center is-justify-content-center';
             }
@@ -588,13 +536,12 @@ function refreshAllPlayers() {
     });
 }
 
-
-// --- Initialization (Updated) ---
+// --- Initialization ---
 async function initialize() {
      console.log("[initialize] Mobile version starting...");
      cacheDOMElements();
 
-     // --- Modal Event Listeners (Keep as is) ---
+     // --- Modal Event Listeners ---
      const modalBackground = favoriteModal?.querySelector('.modal-background');
      if (modalBackground) modalBackground.addEventListener('click', closeModal);
      const closeButton = favoriteModal?.querySelector('.delete');
@@ -602,7 +549,7 @@ async function initialize() {
      const cancelButtons = favoriteModal?.querySelectorAll('.modal-card-foot .button:not(.is-success)');
      cancelButtons?.forEach(btn => btn.addEventListener('click', closeModal));
 
-     // --- Favorite Deletion Event Listener (Keep as is) ---
+     // --- Favorite Deletion Event Listener ---
      if (favoriteList) {
          favoriteList.addEventListener('click', (event) => {
              if (event.target.classList.contains('is-delete')) {
@@ -616,30 +563,45 @@ async function initialize() {
              }
          });
      }
-    if (toggleBtnElement) {
-        toggleBtnElement.addEventListener('touchstart', (event) => {
-            // 기본 브라우저 터치 동작(스크롤, 줌 등)을 막을 필요가 있을 수 있음
-            // event.preventDefault(); // <<< 필요에 따라 주석 해제
 
-            console.log("Toggle button touched!"); // 로그 추가
+     // --- Sidebar Toggle Event Listener (Using 'click' for broader compatibility) ---
+     if (toggleBtnElement) {
+        // 'click' 이벤트는 대부분의 모바일 브라우저에서 터치(탭)를 잘 처리합니다.
+        // touchstart보다 click이 의도치 않은 동작(예: 스크롤 중 터치)을 방지하는 데 더 나을 수 있습니다.
+        toggleBtnElement.addEventListener('click', () => {
+            console.log("Toggle button clicked/tapped!"); // 로그 추가
             toggleSidebar(); // 사이드바 토글 함수 호출
-        }, { passive: true }); // 스크롤 성능 저하 방지를 위해 passive: true 권장 (preventDefault 사용 안 할 경우)
-        // 만약 preventDefault를 사용해야 한다면 { passive: false } 로 설정하거나 이 옵션을 제거해야 합니다.
+        });
+        console.log("'Click' event listener added to toggle button.");
 
-        console.log("Touchstart event listener added to toggle button.");
-    } else {
-        console.error("Toggle button element not found for adding listener.");
-    }
-     // Removed Firefox check and updateModeStyles call
+        // // 만약 click으로도 문제가 지속되면 touchstart를 다시 시도해볼 수 있습니다.
+        // toggleBtnElement.addEventListener('touchstart', (event) => {
+        //     event.preventDefault(); // 탭 시 기본 동작(줌 등) 방지
+        //     console.log("Toggle button touched!");
+        //     toggleSidebar();
+        // }, { passive: false }); // preventDefault 사용 시 passive: false
+        // console.log("Touchstart event listener added to toggle button.");
 
-    await fetchDataFromSheet();
-    setSplitScreen(1);
-    renderSidebarFavorites();
-    renderSportsChannels();
-    await renderLckChannels();
-    renderLckSchedule();
+     } else {
+         console.error("Toggle button element not found for adding listener.");
+     }
 
-    console.log("[initialize] Mobile version ready.");
+     // --- Sidebar Close Button Listener (Inside Sidebar) ---
+     const sidebarCloseButton = sidebar?.querySelector('.button.is-danger'); // 사이드바 내부 닫기 버튼 찾기
+     if (sidebarCloseButton) {
+         sidebarCloseButton.addEventListener('click', toggleSidebar);
+         console.log("Event listener added to sidebar close button.");
+     }
+
+
+     await fetchDataFromSheet();
+     setSplitScreen(1);
+     renderSidebarFavorites();
+     renderSportsChannels();
+     await renderLckChannels();
+     renderLckSchedule();
+
+     console.log("[initialize] Mobile version ready.");
 }
 
 // Page load execution
