@@ -616,22 +616,30 @@ async function initialize() {
              }
          });
      }
+    if (toggleBtnElement) {
+        toggleBtnElement.addEventListener('touchstart', (event) => {
+            // 기본 브라우저 터치 동작(스크롤, 줌 등)을 막을 필요가 있을 수 있음
+            // event.preventDefault(); // <<< 필요에 따라 주석 해제
 
+            console.log("Toggle button touched!"); // 로그 추가
+            toggleSidebar(); // 사이드바 토글 함수 호출
+        }, { passive: true }); // 스크롤 성능 저하 방지를 위해 passive: true 권장 (preventDefault 사용 안 할 경우)
+        // 만약 preventDefault를 사용해야 한다면 { passive: false } 로 설정하거나 이 옵션을 제거해야 합니다.
+
+        console.log("Touchstart event listener added to toggle button.");
+    } else {
+        console.error("Toggle button element not found for adding listener.");
+    }
      // Removed Firefox check and updateModeStyles call
 
-     await fetchDataFromSheet(); // Load schedule/youtube data if configured
+    await fetchDataFromSheet();
+    setSplitScreen(1);
+    renderSidebarFavorites();
+    renderSportsChannels();
+    await renderLckChannels();
+    renderLckSchedule();
 
-     setSplitScreen(1); // Initialize with 1 player screen
-
-     // Render sidebar content
-     renderSidebarFavorites();
-     renderSportsChannels();
-     await renderLckChannels();
-     renderLckSchedule();
-
-     // No final adjustPlayerLayout needed here as setSplitScreen calls it
-
-     console.log("[initialize] Mobile version ready.");
+    console.log("[initialize] Mobile version ready.");
 }
 
 // Page load execution
