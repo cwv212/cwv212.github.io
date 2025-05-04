@@ -20,28 +20,29 @@
     }
 
     /* 메인 콘텐츠 레이아웃 (Flexbox Column) */
- #main-content {
+#main-content {
     display: flex;
     flex-direction: column;
     width: 100%;
-    /* 사용 가능한 전체 높이 (네비 바 제외) */
-    height: calc(100vh - 50px);
+    /* ★★★ height 속성 제거 (JS에서 설정) ★★★ */
+    /* height: calc(100vh - 50px); */
     box-sizing: border-box;
+    /* 중요: JS가 높이를 설정할 때 기준이 되도록 position 설정 (필요시) */
+    position: relative; /* 또는 absolute/fixed */
+    overflow: hidden; /* 내부 스크롤 방지 */
 }
 
 #video-area {
-    /* 초기 높이는 JS에서 설정하므로 % 지정 불필요할 수 있음 */
-    /* height: 60%; */ /* JS에서 동적으로 설정 */
+    height: 60%; /* 부모 높이 기준 % 유지 (기본값, JS에서 변경 가능) */
     width: 100%;
-    display: grid; /* 그리드 사용 */
+    display: grid;
     gap: 0;
     background-color: #000000;
     overflow: hidden;
 }
 
 #chat-area {
-    /* 초기 높이는 JS에서 설정하므로 % 지정 불필요할 수 있음 */
-    /* height: 40%; */ /* JS에서 동적으로 설정 */
+    height: 40%; /* 부모 높이 기준 % 유지 (기본값, JS에서 변경 가능) */
     width: 100%;
     background-color: #18181b;
     overflow: hidden; /* iframe 내부 스크롤 */
