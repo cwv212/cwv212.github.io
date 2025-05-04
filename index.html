@@ -2,87 +2,152 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"> <!-- Mobile viewport settings -->
-    <title>LCK 플레이어 (Mobile)</title>
+    <!-- 모바일 뷰포트 설정: 확대/축소 방지 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>LCK 플레이어 (모바일)</title>
     <!-- Bulma CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Custom Bulma Overrides/Additions -->
+    <!-- 기존 Custom CSS (데스크톱용, 필요시 유지) -->
     <link rel="stylesheet" href="custom-bulma.css">
+    <!-- 모바일용 CSS (새로 추가) -->
+    <link rel="stylesheet" href="mobile-styles.css">
 </head>
-<body>
-    <!-- Sidebar (Will be styled as an overlay) -->
-    <div id="sidebar" class="p-4 is-hidden-mobile"> <!-- Initially hidden on mobile -->
-        <h3 class="title is-5">LCK 채널</h3>
-        <div id="lck-channels" class="buttons are-small is-flex-wrap-wrap">
-           <!-- JS will populate -->
+<body class="is-mobile-layout"> <!-- 모바일 레이아웃 식별용 클래스 추가 -->
+
+    <!-- 모바일: 메인 콘텐츠 영역 -->
+    <div id="main-content">
+        <!-- 모바일: 상단 영상 영역 (60%) -->
+        <div id="video-area">
+            <!-- 플레이어 박스는 JavaScript로 동적 생성됩니다 -->
+            <!-- 예시 (1분할): <div class="player-box" id="p-0"></div> -->
+            <!-- 예시 (2분할): <div class="player-box" id="p-0"></div><div class="player-box" id="p-1"></div> -->
         </div>
 
-        <h3 class="title is-5 mt-4">LCK 대진표</h3>
-        <div id="lck-schedule">
-            <p class="loading-msg has-text-grey has-text-centered py-2">대진표 로딩 중...</p>
+        <!-- 모바일: 하단 채팅 영역 (40%) -->
+<div id="chat-area">
+    <!-- 채팅 표시용 Iframe: src 속성에 고정 URL 직접 지정 -->
+    <iframe id="chat-iframe"
+            src="https://insagirl-toto.appspot.com/chatting/lgic/" <!-- ★★★ 여기에 고정 URL 입력 ★★★ -->
+            style="width: 100%; height: 100%; border: none; display: block;" <!-- 바로 보이도록 display: block 추가 -->
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowfullscreen>
+            <!-- 아이프레임을 지원하지 않는 브라우저를 위한 대체 텍스트 (선택 사항) -->
+            <p>채팅 기능을 보려면 아이프레임을 지원하는 브라우저가 필요합니다.</p>
+    </iframe>
         </div>
+    </div>
 
-        <h4 class="subtitle is-6 mt-4">즐겨찾기 채널</h4>
-        <div id="favorite-channels" class="buttons are-small is-flex-wrap-wrap">
-           <!-- JS will populate -->
+    <!-- 모바일: 하단 고정 네비게이션 -->
+    <nav id="bottom-nav" class="navbar is-fixed-bottom has-shadow">
+        <!-- is-justify-content-space-around 클래스로 버튼 간격 자동 조절 -->
+        <div class="navbar-brand is-flex is-justify-content-space-around" style="width: 100%;">
+            <!-- 화면 분할 버튼 -->
+            <a class="navbar-item is-flex-shrink-1 px-2" onclick="setSplitScreen(1)">
+                <span class="icon"><i class="fas fa-square"></i></span> <!-- Font Awesome 아이콘 필요 -->
+                 <span class="is-size-7 ml-1">1분할</span>
+            </a>
+            <a class="navbar-item is-flex-shrink-1 px-2" onclick="setSplitScreen(2)">
+                 <span class="icon"><i class="fas fa-th-large"></i></span> <!-- Font Awesome 아이콘 필요 -->
+                 <span class="is-size-7 ml-1">2분할</span>
+            </a>
+
+            <!-- 구분선 -->
+            <span class="navbar-item is-flex-shrink-0 has-text-grey-light px-1">|</span>
+
+            <!-- 주요 채널 바로가기 (예시: LCK) -->
+            <a class="navbar-item is-flex-shrink-1 px-2" onclick="playChannelFromNav('https://global-media.sooplive.com/live/lckkr/master.m3u8', 'm3u8')">
+                <span class="is-size-7">LCK S</span> <!-- Soop -->
+            </a>
+             <a class="navbar-item is-flex-shrink-1 px-2" onclick="playChannelFromNav(chzzkProxyBaseUrl + '9381e7d6816e6d915a44a13c0195b202', 'm3u8')">
+                <span class="is-size-7">LCK C</span> <!-- Chzzk -->
+            </a>
+             <a class="navbar-item is-flex-shrink-1 px-2" onclick="playChannelFromNav(getYouTubeLiveOrUpcoming(), 'iframe')">
+                <span class="is-size-7">LCK Y</span> <!-- YouTube -->
+            </a>
+
+            <!-- 구분선 -->
+            <span class="navbar-item is-flex-shrink-0 has-text-grey-light px-1">|</span>
+
+            <!-- 추가 기능 모달 열기 버튼 -->
+            <a class="navbar-item is-flex-shrink-1 px-2" onclick="openControlsModal()">
+                 <span class="icon"><i class="fas fa-bars"></i></span> <!-- Font Awesome 아이콘 필요 -->
+                 <span class="is-size-7 ml-1">더보기</span>
+            </a>
         </div>
+    </nav>
 
-        <h4 class="subtitle is-6 mt-4 toggle-header collapsed is-clickable" onclick="toggleSports(this)">
-            스포츠 채널
-        </h4>
-        <div id="sports-channels" class="buttons are-small is-flex-wrap-wrap">
-            <!-- JS will populate -->
-        </div>
+    <!-- 기타 기능 모달 (즐겨찾기, 스포츠 채널, 사용자 입력 등) -->
+    <div class="modal" id="controls-modal">
+      <div class="modal-background" onclick="closeControlsModal()"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">채널 및 설정</p>
+          <button class="delete" aria-label="close" onclick="closeControlsModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <!-- LCK 대진표 -->
+            <h3 class="title is-6">LCK 대진표</h3>
+            <div id="lck-schedule-modal" class="mb-3" style="max-height: 150px; overflow-y: auto; border: 1px solid #444; border-radius: 4px; padding: 5px;">
+                 <!-- 내용은 JavaScript로 로드됩니다 -->
+                 <p class="loading-msg has-text-grey has-text-centered py-2 is-size-7">대진표 로딩 중...</p>
+            </div>
 
-        <h3 class="title is-5 mt-4">분할 화면 설정</h3>
-        <div id="split-screen-buttons" class="buttons">
-            <button class="button is-outlined" onclick="setSplitScreen(1)">1분할</button>
-            <button class="button is-outlined" onclick="setSplitScreen(2)">2분할</button>
-            <!-- 3 and 4 split buttons removed -->
-        </div>
+            <!-- 즐겨찾기 채널 (토글 섹션) -->
+            <h4 class="subtitle is-6 mt-3 toggle-header collapsed is-clickable" onclick="toggleSection(this, 'favorite-channels-modal')">
+                즐겨찾기 채널
+            </h4>
+            <div id="favorite-channels-modal" class="buttons are-small is-flex-wrap-wrap section-content" style="display: none;">
+                       <!-- 내용은 JavaScript로 로드됩니다 -->
+            </div>
 
-        <div id="custom-url-container" class="mt-4">
-            <div class="field">
-                <div class="control">
-                     <input type="text" id="custom-url-input" class="input is-small" placeholder="m3u8, 치지직 ID, 채널 URL 입력">
+            <!-- 스포츠 채널 (토글 섹션) -->
+            <h4 class="subtitle is-6 mt-3 toggle-header collapsed is-clickable" onclick="toggleSection(this, 'sports-channels-modal')">
+                스포츠 채널
+            </h4>
+            <div id="sports-channels-modal" class="buttons are-small is-flex-wrap-wrap section-content" style="display: none;">
+                      <!-- 내용은 JavaScript로 로드됩니다 -->
+            </div>
+
+            <!-- 사용자 입력 -->
+            <h3 class="title is-6 mt-4">사용자 입력</h3>
+            <div id="custom-url-container-modal">
+                <div class="field">
+                    <div class="control">
+                         <input type="text" id="custom-url-input-modal" class="input is-small" placeholder="m3u8, 치지직 ID, 채널 URL">
+                    </div>
+                </div>
+                <div id="custom-url-buttons-modal" class="field is-grouped mt-2">
+                    <p class="control">
+                        <button class="button is-link is-small" onclick="playCustomUrlModal()">실행</button>
+                    </p>
+                     <p class="control">
+                        <!-- 이 버튼은 기존 즐겨찾기 '관리' 모달을 엽니다 -->
+                        <button class="button is-info is-small" onclick="openFavoritesManagerModal()">즐겨찾기 관리</button>
+                     </p>
                 </div>
             </div>
-            <div id="custom-url-buttons" class="field is-grouped mt-2">
-                <p class="control">
-                    <button class="button is-link is-small" onclick="playCustomUrl()">실행</button>
-                </p>
-                <p class="control">
-                    <button class="button is-info is-small" onclick="openModal()">즐겨찾기</button>
-                </p>
+
+            <!-- HLS 플레이어 설치 안내 (모드에 따라 표시) -->
+             <div id="firefox-notice-modal" class="notification is-warning is-light is-size-7 p-2 mt-3" style="display: none;">
+                Firefox: <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어</a> 설치 필수
             </div>
-        </div>
+            <div id="chrome-notice-modal" class="notification is-warning is-light is-size-7 p-2 mt-3" style="display: none;">
+                 Chrome: <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어</a> 설치 필수
+            </div>
 
-         <!-- Extension Notices Removed -->
-         <!-- Mode Toggle Button Removed -->
+            <!-- HLS 플레이어 모드 토글 버튼 -->
+             <button id="mode-toggle-btn-modal" class="button is-fullwidth mt-4" onclick="toggleMode()"></button>
 
-         <!-- Close button for sidebar overlay -->
-         <button class="button is-small is-danger is-light mt-auto" onclick="toggleSidebar()">닫기</button>
+        </section>
+        <footer class="modal-card-foot is-justify-content-flex-end">
+          <button class="button" onclick="closeControlsModal()">닫기</button>
+        </footer>
+      </div>
     </div>
 
-    <!-- Main Content Area -->
-    <div id="main-content">
-        <!-- Player Container -->
-        <div id="player-container" class="has-background-light">
-             <!-- Player boxes added by JS -->
-        </div>
-
-        <!-- Chat Container -->
-        <div id="chat-container">
-            <iframe id="chat-iframe" src="https://insagirl-toto.appspot.com/chatting/lgic/" frameborder="0"></iframe>
-        </div>
-    </div>
-
-    <!-- Sidebar Toggle Button (Hamburger) - Repositioned -->
-    <button id="toggle-btn" class="button is-small is-rounded is-link">☰</button>
-
-    <!-- Favorites Modal (Bulma) - No changes needed here -->
+    <!-- 기존 즐겨찾기 '관리' 모달 (추가/삭제용) -->
     <div class="modal" id="favorite-modal">
       <div class="modal-background" onclick="closeModal()"></div>
       <div class="modal-card">
@@ -91,31 +156,38 @@
           <button class="delete" aria-label="close" onclick="closeModal()"></button>
         </header>
         <section class="modal-card-body">
+          <!-- 이름 입력 필드 -->
           <div class="field">
             <label class="label is-small">이름</label>
             <div class="control">
-              <input id="favorite-name-input" class="input is-small" type="text" placeholder="이름">
+              <input id="favorite-name-input" class="input is-small" type="text" placeholder="표시될 이름 입력">
             </div>
           </div>
+          <!-- URL 또는 채널 ID 입력 필드 -->
           <div class="field mt-3">
             <label class="label is-small">URL 또는 채널 ID</label>
             <div class="control">
-              <input id="favorite-url-input" class="input is-small" type="text" placeholder="URL 또는 채널 ID">
+              <input id="favorite-url-input" class="input is-small" type="text" placeholder="채널 URL 또는 치지직 ID 등">
             </div>
           </div>
-          <label class="label is-small mt-4">목록</label>
-          <div id="favorite-list" style="max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; margin-top: 5px; padding-top: 5px;">
-             <!-- JS will populate -->
+          <!-- 현재 저장된 즐겨찾기 목록 -->
+          <label class="label is-small mt-4">저장된 목록</label>
+          <div id="favorite-list" style="max-height: 200px; overflow-y: auto; border-top: 1px solid #444; margin-top: 5px; padding-top: 5px;">
+             <!-- JavaScript로 목록 동적 생성 -->
           </div>
         </section>
         <footer class="modal-card-foot is-justify-content-flex-end">
+          <!-- 추가 버튼 -->
           <button class="button is-success" onclick="addFavorite()">추가</button>
+          <!-- 닫기 버튼 -->
           <button class="button" onclick="closeModal()">닫기</button>
         </footer>
       </div>
     </div>
 
-    <!-- JavaScript -->
+    <!-- Font Awesome 아이콘 라이브러리 로드 (아이콘 사용 시 필수) -->
+    <script defer src="https://use.fontawesome.com/releases/v5.15.4/js/all.js"></script>
+    <!-- 사용자 정의 JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>
