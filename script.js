@@ -101,6 +101,31 @@ async function initialize() {
      const ctrlCancelBtn = controlsModal?.querySelector('.modal-card-foot .button');
      if (ctrlCancelBtn) ctrlCancelBtn.addEventListener('click', closeControlsModal);
 
+         // ★★★ F5 새로고침 버튼 이벤트 리스너 추가 (모바일 레이아웃일 때만?) ★★★
+     if (isMobileLayout) { // 모바일 하단 네비에만 버튼이 있으므로 isMobileLayout 조건 추가 가능
+         const refreshBtn = document.getElementById('refresh-btn');
+         if (refreshBtn) {
+             refreshBtn.addEventListener('click', () => {
+                 const chatIframe = document.getElementById('chat-iframe');
+                 if (chatIframe) {
+                     console.log('[F5] 채팅 iframe 새로고침 시도');
+                     // 기존 src 가져오기 (베이스 URL 재사용)
+                     const currentSrc = chatIframe.src;
+                     // URL에서 '?' 앞부분 (기본 URL)과 '#' 뒷부분 (해시) 분리 시도
+                     const baseUrl = currentSrc.split('?')[0].split('#')[0]; // ?나 # 앞부분 추출
+                     const hashPart = currentSrc.includes('#') ? '#' + currentSrc.split('#')[1] : ''; // # 있으면 추출
+
+                     // 캐시 무효화를 위해 타임스탬프 추가, 기존 해시 유지
+                     chatIframe.src = baseUrl + '?cache=' + Date.now() + hashPart;
+                 } else {
+                     console.warn('[F5] 채팅 iframe 요소를 찾을 수 없습니다.');
+                 }
+             });
+         } else {
+              console.warn('[initialize] F5 새로고침 버튼(refresh-btn) 요소를 찾을 수 없습니다.');
+         }
+     }
+    
      // --- 공통 데이터 로드 ---
      if (navigator.userAgent.includes('Firefox')) {
          isFirefoxMode = true;
