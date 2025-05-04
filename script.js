@@ -55,8 +55,8 @@ function updateLayoutHeight() {
     mainContent.style.height = `${mainContentHeight}px`; // px 단위로 설정
 
     // 4. 분할 수에 따라 비디오/채팅 영역 높이 비율 재조정 (adjustPlayerLayout 호출과 유사하게)
-    let videoHeightPercent = (playerCount === 1) ? 45 : 65;
-    let chatHeightPercent = (playerCount === 1) ? 55 : 35;
+    let videoHeightPercent = (playerCount === 1) ? 50 : 66;
+    let chatHeightPercent = (playerCount === 1) ? 50 : 34;
 
     videoArea.style.height = `${videoHeightPercent}%`;
     chatArea.style.height = `${chatHeightPercent}%`;
