@@ -34,7 +34,7 @@
     /* 영상 영역 (상단 60%) */
     #video-area {
         /* ★★★ 수정: vh 대신 % 사용 (부모인 #main-content 높이의 60%) */
-        height: 50%;
+        height: 60%;
         width: 100%;
         display: grid;
         gap: 0;
