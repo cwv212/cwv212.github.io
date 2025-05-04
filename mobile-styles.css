@@ -1,7 +1,7 @@
 /* --- 모바일 전용 스타일 --- */
 
 /* 768px 이하 화면 너비에 적용 */
-@media (max-width: 1200px) {
+@media {
 
     html, body {
         overflow: hidden !important; /* 전체 스크롤 방지 */
