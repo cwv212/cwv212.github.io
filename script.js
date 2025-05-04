@@ -426,8 +426,9 @@ function renderLckScheduleModal() {
 }
 
 // --- 모든 플레이어 새로고침 함수 (모바일 전용) ---
+// --- 모든 플레이어 새로고침 함수 (Hls.js 플레이어 새로고침) ---
 function refreshAllPlayers() {
-    const targetContainer = videoArea; // 항상 videoArea
+    const targetContainer = videoArea;
     const activeIframes = targetContainer?.querySelectorAll('.player-box iframe') || [];
     console.log(`[refreshAllPlayers] ${activeIframes.length}개의 플레이어 새로고침 시도...`);
     activeIframes.forEach(iframe => {
@@ -435,9 +436,33 @@ function refreshAllPlayers() {
             const currentSrc = iframe.getAttribute('src');
             const parentBox = iframe.closest('.player-box');
             if (!parentBox) return;
-            if (currentSrc.startsWith(HLS_EMBED_BASE_URL)) {
-                try { const urlParams = new URLSearchParams(currentSrc.split('?')[1]); const originalUrl = urlParams.get('url'); if (originalUrl) { console.log(`[refreshAllPlayers] livereacting HLS 플레이어 새로고침: ${originalUrl}`); loadPlayer(parentBox, originalUrl, 'm3u8'); } else { console.warn(`[refreshAllPlayers] livereacting URL에서 원본 M3U8 추출 실패, src 재설정: ${currentSrc}`); iframe.src = currentSrc; } } catch(e) { console.error(`[refreshAllPlayers] livereacting URL 파싱 오류, src 재설정: ${currentSrc}`, e); iframe.src = currentSrc; }
-            } else { console.log(`[refreshAllPlayers] 일반 iframe 플레이어 새로고침: ${currentSrc}`); loadPlayer(parentBox, currentSrc, 'iframe'); }
+
+            // ★★★ hls_player.html 확인 로직 ★★★
+            if (currentSrc.includes('hls_player.html#')) {
+                // 해시에서 원본 URL 추출
+                const originalUrlEncoded = currentSrc.split('#')[1];
+                if (originalUrlEncoded) {
+                     try {
+                        const originalUrl = decodeURIComponent(originalUrlEncoded);
+                        console.log(`[refreshAllPlayers] Hls.js 플레이어 새로고침: ${originalUrl}`);
+                        loadPlayer(parentBox, originalUrl, 'm3u8'); // m3u8 타입으로 다시 로드
+                     } catch (e) {
+                          console.error(`[refreshAllPlayers] HLS URL 디코딩 오류, src 재설정: ${currentSrc}`, e);
+                          iframe.src = currentSrc; // 디코딩 실패 시 단순 재설정
+                     }
+                } else {
+                    console.warn(`[refreshAllPlayers] Hls.js URL에서 원본 M3U8 추출 실패, src 재설정: ${currentSrc}`);
+                    iframe.src = currentSrc;
+                }
+            }
+            // ★★★ livereacting.com 관련 로직 제거 ★★★
+            // else if (currentSrc.startsWith(HLS_EMBED_BASE_URL)) { ... }
+
+            // 일반 iframe 플레이어인 경우
+            else {
+                console.log(`[refreshAllPlayers] 일반 iframe 플레이어 새로고침: ${currentSrc}`);
+                loadPlayer(parentBox, currentSrc, 'iframe');
+            }
         }
     });
 }
@@ -460,7 +485,7 @@ function addFavorite() {
     } else { alert('이름과 URL 또는 채널 ID를 모두 입력해주세요.'); }
 }
 
-// --- 플레이어 로드 함수 (모바일 전용, livereacting 사용) ---
+// --- 플레이어 로드 함수 수정 ---
 function loadPlayer(box, url, type) {
     while (box.firstChild) box.removeChild(box.firstChild);
     if (!url) { box.innerHTML='<div class="has-text-grey is-size-6 has-text-centered p-2">URL 없음</div>'; box.className='player-box'; return; }
@@ -470,29 +495,35 @@ function loadPlayer(box, url, type) {
     iframe.setAttribute('allowfullscreen','');
     iframe.style.border = 'none';
 
-    // HLS 스트림 판단 로직 (원본 URL/ID 기준)
     const chzzkIdPattern = /^[0-9a-fA-F]{32}$/;
     let isHlsStream = (type === 'm3u8') ||
                       (typeof url === 'string' && url.endsWith('.m3u8')) ||
                       (typeof url === 'string' && url.includes(chzzkProxyBaseUrl)) ||
-                      chzzkIdPattern.test(url); // ID 자체도 HLS로 간주
+                      chzzkIdPattern.test(url);
 
     console.log(`[loadPlayer] 로딩 시작 - URL/ID: ${url}, 타입: ${type}, HLS 여부: ${isHlsStream}, 대상 박스: ${box.id}`);
 
     if (isHlsStream) {
-        // HLS 스트림 -> livereacting.com URL 생성
-        let hlsUrl = url;
-        // 만약 입력값이 ID였다면 프록시 URL로 변경
+        // HLS 스트림 -> hls_player.html 로드
+        let hlsUrlToLoad = url;
+        // 입력값이 ID였다면 프록시 URL로 변경
         if (chzzkIdPattern.test(url)) {
-            hlsUrl = `${chzzkProxyBaseUrl}${url}`;
+            hlsUrlToLoad = `${chzzkProxyBaseUrl}${url}`;
         }
-        const embedUrl = HLS_EMBED_BASE_URL + encodeURIComponent(hlsUrl);
-        iframe.src = embedUrl;
-        console.log(`[loadPlayer] livereacting HLS 임베드 로드: ${embedUrl}`);
-        iframe.onerror = (e) => { console.error(`[loadPlayer] livereacting HLS 임베드 로드 오류: ${embedUrl}`, e); box.innerHTML=`<div class="has-text-danger is-size-7 has-text-centered p-2">HLS 플레이어 로드 실패<br><small>외부 서비스 오류 또는 URL 확인</small></div>`; box.className='player-box'; };
+
+        // ★★★ hls_player.html 사용하도록 변경 ★★★
+        const playerPageUrl = `hls_player.html#${encodeURIComponent(hlsUrlToLoad)}`;
+        iframe.src = playerPageUrl;
+        console.log(`[loadPlayer] Hls.js 플레이어 로드: ${playerPageUrl}`);
+
+        iframe.onerror = (e) => {
+            console.error(`[loadPlayer] Hls.js 플레이어 iframe 로드 오류: ${playerPageUrl}`, e);
+            box.innerHTML=`<div class="has-text-danger is-size-7 has-text-centered p-2">HLS 플레이어 로드 실패<br><small>플레이어 파일 확인 필요</small></div>`;
+            box.className='player-box';
+        };
     } else {
         // HLS 아님 -> 일반 iframe 처리
-        const finalUrl = transformUrl(url) || url; // transformUrl은 이제 iframe용 변환만
+        const finalUrl = transformUrl(url) || url;
         iframe.src = finalUrl;
         console.log(`[loadPlayer] 일반 Iframe 로드: ${finalUrl}`);
         iframe.onerror = (e) => { console.error(`[loadPlayer] Iframe 로드 오류: ${finalUrl}`, e); box.innerHTML=`<div class="has-text-danger is-size-7 has-text-centered p-2">플레이어 로드 실패<br><small>${url}</small></div>`; box.className='player-box'; };
