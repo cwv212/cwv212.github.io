@@ -34,7 +34,7 @@
     /* 영상 영역 (상단 60%) */
     #video-area {
         /* ★★★ 수정: vh 대신 % 사용 (부모인 #main-content 높이의 60%) */
-        height: 60%;
+        height: 55%;
         width: 100%;
         display: grid;
         gap: 0;
@@ -45,7 +45,7 @@
     /* 채팅 영역 (하단 40%) */
     #chat-area {
         /* ★★★ 수정: vh 대신 % 사용 (부모인 #main-content 높이의 40%) */
-        height: 40%;
+        height: 35%;
         width: 100%;
         background-color: #18181b;
         overflow: hidden; /* iframe 내부 스크롤 사용 */
