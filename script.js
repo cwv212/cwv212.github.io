@@ -15,6 +15,7 @@ let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 // --- DOM 요소 캐싱 변수 ---
 // 모바일 요소만 캐싱
 let videoArea, chatArea, chatIframe, bottomNav, controlsModal, favoriteModal, favoriteList;
+let mainContent; 
 
 // --- 채널 데이터 정의 (변경 없음) ---
 const baseballChannelsData = Array.from({ length: 5 }, (_, i) => ({ name: `야${i + 1}`, url: `${baseballBaseUrl}${i + 1}/master.m3u8`, type: 'm3u8', className: 'baseball-btn channel-button is-outlined' }));
@@ -23,28 +24,73 @@ const sportsChannels = [...baseballChannelsData, ...spotvChannelsData];
 const lckChannels = [ { name: 'L', url: 'https://global-media.sooplive.com/live/lckkr/master.m3u8', type: 'm3u8', tooltip: 'soop', className: 'lck-channel-btn is-outlined' }, { name: 'C', url: `${chzzkProxyBaseUrl}9381e7d6816e6d915a44a13c0195b202`, type: 'm3u8', tooltip: 'chzzk', className: 'lck-channel-btn is-outlined' }, { name: 'K', url: '', type: 'iframe', tooltip: 'youtube', className: 'lck-channel-btn is-outlined' } ];
 const streamerChannels = [ { name: '풍', id: '7ce8032370ac5121dcabce7bad375ced', type: 'm3u8', className: 'chzzk-btn channel-button is-outlined' }, { name: '침', id: 'bb382c2c0cc9fa7c86ab3b037fb5799c', type: 'm3u8', className: 'chzzk-btn channel-button is-outlined' }, { name: '추', id: '181a3baebe508d3b5fa5d9fe4d6b5241', type: 'm3u8', className: 'chzzk-btn channel-button is-outlined' }, { name: '솝', id: '34a2bd4f5988e37693e94306f0bfe57f', type: 'm3u8', className: 'chzzk-btn channel-button is-outlined' }, { name: '센', id: 'be243c7cbfb8d4e28777eedc43e28181', type: 'm3u8', className: 'chzzk-btn channel-button is-outlined' } ];
 
-// --- DOM 요소 캐싱 함수 (모바일 요소만) ---
 function cacheDOMElements() {
     videoArea = document.getElementById('video-area');
     chatArea = document.getElementById('chat-area');
     chatIframe = document.getElementById('chat-iframe');
     bottomNav = document.getElementById('bottom-nav');
     controlsModal = document.getElementById('controls-modal');
-    favoriteModal = document.getElementById('favorite-modal'); // 즐겨찾기 관리 모달은 유지
-    favoriteList = document.getElementById('favorite-list');     // 즐겨찾기 관리 목록도 유지
+    favoriteModal = document.getElementById('favorite-modal');
+    favoriteList = document.getElementById('favorite-list');
+    mainContent = document.getElementById('main-content'); // ★★★ main-content 캐싱 ★★★
 }
 
-// --- checkLayout 함수 제거 ---
-// function checkLayout() { ... }
+// --- ★★★ 레이아웃 높이 업데이트 함수 추가 ★★★ ---
+function updateLayoutHeight() {
+    if (!mainContent || !bottomNav || !videoArea || !chatArea) return; // 필요한 요소 없으면 종료
+
+    // 1. 하단 네비게이션 바의 실제 높이 가져오기
+    const navBarHeight = bottomNav.offsetHeight; // 실제 렌더링된 높이
+
+    // 2. 실제 사용 가능한 화면 높이 계산
+    // VisualViewport API 지원 시 사용 (더 정확)
+    let availableHeight = window.innerHeight; // 기본값
+    if (window.visualViewport) {
+        availableHeight = window.visualViewport.height;
+        // 참고: visualViewport.offsetTop 등도 활용 가능
+    }
+
+    // 3. 메인 콘텐츠 영역의 높이 설정 (사용 가능 높이 - 네비 바 높이)
+    const mainContentHeight = availableHeight - navBarHeight;
+    mainContent.style.height = `${mainContentHeight}px`; // px 단위로 설정
+
+    // 4. 분할 수에 따라 비디오/채팅 영역 높이 비율 재조정 (adjustPlayerLayout 호출과 유사하게)
+    let videoHeightPercent = (playerCount === 1) ? 45 : 60;
+    let chatHeightPercent = (playerCount === 1) ? 55 : 40;
+
+    videoArea.style.height = `${videoHeightPercent}%`;
+    chatArea.style.height = `${chatHeightPercent}%`;
+
+    console.log(`[updateLayoutHeight] 사용 가능 높이: ${availableHeight}px, 네비 바 높이: ${navBarHeight}px, 메인 콘텐츠 높이: ${mainContentHeight}px, 영상: ${videoHeightPercent}%, 채팅: ${chatHeightPercent}%`);
+}
+
+// --- ★★★ 이벤트 리스너 성능 개선을 위한 스로틀 함수 추가 ★★★ ---
+function throttle(func, limit) {
+  let lastFunc;
+  let lastRan;
+  return function() {
+    const context = this;
+    const args = arguments;
+    if (!lastRan) {
+      func.apply(context, args);
+      lastRan = Date.now();
+    } else {
+      clearTimeout(lastFunc);
+      lastFunc = setTimeout(function() {
+        if ((Date.now() - lastRan) >= limit) {
+          func.apply(context, args);
+          lastRan = Date.now();
+        }
+      }, limit - (Date.now() - lastRan));
+    }
+  }
+}
 
 // --- 초기화 함수 (모바일 전용으로 간소화) ---
 async function initialize() {
      console.log("[initialize] 초기화 시작");
      cacheDOMElements();
-     // checkLayout() 호출 제거
 
-     // --- 이벤트 리스너 설정 ---
-     // 즐겨찾기 관리 모달 리스너
      const favModalBg = favoriteModal?.querySelector('.modal-background');
      if (favModalBg) favModalBg.addEventListener('click', closeModal);
      const favCloseBtn = favoriteModal?.querySelector('.delete');
@@ -87,26 +133,52 @@ async function initialize() {
          });
      } else { console.warn('[initialize] F5 새로고침 버튼(refresh-btn) 요소를 찾을 수 없습니다.'); }
 
+         // ★★★ 레이아웃 높이 조절 이벤트 리스너 추가 ★★★
+     const throttledUpdateLayout = throttle(updateLayoutHeight, 100); // 100ms 간격으로 스로틀링
+
+     // 초기 로드 시 높이 설정
+     updateLayoutHeight();
+
+     // VisualViewport API 지원 시 해당 리사이즈 이벤트 사용
+     if (window.visualViewport) {
+         window.visualViewport.addEventListener('resize', throttledUpdateLayout);
+         window.visualViewport.addEventListener('scroll', throttledUpdateLayout); // 스크롤 시에도 UI 변경 가능성 있음
+     } else {
+         // 지원 안 할 경우 window 리사이즈 이벤트 사용 (덜 정확할 수 있음)
+         window.addEventListener('resize', throttledUpdateLayout);
+     }
+     // 화면 방향 변경 시 높이 재계산
+     window.addEventListener('orientationchange', updateLayoutHeight);
+    
      // --- 데이터 로드 ---
      await fetchDataFromSheet();
 
-     // --- 초기 설정 (모바일 전용) ---
+     // --- 초기 설정 ---
      console.log("[initialize] 모바일 레이아웃 설정 중...");
-     setSplitScreen(1);
-     renderControlsModalLists(); // 컨트롤 모달 목록 렌더링
-     renderLckScheduleModal();   // 컨트롤 모달 스케줄 렌더링
-     console.log("[initialize] 모바일 레이아웃 설정 완료 & 초기화 완료");
+     setSplitScreen(1); // setSplitScreen은 adjustPlayerLayout을 호출하고, adjustPlayerLayout은 이제 높이 비율은 직접 설정하지 않음
+     renderControlsModalLists();
+     renderLckScheduleModal();
+
+     // ★★★ 초기 로드 후 높이를 다시 한번 확실히 설정 ★★★
+     // (데이터 로드 등으로 인해 미세하게 레이아웃이 변경될 수 있으므로)
+     setTimeout(updateLayoutHeight, 100); // 약간의 지연 후 실행
+
+     console.log("[initialize] 초기화 완료");
 }
 
-// --- 화면 분할 설정 함수 (모바일 전용) ---
+// --- setSplitScreen 함수 수정 (adjustPlayerLayout 호출 유지) ---
 function setSplitScreen(count) {
-    const targetContainer = videoArea; // 항상 videoArea 사용
-    const maxCount = 2; // 최대 2분할
+    const targetContainer = videoArea;
+    const maxCount = 2;
 
     if (!targetContainer) { console.error("[setSplitScreen] videoArea 요소를 찾을 수 없습니다!"); return; }
 
     if (count < 1) count = 1;
     if (count > maxCount) count = maxCount;
+
+    // ★★★ playerCount 변경 전에 현재 값 저장 (선택적 최적화) ★★★
+    // const previousPlayerCount = playerCount;
+
     playerCount = count;
     clickIndex = 0;
 
@@ -123,45 +195,45 @@ function setSplitScreen(count) {
         targetContainer.appendChild(box);
     }
 
+    // ★★★ adjustPlayerLayout 호출은 유지 (내부 그리드 설정 및 높이 재조정 트리거) ★★★
     adjustPlayerLayout();
+
+    // ★★★ 분할 수가 변경되었을 때만 높이를 강제로 업데이트 (선택적 최적화) ★★★
+    // if (previousPlayerCount !== playerCount) {
+    //     updateLayoutHeight();
+    // }
 }
 
 // --- 플레이어 레이아웃 조정 함수 (모바일 전용, 동적 높이 및 상하 분할) ---
 function adjustPlayerLayout() {
-    const targetContainer = videoArea; // 항상 videoArea 사용
-    const chatContainer = chatArea; // 채팅 영역 참조
-    if (!targetContainer || !chatContainer) {
-        console.error("adjustPlayerLayout: 비디오 또는 채팅 영역 요소를 찾을 수 없습니다.");
+    const targetContainer = videoArea;
+    if (!targetContainer) {
+        console.error("adjustPlayerLayout: 비디오 영역 요소를 찾을 수 없습니다.");
         return;
     }
 
-    let videoHeightPercent = 60; // 기본값 (2분할 기준)
-    let chatHeightPercent = 35;  // 기본값 (2분할 기준)
-    let gridColumns = '1fr';     // 기본 그리드 컬럼 (1개)
-    let gridRows = '1fr';        // 기본 그리드 행 (1개)
+    let gridColumns = '1fr';
+    let gridRows = '1fr';
 
-    // 분할 수에 따라 높이 비율 및 그리드 행 설정 변경
     if (playerCount === 1) {
-        videoHeightPercent = 40; // 1분할 시 영상 45%
-        chatHeightPercent = 55;  // 1분할 시 채팅 55%
-        gridRows = '1fr';        // 1분할 시 행 1개
-        console.log("[adjustPlayerLayout] 1분할 설정: 영상 45%, 채팅 55%, 그리드 1x1");
+        gridRows = '1fr';
+        console.log("[adjustPlayerLayout] 1분할 설정: 그리드 1x1");
     } else if (playerCount === 2) {
-        videoHeightPercent = 60; // 2분할 시 영상 60%
-        chatHeightPercent = 35;  // 2분할 시 채팅 40%
-        // ★★★ 2분할 상하 배치를 위해 행을 2개로 설정 ★★★
-        gridRows = '1fr 1fr';
-        console.log("[adjustPlayerLayout] 2분할 설정: 영상 60%, 채팅 40%, 그리드 1x2 (상하)");
+        gridRows = '1fr 1fr'; // 상하 분할
+        console.log("[adjustPlayerLayout] 2분할 설정: 그리드 1x2 (상하)");
     }
-    // (참고: 현재 setSplitScreen에서 1 또는 2만 허용하므로 다른 경우는 없음)
 
-    // 계산된 높이 비율 적용
-    targetContainer.style.height = `${videoHeightPercent}%`;
-    chatContainer.style.height = `${chatHeightPercent}%`;
+    // ★★★ 높이 설정 부분 제거 (updateLayoutHeight에서 처리) ★★★
+    // targetContainer.style.height = `${videoHeightPercent}%`;
+    // chatContainer.style.height = `${chatHeightPercent}%`;
 
-    // 비디오 영역 내부 그리드 레이아웃 설정
+    // 그리드 레이아웃만 설정
     targetContainer.style.gridTemplateColumns = gridColumns;
     targetContainer.style.gridTemplateRows = gridRows;
+
+    // ★★★ 높이가 변경될 수 있으므로 레이아웃 업데이트 함수 호출 ★★★
+    // (setSplitScreen에서 adjustPlayerLayout을 호출하고, adjustPlayerLayout이 끝날 때 높이를 다시 맞추는 것이 좋음)
+    updateLayoutHeight();
 }
 
 // --- 모바일 컨트롤 모달 관련 함수 ---
