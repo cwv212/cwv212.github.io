@@ -126,21 +126,43 @@ function setSplitScreen(count) {
     adjustPlayerLayout();
 }
 
-// --- 플레이어 레이아웃 조정 함수 (모바일 전용) ---
+// --- 플레이어 레이아웃 조정 함수 (모바일 전용, 동적 높이 및 상하 분할) ---
 function adjustPlayerLayout() {
     const targetContainer = videoArea; // 항상 videoArea 사용
-    if (!targetContainer) return;
+    const chatContainer = chatArea; // 채팅 영역 참조
+    if (!targetContainer || !chatContainer) {
+        console.error("adjustPlayerLayout: 비디오 또는 채팅 영역 요소를 찾을 수 없습니다.");
+        return;
+    }
 
-    let columns = 1;
-    if (playerCount === 2) { columns = 2; }
-    targetContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-    targetContainer.style.gridTemplateRows = '1fr';
-    console.log(`[adjustPlayerLayout] Grid 설정: ${columns} 열 x 1 행`);
+    let videoHeightPercent = 60; // 기본값 (2분할 기준)
+    let chatHeightPercent = 40;  // 기본값 (2분할 기준)
+    let gridColumns = '1fr';     // 기본 그리드 컬럼 (1개)
+    let gridRows = '1fr';        // 기본 그리드 행 (1개)
+
+    // 분할 수에 따라 높이 비율 및 그리드 행 설정 변경
+    if (playerCount === 1) {
+        videoHeightPercent = 45; // 1분할 시 영상 45%
+        chatHeightPercent = 55;  // 1분할 시 채팅 55%
+        gridRows = '1fr';        // 1분할 시 행 1개
+        console.log("[adjustPlayerLayout] 1분할 설정: 영상 45%, 채팅 55%, 그리드 1x1");
+    } else if (playerCount === 2) {
+        videoHeightPercent = 60; // 2분할 시 영상 60%
+        chatHeightPercent = 40;  // 2분할 시 채팅 40%
+        // ★★★ 2분할 상하 배치를 위해 행을 2개로 설정 ★★★
+        gridRows = '1fr 1fr';
+        console.log("[adjustPlayerLayout] 2분할 설정: 영상 60%, 채팅 40%, 그리드 1x2 (상하)");
+    }
+    // (참고: 현재 setSplitScreen에서 1 또는 2만 허용하므로 다른 경우는 없음)
+
+    // 계산된 높이 비율 적용
+    targetContainer.style.height = `${videoHeightPercent}%`;
+    chatContainer.style.height = `${chatHeightPercent}%`;
+
+    // 비디오 영역 내부 그리드 레이아웃 설정
+    targetContainer.style.gridTemplateColumns = gridColumns;
+    targetContainer.style.gridTemplateRows = gridRows;
 }
-
-// --- 데스크톱 관련 함수 모두 제거 ---
-// updateModeStyles, updateModeStylesModal, toggleMode, toggleSidebar,
-// renderSidebarFavorites, renderSportsChannels, renderLckChannels, renderLckSchedule 함수 제거
 
 // --- 모바일 컨트롤 모달 관련 함수 ---
 function openControlsModal() {
