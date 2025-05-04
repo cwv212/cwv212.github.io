@@ -136,19 +136,19 @@ function adjustPlayerLayout() {
     }
 
     let videoHeightPercent = 60; // 기본값 (2분할 기준)
-    let chatHeightPercent = 40;  // 기본값 (2분할 기준)
+    let chatHeightPercent = 35;  // 기본값 (2분할 기준)
     let gridColumns = '1fr';     // 기본 그리드 컬럼 (1개)
     let gridRows = '1fr';        // 기본 그리드 행 (1개)
 
     // 분할 수에 따라 높이 비율 및 그리드 행 설정 변경
     if (playerCount === 1) {
-        videoHeightPercent = 45; // 1분할 시 영상 45%
+        videoHeightPercent = 40; // 1분할 시 영상 45%
         chatHeightPercent = 55;  // 1분할 시 채팅 55%
         gridRows = '1fr';        // 1분할 시 행 1개
         console.log("[adjustPlayerLayout] 1분할 설정: 영상 45%, 채팅 55%, 그리드 1x1");
     } else if (playerCount === 2) {
         videoHeightPercent = 60; // 2분할 시 영상 60%
-        chatHeightPercent = 40;  // 2분할 시 채팅 40%
+        chatHeightPercent = 35;  // 2분할 시 채팅 40%
         // ★★★ 2분할 상하 배치를 위해 행을 2개로 설정 ★★★
         gridRows = '1fr 1fr';
         console.log("[adjustPlayerLayout] 2분할 설정: 영상 60%, 채팅 40%, 그리드 1x2 (상하)");
