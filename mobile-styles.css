@@ -1,0 +1,306 @@
+/* --- 모바일 전용 스타일 --- */
+
+/* 768px 이하 화면 너비에 적용 */
+@media (max-width: 768px) {
+
+    html, body {
+        overflow: hidden !important; /* 전체 스크롤 방지 */
+        height: 100%; /* 높이 100% 설정 */
+        background-color: #14161A; /* 기본 어두운 배경색 */
+        color: #c5c8cc; /* 기본 텍스트 색상 */
+        -webkit-tap-highlight-color: transparent; /* 모바일 클릭 시 하이라이트 제거 */
+        font-family: 'Roboto', sans-serif; /* 폰트 적용 */
+        margin: 0; /* 기본 마진 제거 */
+        padding: 0; /* 기본 패딩 제거 */
+    }
+
+    /* 데스크톱 사이드바 및 토글 버튼 숨기기 */
+    #sidebar, #toggle-btn {
+        display: none !important;
+    }
+
+    /* 메인 콘텐츠 레이아웃 (Flexbox Column) */
+    #main-content {
+        display: flex;
+        flex-direction: column; /* 세로 방향 배치 */
+        width: 100%;
+        height: 100vh; /* 뷰포트 전체 높이 */
+        /* 하단 네비게이션 바 높이만큼 패딩 추가 */
+        padding-bottom: 50px;
+        box-sizing: border-box; /* 패딩 포함 크기 계산 */
+    }
+
+    /* 영상 영역 (상단 60%) */
+    #video-area {
+        height: 60vh; /* 뷰포트 높이의 60% */
+        width: 100%;
+        display: grid; /* 1 또는 2개 영상 배치를 위해 Grid 사용 */
+        gap: 0; /* 영상 간 간격 없음 */
+        background-color: #000000; /* 영상 배경은 검은색 */
+        overflow: hidden; /* 영역 넘치는 부분 숨김 */
+    }
+
+    /* 채팅 영역 (하단 40%) */
+    #chat-area {
+        height: 40vh;
+        width: 100%;
+        background-color: #18181b; /* 채팅 배경색 유지 */
+        overflow: hidden; /* 중요: 채팅 영역 내부 스크롤 방지 (iframe 내부 스크롤 사용) */
+        position: relative;
+        border-top: 1px solid #333;
+    }
+
+
+    /* 채팅 플레이스홀더 스타일 */
+    #chat-placeholder {
+        position: absolute; /* 채팅 영역 내 절대 위치 */
+        top: 0; left: 0; right: 0; bottom: 0;
+        display: flex; /* Flexbox로 중앙 정렬 */
+        align-items: center;
+        justify-content: center;
+        z-index: 1; /* Iframe 뒤에 위치 */
+        color: #888; /* 회색 텍스트 */
+        font-size: 0.9rem;
+    }
+
+    /* 채팅 Iframe 스타일 */
+     #chat-iframe {
+        display: block; /* 항상 보이도록 설정 */
+        width: 100%;
+        height: 100%;
+        border: none;
+        position: relative; /* z-index 불필요 */
+     }
+
+    /* 영상 플레이어 박스 스타일 */
+    .player-box {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border: none; /* 테두리 없음 */
+        background-color: #111111; /* 로딩 전 어두운 배경 */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #555; /* 로딩 메시지 색상 */
+        font-size: 0.8rem;
+    }
+
+    /* 플레이어 내부 Iframe 스타일 */
+    .player-box iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+    }
+
+    /* 하단 고정 네비게이션 바 */
+    #bottom-nav {
+        background-color: #202023; /* 네비게이션 바 배경색 */
+        height: 50px; /* 높이 지정 */
+        border-top: 1px solid #333; /* 상단 구분선 */
+        padding: 0 5px; /* 좌우 최소 패딩 */
+        z-index: 30; /* 다른 요소 위에 표시 */
+    }
+
+    #bottom-nav .navbar-brand {
+        width: 100%;
+        align-items: center; /* 내부 아이템 세로 중앙 정렬 */
+    }
+
+    /* 네비게이션 바 아이템(버튼) 스타일 */
+    #bottom-nav .navbar-item {
+        padding: 0 5px; /* 아이템 내부 패딩 축소 */
+        color: #ccc; /* 기본 텍스트 색상 */
+        display: flex; /* 내부 아이콘/텍스트 정렬 */
+        flex-direction: column; /* 아이콘과 텍스트 세로 배치 */
+        align-items: center; /* 가로 중앙 정렬 */
+        justify-content: center; /* 세로 중앙 정렬 */
+        height: 100%; /* 부모 높이 채움 */
+        line-height: 1.1; /* 줄 간격 조절 */
+        flex-grow: 1; /* 가능한 공간 차지 */
+        flex-basis: 0; /* 동일 너비 배분 시작점 */
+        cursor: pointer;
+        transition: background-color 0.2s; /* 부드러운 호버 효과 */
+    }
+
+    /* 네비게이션 바 아이템 호버 효과 */
+     #bottom-nav .navbar-item:hover,
+     #bottom-nav .navbar-item:focus {
+        background-color: #333; /* 호버 시 배경색 변경 */
+        color: #fff; /* 호버 시 텍스트 색상 변경 */
+     }
+
+     /* 네비게이션 바 아이콘 스타일 */
+    #bottom-nav .navbar-item .icon {
+        margin-bottom: 2px; /* 아이콘과 텍스트 사이 간격 */
+        margin-right: 0 !important; /* Bulma 기본값 오버라이드 */
+        height: 1em; /* 아이콘 높이 고정 */
+        font-size: 1.1rem; /* 아이콘 크기 */
+        width: 1.2em; /* 아이콘 너비 (정렬용) */
+        text-align: center;
+    }
+
+     /* 네비게이션 바 텍스트 스타일 */
+     #bottom-nav .navbar-item .is-size-7 {
+        font-size: 0.65rem !important; /* 텍스트 크기 작게 */
+        text-align: center;
+        white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+     }
+
+    /* 네비게이션 바 구분선 스타일 */
+    #bottom-nav .navbar-item.is-flex-shrink-0 { /* 구분선(|) */
+        flex-grow: 0; /* 크기 커지지 않음 */
+        padding: 0 4px; /* 패딩 조절 */
+        cursor: default; /* 클릭 불가 커서 */
+        color: #555; /* 색상 어둡게 */
+    }
+    #bottom-nav .navbar-item.is-flex-shrink-0:hover {
+        background-color: transparent; /* 호버 효과 없음 */
+    }
+
+
+    /* 컨트롤 모달 스타일 */
+     .modal.is-active {
+        z-index: 40; /* 모달이 네비게이션 바 위에 오도록 z-index 설정 */
+     }
+    .modal-card {
+        width: 95%; /* 모바일 화면 너비의 95% */
+        max-width: 400px; /* 최대 너비 제한 */
+        margin: 10px auto; /* 상하 여백 및 가로 중앙 정렬 */
+    }
+     .modal-card-body {
+         background-color: #1f2124; /* 모달 본문 어두운 배경 */
+         color: #c5c8cc; /* 모달 본문 텍스트 색상 */
+     }
+    .modal-card-head, .modal-card-foot {
+         background-color: #2a2d33; /* 모달 헤더/푸터 배경 */
+         border-color: #3a3d43; /* 모달 헤더/푸터 테두리 색 */
+     }
+    .modal-card-title { color: #e0e3e6; } /* 모달 제목 색상 */
+    #controls-modal .label,
+    #controls-modal .title,
+    #controls-modal .subtitle {
+        color: #b0b3b8; /* 모달 내부 라벨/제목 색상 */
+    }
+    #controls-modal .input {
+        background-color: #333; /* 입력 필드 배경 */
+        border-color: #555; /* 입력 필드 테두리 */
+        color: #ddd; /* 입력 필드 텍스트 */
+    }
+     #controls-modal .input::placeholder {
+         color: #888; /* 입력 필드 placeholder 색상 */
+     }
+
+
+     /* 모달 내부 채널 버튼 스타일 */
+    #controls-modal .buttons .button {
+        background-color: #3a3d43; /* 버튼 배경 */
+        border-color: #5a5d63; /* 버튼 테두리 */
+        color: #c5c8cc; /* 버튼 텍스트 */
+        font-size: 0.75rem; /* 버튼 폰트 크기 작게 */
+        padding: 4px 8px; /* 버튼 내부 패딩 */
+         margin: 2px; /* 버튼 간 간격 */
+         height: auto; /* 높이 자동 조절 */
+         line-height: 1.4; /* 줄 간격 */
+    }
+    #controls-modal .buttons .button:hover {
+        background-color: #4a4d53; /* 버튼 호버 배경 */
+        border-color: #6a6d73; /* 버튼 호버 테두리 */
+        color: #e0e3e6; /* 버튼 호버 텍스트 */
+    }
+
+     /* 모달 내부 토글 헤더 화살표 조정 */
+     #controls-modal .toggle-header {
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+        border-bottom: 1px solid #333;
+        margin-bottom: 5px;
+     }
+     #controls-modal .toggle-header::after {
+         content: '▼'; /* 기본 아래 화살표 */
+         font-size: 0.8em;
+         transition: transform 0.2s ease;
+         margin-left: 5px;
+         color: #888;
+     }
+     #controls-modal .toggle-header.collapsed::after {
+         content: '▶'; /* 접혔을 때 오른쪽 화살표 */
+         transform: rotate(0deg);
+     }
+
+      /* 모달 내부 접히는 섹션 콘텐츠 스타일 */
+     .section-content {
+        background-color: #2a2d33; /* 섹션 배경 */
+        padding: 8px; /* 내부 패딩 */
+        border-radius: 4px; /* 모서리 둥글게 */
+        margin-top: 0; /* 토글 헤더와 간격 제거 */
+        max-height: 150px; /* 최대 높이 제한 */
+        overflow-y: auto; /* 내용 많으면 스크롤 */
+        scrollbar-width: thin; /* 스크롤바 얇게 (Firefox) */
+        scrollbar-color: #555 #333; /* 스크롤바 색상 (Firefox) */
+     }
+     /* Webkit 브라우저 스크롤바 스타일 */
+     .section-content::-webkit-scrollbar { width: 6px; }
+     .section-content::-webkit-scrollbar-track { background: #333; }
+     .section-content::-webkit-scrollbar-thumb { background-color: #555; border-radius: 3px; }
+
+     /* 모달 내부 HLS 알림 스타일 */
+     #controls-modal .notification {
+        background-color: rgba(255, 229, 100, 0.1); /* Bulma is-light 느낌 */
+        color: #947600; /* Bulma is-warning is-light 텍스트 색상 */
+        border-radius: 4px;
+        margin-top: 10px;
+     }
+      #controls-modal .notification a {
+        color: #3273dc; /* 링크 색상 */
+        text-decoration: underline;
+     }
+
+     /* 데스크톱용 HLS 알림 숨기기 */
+     #firefox-notice, #chrome-notice { display: none; }
+
+     /* 기존 즐겨찾기 관리 모달 다크 테마 적용 */
+     #favorite-modal .modal-card-body {
+          background-color: #1f2124;
+          color: #c5c8cc;
+     }
+      #favorite-modal .modal-card-head, #favorite-modal .modal-card-foot {
+         background-color: #2a2d33;
+         border-color: #3a3d43;
+     }
+     #favorite-modal .modal-card-title { color: #e0e3e6; }
+     #favorite-modal .label { color: #b0b3b8; }
+     #favorite-modal .input {
+         background-color: #333;
+         border-color: #555;
+         color: #ddd;
+     }
+     #favorite-modal #favorite-list {
+         border-top-color: #444;
+         color: #b0b3b8;
+     }
+     #favorite-modal #favorite-list .level { border-bottom: 1px solid #444; padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+     #favorite-modal #favorite-list .level:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+     #favorite-modal #favorite-list .level-left .level-item { flex-shrink: 1; margin-right: 0.5rem; word-break: break-all; }
+     #favorite-modal #favorite-list .is-size-7 { color: #b0b3b8;}
+     #favorite-modal #favorite-list .button.is-delete {
+         background-color: #901c1c; /* 삭제 버튼 색상 */
+         border: none;
+         width: 18px;
+         height: 18px;
+         font-size: 10px;
+     }
+     #favorite-modal #favorite-list .button.is-delete:hover {
+         background-color: #cc0000;
+     }
+
+} /* @media 쿼리 종료 */
+
+/* 기본 body 배경색 (페이지 로드 시 흰색 깜빡임 방지) */
+body {
+    background-color: #14161A;
+}
