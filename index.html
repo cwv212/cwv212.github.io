@@ -2,90 +2,75 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- 모바일 뷰포트 설정: 확대/축소 방지 -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>LCK 플레이어 (모바일)</title>
-    <!-- Bulma CSS -->
+    <title>LCK 플레이어</title> <!-- 타이틀 간소화 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <!-- 모바일용 CSS (새로 추가) -->
-    <link rel="stylesheet" href="mobile-styles.css">
+    <!-- ★★★ custom-bulma.css는 데스크톱 전용이었다면 제거 가능, 공통 스타일이면 유지 ★★★ -->
+    <!-- <link rel="stylesheet" href="custom-bulma.css"> -->
+    <link rel="stylesheet" href="mobile-styles.css"> <!-- 모바일 스타일 유지 -->
 </head>
-<body class="is-mobile-layout"> <!-- 모바일 레이아웃 식별용 클래스 추가 -->
+<body class="is-mobile-layout"> <!-- 클래스 유지 또는 제거 가능 -->
 
-    <!-- 모바일: 메인 콘텐츠 영역 -->
+    <!-- 메인 콘텐츠 영역 -->
     <div id="main-content">
-        <!-- 모바일: 상단 영상 영역 (60%) -->
+        <!-- 상단 영상 영역 -->
         <div id="video-area">
-            <!-- 플레이어 박스는 JavaScript로 동적 생성됩니다 -->
-            <!-- 예시 (1분할): <div class="player-box" id="p-0"></div> -->
-            <!-- 예시 (2분할): <div class="player-box" id="p-0"></div><div class="player-box" id="p-1"></div> -->
+            <!-- JS로 플레이어 박스 생성 -->
         </div>
 
-        <!-- 모바일: 하단 채팅 영역 (40%) -->
-<div id="chat-area">
-    <!-- 채팅 표시용 Iframe: src 속성에 고정 URL 직접 지정 -->
-    <iframe id="chat-iframe"
-            src="https://insagirl-toto.appspot.com/chatting/lgic/" <!-- ★★★ 여기에 고정 URL 입력 ★★★ -->
-            style="width: 100%; height: 100%; border: none; display: block;" <!-- 바로 보이도록 display: block 추가 -->
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowfullscreen>
-            <!-- 아이프레임을 지원하지 않는 브라우저를 위한 대체 텍스트 (선택 사항) -->
-            <p>채팅 기능을 보려면 아이프레임을 지원하는 브라우저가 필요합니다.</p>
-    </iframe>
+        <!-- 하단 채팅 영역 -->
+        <div id="chat-area">
+            <iframe id="chat-iframe"
+                    src="https://insagirl-toto.appspot.com/chatting/lgic/"
+                    style="width: 100%; height: 100%; border: none; display: block;"
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowfullscreen>
+                    <p>채팅 기능을 보려면 아이프레임을 지원하는 브라우저가 필요합니다.</p>
+            </iframe>
         </div>
     </div>
 
-    <!-- 모바일: 하단 고정 네비게이션 -->
-<!-- 모바일: 하단 고정 네비게이션 -->
-<nav id="bottom-nav" class="navbar is-fixed-bottom has-shadow">
-    <div class="navbar-brand is-flex is-justify-content-space-around" style="width: 100%;">
-        <!-- 화면 분할 버튼 (유지) -->
-        <a class="navbar-item is-flex-shrink-1 px-2" onclick="setSplitScreen(1)">
-            <span class="icon"><i class="fas fa-square"></i></span>
-            <span class="is-size-7 ml-1">1분할</span>
-        </a>
-        <a class="navbar-item is-flex-shrink-1 px-2" onclick="setSplitScreen(2)">
-            <span class="icon"><i class="fas fa-th-large"></i></span>
-            <span class="is-size-7 ml-1">2분할</span>
-        </a>
+    <!-- 하단 고정 네비게이션 -->
+    <nav id="bottom-nav" class="navbar is-fixed-bottom has-shadow">
+        <div class="navbar-brand is-flex is-justify-content-space-around" style="width: 100%;">
+            <!-- 화면 분할 버튼 -->
+            <a class="navbar-item is-flex-shrink-1 px-2" onclick="setSplitScreen(1)">
+                <span class="icon"><i class="fas fa-square"></i></span>
+                 <span class="is-size-7 ml-1">1분할</span>
+            </a>
+            <a class="navbar-item is-flex-shrink-1 px-2" onclick="setSplitScreen(2)">
+                 <span class="icon"><i class="fas fa-th-large"></i></span>
+                 <span class="is-size-7 ml-1">2분할</span>
+            </a>
+            <!-- 구분선 -->
+            <span class="navbar-item is-flex-shrink-0 has-text-grey-light px-1">|</span>
+            <!-- LCK Y 버튼 -->
+            <a class="navbar-item is-flex-shrink-1 px-2" onclick="playChannelFromNav(getYouTubeLiveOrUpcoming(), 'iframe')">
+                <span class="icon"><i class="fab fa-youtube"></i></span>
+                <span class="is-size-7 ml-1">LCK</span>
+            </a>
+            <!-- F5 새로고침 버튼 -->
+            <a class="navbar-item is-flex-shrink-1 px-2" id="refresh-btn">
+                <span class="icon"><i class="fas fa-sync-alt"></i></span>
+                <span class="is-size-7 ml-1">F5</span>
+            </a>
+            <!-- 흐름 버튼 -->
+            <a class="navbar-item is-flex-shrink-1 px-2" onclick="window.open('https://insagirl-toto.appspot.com/hrm/?where=1', '_blank');">
+                <span class="icon"><i class="fas fa-chart-line"></i></span>
+                <span class="is-size-7 ml-1">흐름</span>
+            </a>
+            <!-- 구분선 -->
+            <span class="navbar-item is-flex-shrink-0 has-text-grey-light px-1">|</span>
+            <!-- 더보기 버튼 -->
+            <a class="navbar-item is-flex-shrink-1 px-2" onclick="openControlsModal()">
+                 <span class="icon"><i class="fas fa-bars"></i></span>
+                 <span class="is-size-7 ml-1">더보기</span>
+            </a>
+        </div>
+    </nav>
 
-        <!-- 구분선 -->
-        <span class="navbar-item is-flex-shrink-0 has-text-grey-light px-1">|</span>
-
-        <!-- LCK Y 버튼 (유지) -->
-        <a class="navbar-item is-flex-shrink-1 px-2" onclick="playChannelFromNav(getYouTubeLiveOrUpcoming(), 'iframe')">
-            <span class="icon">
-                <i class="fab fa-youtube"></i> <!-- 유튜브 브랜드 아이콘 -->
-            </span>
-            <span class="is-size-7">LCK</span>
-        </a>
-
-        <!-- F5 새로고침 버튼 (추가) -->
-        <a class="navbar-item is-flex-shrink-1 px-2" id="refresh-btn"> <!-- ★★★ id 추가 ★★★ -->
-            <span class="icon"><i class="fas fa-sync-alt"></i></span> <!-- 새로고침 아이콘 -->
-            <span class="is-size-7 ml-1">F5</span>
-        </a>
-
-        <!-- 흐름 버튼 (추가) -->
-        <a class="navbar-item is-flex-shrink-1 px-2" onclick="window.open('https://insagirl-toto.appspot.com/hrm/?where=1', '_blank');"> <!-- ★★★ 새 탭 링크 onclick 추가 ★★★ -->
-            <span class="icon"><i class="fas fa-chart-line"></i></span> <!-- 흐름 관련 아이콘 (예시) -->
-            <span class="is-size-7 ml-1">흐름</span>
-        </a>
-
-        <!-- 구분선 -->
-        <span class="navbar-item is-flex-shrink-0 has-text-grey-light px-1">|</span>
-
-        <!-- 더보기 버튼 (유지) -->
-        <a class="navbar-item is-flex-shrink-1 px-2" onclick="openControlsModal()">
-            <span class="icon"><i class="fas fa-bars"></i></span>
-            <span class="is-size-7 ml-1">더보기</span>
-        </a>
-    </div>
-</nav>
-    
-    <!-- 기타 기능 모달 (즐겨찾기, 스포츠 채널, 사용자 입력 등) -->
+    <!-- 기타 기능 모달 -->
     <div class="modal" id="controls-modal">
       <div class="modal-background" onclick="closeControlsModal()"></div>
       <div class="modal-card">
@@ -97,56 +82,35 @@
             <!-- LCK 대진표 -->
             <h3 class="title is-6">LCK 대진표</h3>
             <div id="lck-schedule-modal" class="mb-3" style="max-height: 150px; overflow-y: auto; border: 1px solid #444; border-radius: 4px; padding: 5px;">
-                 <!-- 내용은 JavaScript로 로드됩니다 -->
                  <p class="loading-msg has-text-grey has-text-centered py-2 is-size-7">대진표 로딩 중...</p>
             </div>
-
-            <!-- 즐겨찾기 채널 (토글 섹션) -->
+            <!-- 즐겨찾기 채널 -->
             <h4 class="subtitle is-6 mt-3 toggle-header collapsed is-clickable" onclick="toggleSection(this, 'favorite-channels-modal')">
                 즐겨찾기 채널
             </h4>
             <div id="favorite-channels-modal" class="buttons are-small is-flex-wrap-wrap section-content" style="display: none;">
-                       <!-- 내용은 JavaScript로 로드됩니다 -->
+                       <!-- JS 로드 -->
             </div>
-
-            <!-- 스포츠 채널 (토글 섹션) -->
+            <!-- 스포츠 채널 -->
             <h4 class="subtitle is-6 mt-3 toggle-header collapsed is-clickable" onclick="toggleSection(this, 'sports-channels-modal')">
                 스포츠 채널
             </h4>
             <div id="sports-channels-modal" class="buttons are-small is-flex-wrap-wrap section-content" style="display: none;">
-                      <!-- 내용은 JavaScript로 로드됩니다 -->
+                      <!-- JS 로드 -->
             </div>
-
             <!-- 사용자 입력 -->
             <h3 class="title is-6 mt-4">사용자 입력</h3>
             <div id="custom-url-container-modal">
-                <div class="field">
-                    <div class="control">
-                         <input type="text" id="custom-url-input-modal" class="input is-small" placeholder="m3u8, 치지직 ID, 채널 URL">
-                    </div>
-                </div>
+                <div class="field"><div class="control"><input type="text" id="custom-url-input-modal" class="input is-small" placeholder="m3u8, 치지직 ID, 채널 URL"></div></div>
                 <div id="custom-url-buttons-modal" class="field is-grouped mt-2">
-                    <p class="control">
-                        <button class="button is-link is-small" onclick="playCustomUrlModal()">실행</button>
-                    </p>
-                     <p class="control">
-                        <!-- 이 버튼은 기존 즐겨찾기 '관리' 모달을 엽니다 -->
-                        <button class="button is-info is-small" onclick="openFavoritesManagerModal()">즐겨찾기 관리</button>
-                     </p>
+                    <p class="control"><button class="button is-link is-small" onclick="playCustomUrlModal()">실행</button></p>
+                    <p class="control"><button class="button is-info is-small" onclick="openFavoritesManagerModal()">즐겨찾기 관리</button></p>
                 </div>
             </div>
-
-            <!-- HLS 플레이어 설치 안내 (모드에 따라 표시) -->
-             <div id="firefox-notice-modal" class="notification is-warning is-light is-size-7 p-2 mt-3" style="display: none;">
-                Firefox: <a href="https://addons.mozilla.org/ko/firefox/addon/m3u8-hls-player-with-shortcuts/" target="_blank">HLS 플레이어</a> 설치 필수
-            </div>
-            <div id="chrome-notice-modal" class="notification is-warning is-light is-size-7 p-2 mt-3" style="display: none;">
-                 Chrome: <a href="https://chromewebstore.google.com/detail/hls-player-m3u8-streaming/eakdijdofmnclopcffkkgmndadhbjgka?hl=ko" target="_blank">HLS 플레이어</a> 설치 필수
-            </div>
-
-            <!-- HLS 플레이어 모드 토글 버튼 -->
-             <button id="mode-toggle-btn-modal" class="button is-fullwidth mt-4" onclick="toggleMode()"></button>
-
+            <!-- ★★★ 모드 토글 버튼 및 HLS 알림 제거 ★★★ -->
+            <!-- <div id="firefox-notice-modal">...</div> -->
+            <!-- <div id="chrome-notice-modal">...</div> -->
+            <!-- <button id="mode-toggle-btn-modal">...</button> -->
         </section>
         <footer class="modal-card-foot is-justify-content-flex-end">
           <button class="button" onclick="closeControlsModal()">닫기</button>
@@ -154,7 +118,7 @@
       </div>
     </div>
 
-    <!-- 기존 즐겨찾기 '관리' 모달 (추가/삭제용) -->
+    <!-- 즐겨찾기 '관리' 모달 -->
     <div class="modal" id="favorite-modal">
       <div class="modal-background" onclick="closeModal()"></div>
       <div class="modal-card">
@@ -163,38 +127,18 @@
           <button class="delete" aria-label="close" onclick="closeModal()"></button>
         </header>
         <section class="modal-card-body">
-          <!-- 이름 입력 필드 -->
-          <div class="field">
-            <label class="label is-small">이름</label>
-            <div class="control">
-              <input id="favorite-name-input" class="input is-small" type="text" placeholder="표시될 이름 입력">
-            </div>
-          </div>
-          <!-- URL 또는 채널 ID 입력 필드 -->
-          <div class="field mt-3">
-            <label class="label is-small">URL 또는 채널 ID</label>
-            <div class="control">
-              <input id="favorite-url-input" class="input is-small" type="text" placeholder="채널 URL 또는 치지직 ID 등">
-            </div>
-          </div>
-          <!-- 현재 저장된 즐겨찾기 목록 -->
-          <label class="label is-small mt-4">저장된 목록</label>
-          <div id="favorite-list" style="max-height: 200px; overflow-y: auto; border-top: 1px solid #444; margin-top: 5px; padding-top: 5px;">
-             <!-- JavaScript로 목록 동적 생성 -->
-          </div>
+          <div class="field"><label class="label is-small">이름</label><div class="control"><input id="favorite-name-input" class="input is-small" type="text" placeholder="표시될 이름 입력"></div></div>
+          <div class="field mt-3"><label class="label is-small">URL 또는 채널 ID</label><div class="control"><input id="favorite-url-input" class="input is-small" type="text" placeholder="채널 URL 또는 치지직 ID 등"></div></div>
+          <label class="label is-small mt-4">저장된 목록</label><div id="favorite-list" style="max-height: 200px; overflow-y: auto; border-top: 1px solid #444; margin-top: 5px; padding-top: 5px;"></div>
         </section>
         <footer class="modal-card-foot is-justify-content-flex-end">
-          <!-- 추가 버튼 -->
           <button class="button is-success" onclick="addFavorite()">추가</button>
-          <!-- 닫기 버튼 -->
           <button class="button" onclick="closeModal()">닫기</button>
         </footer>
       </div>
     </div>
 
-    <!-- Font Awesome 아이콘 라이브러리 로드 (아이콘 사용 시 필수) -->
     <script defer src="https://use.fontawesome.com/releases/v5.15.4/js/all.js"></script>
-    <!-- 사용자 정의 JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>
